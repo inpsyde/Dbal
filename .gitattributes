@@ -1,0 +1,9 @@
+* text eol=lf
+
+/.psalm/ export-ignore
+/tests/ export-ignore
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/phpcs.xml.dist
+/phpunit.xml.dist
+/psalm.xml

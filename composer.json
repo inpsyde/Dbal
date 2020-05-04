@@ -1,0 +1,66 @@
+{
+    "name": "inpsyde/dbal",
+    "description": "Database abstraction layer for WordPress, on top of wpdb and dbDelta.",
+    "type": "library",
+    "license": "GPLv2+",
+    "authors": [
+		{
+            "name": "Inpsyde",
+            "homepage": "https://inpsyde.com",
+			"role": "company"
+        },
+        {
+            "name": "Giuseppe Mazzapica",
+            "homepage": "https://gmazzap.me",
+			"role": "developer"
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require": {
+        "php": ">=7.2",
+        "ext-json": "*"
+    },
+    "require-dev": {
+        "inpsyde/php-coding-standards": "^1",
+        "phpunit/phpunit": "^8",
+        "brain/monkey": "^2",
+        "roots/wordpress": "@stable",
+        "vimeo/psalm": "@stable",
+        "globalis/wp-cli-bin": "^2",
+        "symfony/process": "^5",
+        "symfony/dotenv": "^5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Inpsyde\\Dbal\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Inpsyde\\Dbal\\Tests\\": "tests/src/",
+            "Inpsyde\\Dbal\\Tests\\Unit\\": "tests/unit/",
+            "Inpsyde\\Dbal\\Tests\\Integration\\": "tests/integration/"
+        }
+    },
+    "scripts": {
+        "cs": "@php ./vendor/squizlabs/php_codesniffer/bin/phpcs",
+        "psalm": "@php ./vendor/vimeo/psalm/psalm",
+        "tests": "@php ./vendor/phpunit/phpunit/phpunit",
+        "tests:no-cov": "@php ./vendor/phpunit/phpunit/phpunit --no-coverage",
+        "tests:unit": "@php ./vendor/phpunit/phpunit/phpunit --testsuite=unit",
+        "tests:unit:no-cov": "@php ./vendor/phpunit/phpunit/phpunit --testsuite=unit --no-coverage",
+        "tests:integration": "@php ./vendor/phpunit/phpunit/phpunit --testsuite=integration --no-coverage",
+        "qa": [
+            "@cs",
+            "@psalm",
+            "@tests:no-cov"
+        ]
+    },
+    "config": {
+        "optimize-autoloader": true
+    },
+    "extra": {
+        "wordpress-install-dir": "vendor/wordpress/wordpress"
+    }
+}
