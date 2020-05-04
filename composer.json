@@ -2,7 +2,7 @@
     "name": "inpsyde/dbal",
     "description": "Database abstraction layer for WordPress, on top of wpdb and dbDelta.",
     "type": "library",
-    "license": "GPLv2+",
+    "license": "GPL-2.0-or-later",
     "authors": [
 		{
             "name": "Inpsyde",
