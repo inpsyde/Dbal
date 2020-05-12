@@ -55,7 +55,7 @@ final class Dbal
             $schemas->install($installer);
             $schemas->uninstall($installer);
 
-            do_action('dbal.ready');
+            do_action(self::ACTION_READY);
         };
 
         did_action('plugins_loaded') > 0
