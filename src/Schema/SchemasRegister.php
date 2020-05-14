@@ -49,22 +49,7 @@ class SchemasRegister
      */
     public function registerForInstall(InstallableSchema $schema): SchemasRegister
     {
-        $name = $schema->name();
-
-        if (!$name) {
-            throw new \Exception("Schema name can't be empty.");
-        }
-
-        if (!empty($this->schemas[$name])) {
-            throw new \Exception("Scheme with name {$name} already registered.");
-        }
-
-        if (!Schemas::validateSchemaName($name)) {
-            throw new \Exception("'{$name}' is not a valid schema name.");
-        }
-
-        $this->schemas[$name] = [$schema, self::INSTALL];
-        $this->counts[self::INSTALL]++;
+        $this->registerFor($schema, self::INSTALL);
 
         return $this;
     }
@@ -75,15 +60,37 @@ class SchemasRegister
      */
     public function registerForUninstall(InstallableSchema $schema): SchemasRegister
     {
+        $this->registerFor($schema, self::UNINSTALL);
+
+        return $this;
+    }
+
+    /**
+     * Register schema for a given action
+     *
+     * @param InstallableSchema $schema
+     * @param int $for
+     *
+     * @throws \Exception
+     */
+    private function registerFor(InstallableSchema $schema, int $for): void
+    {
         $name = $schema->name();
+
+        if (!$name) {
+            throw new \Exception("Schema name can't be empty.");
+        }
+
+        if (!Schemas::validateSchemaName($name)) {
+            throw new \Exception("'{$name}' is not a valid schema name.");
+        }
+
         if (!empty($this->schemas[$name])) {
             throw new \Exception("Scheme with name {$name} already registered.");
         }
 
-        $this->schemas[$name] = [$schema, self::UNINSTALL];
-        $this->counts[self::UNINSTALL]++;
-
-        return $this;
+        $this->schemas[$name] = [$schema, $for];
+        $this->counts[$for]++;
     }
 
     /**
