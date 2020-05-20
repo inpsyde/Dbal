@@ -9,6 +9,7 @@ use Inpsyde\Dbal\Dbal;
 use Inpsyde\Dbal\PhpErrors;
 use Inpsyde\Dbal\Result;
 use Inpsyde\Dbal\Schema\ColumnValueEncoder;
+use Inpsyde\Dbal\Schema\Index;
 use Inpsyde\Dbal\Schema\Schema;
 use Inpsyde\Dbal\Schema\SchemaFinder;
 
@@ -227,14 +228,10 @@ class Write
 
         // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
 
-        /** @var Schema $schema */
-        $schema = $this->schema;
-        $indexes = $schema->indexes();
-        $primary = $indexes ? $indexes->primary() : null;
-        if (!$primary) {
-            $name = $this->finder->fullTableName($schema);
-
-            return Result::new(new \Error("Table {$name} doesn't have a primary column."));
+        try {
+            $primary = $this->findPrimary();
+        } catch (\Error $error) {
+            return Result::new($error);
         }
 
         return $this->update($data, [$primary->name() => $primaryValue]);
@@ -342,6 +339,30 @@ class Write
     }
 
     /**
+     * @param $primaryValue
+     * @return Result
+     *
+     * @psalm-suppress MissingParamType
+     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
+     */
+    public function deleteOnPrimary($primaryValue): Result
+    {
+        // phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
+
+        if (!$this->errors->isEmpty()) {
+            return Result::new($this->errors);
+        }
+
+        try {
+            $primary = $this->findPrimary();
+        } catch (\Error $error) {
+            return Result::new($error);
+        }
+
+        return $this->delete([$primary->name() => $primaryValue]);
+    }
+
+    /**
      * @param array $data
      * @return array{0:array<string, mixed>, 1:array<string, string>}
      */
@@ -399,8 +420,8 @@ class Write
      * @param string $type
      * @param array $data
      * @param array $formats
-     * @param array|null $whereData
-     * @param array|null $whereFormats
+     * @param array $whereData
+     * @param array $whereFormats
      * @return \Inpsyde\Dbal\Result
      */
     private function execute(
@@ -411,14 +432,17 @@ class Write
         array $whereFormats = []
     ): Result {
 
-        $execute = static function (\wpdb $wpdb, Schema $schema) use (
+        $finder = $this->finder;
+
+        $execute = function (\wpdb $wpdb, Schema $schema) use (
             $type,
             $data,
             $formats,
             $whereData,
-            $whereFormats
+            $whereFormats,
+            $finder
         ): int {
-            $table = $this->finder->fullTableName($schema);
+            $table = $finder->fullTableName($schema);
 
             switch ($type) {
                 case self::DELETE:
@@ -428,6 +452,8 @@ class Write
                 case self::UPDATE:
                     return (int)$wpdb->update($table, $data, $formats, $whereData, $whereFormats);
             }
+
+            return 0;
         };
 
         return $this->safeExecute($execute, $type);
@@ -458,6 +484,8 @@ class Write
         $phpErrors = PhpErrors::convertToExceptions();
         $suppressErrors = $wpdb->suppress_errors(true);
         $errors = new ErrorCollector();
+
+        $errorMessage = "Failed executing {$operation} operation.";
 
         try {
             /** @var Schema $schema */
@@ -508,5 +536,23 @@ class Write
             $phpErrors->restoreHandler();
             $wpdb->suppress_errors($suppressErrors);
         }
+    }
+
+    /**
+     * @return Index|null
+     */
+    private function findPrimary(): ?Index
+    {
+        /** @var Schema $schema */
+        $schema = $this->schema;
+        $indexes = $schema->indexes();
+        $primary = $indexes ? $indexes->primary() : null;
+        if (!$primary) {
+            $name = $this->finder->fullTableName($schema);
+
+            throw new \Error("Table {$name} doesn't have a primary column.");
+        }
+
+        return $primary;
     }
 }

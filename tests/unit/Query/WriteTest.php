@@ -95,6 +95,32 @@ SQL;
         $this->compareQueries($expectedQuery, $wpdb->last_query);
     }
 
+    public function testDelete()
+    {
+        $finder = $this->initializeSampleTablesFinder();
+        $result = Write::on(TableOne::NAME, $finder)->delete([TableOne::POST_ID => 1]);
+
+        $result->extract();
+
+        $expectedQuery = <<<SQL
+DELETE FROM `wp_1_tests_sample_table` WHERE `post_id` = 1
+SQL;
+
+        global $wpdb;
+        $this->compareQueries($expectedQuery, $wpdb->last_query);
+    }
+
+    public function testDeleteOnPrimary()
+    {
+        $finder = $this->initializeSampleTablesFinder();
+        $result = Write::on(TableOne::NAME, $finder)->deleteOnPrimary(1);
+        $result->extract();
+
+        $expectedQuery = "DELETE FROM `wp_1_tests_sample_table` WHERE `id` = 1";
+        global $wpdb;
+        $this->compareQueries($expectedQuery, $wpdb->last_query);
+    }
+
     /**
      * @param string $expectedRaw
      * @param string $actualRaw
