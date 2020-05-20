@@ -174,11 +174,11 @@ class Write
     }
 
     /**
-     * @param array $insertData
+     * @param array $updateData
      * @param array $whereData
      * @return Result
      */
-    public function update(array $insertData, array $whereData): Result
+    public function update(array $updateData, array $whereData): Result
     {
         if (!$this->errors->isEmpty()) {
             return Result::new($this->errors);
@@ -187,7 +187,7 @@ class Write
         /** @var Schema $schema */
         $schema = $this->schema;
         $columns = $schema->columns();
-        [$updateValues, $dataFormats] = $columns->columnsInfoForDataUpdate($insertData);
+        [$updateValues, $dataFormats] = $columns->columnsInfoForDataUpdate($updateData);
         [$whereValues, $whereDataFormats] = $columns->columnsInfoForDataRead($whereData);
 
         $data = [];
@@ -442,6 +442,7 @@ class Write
             $whereFormats,
             $finder
         ): int {
+
             $table = $finder->fullTableName($schema);
 
             switch ($type) {
@@ -450,7 +451,7 @@ class Write
                 case self::CREATE:
                     return (int)$wpdb->insert($table, $data, $formats);
                 case self::UPDATE:
-                    return (int)$wpdb->update($table, $data, $formats, $whereData, $whereFormats);
+                    return (int)$wpdb->update($table, $data, $whereData, $formats, $whereFormats);
             }
 
             return 0;
