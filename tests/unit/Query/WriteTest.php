@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Inpsyde\Dbal\Tests\Unit\Query;
 
+use Inpsyde\Dbal\Query\Compare;
 use Inpsyde\Dbal\Query\Where;
 use Inpsyde\Dbal\Query\Write;
 use Inpsyde\Dbal\Tests\TableOne;
@@ -72,6 +73,22 @@ SQL;
 UPDATE `wp_1_tests_sample_table` SET `text` = 'one', `integer` = 11
 WHERE `wp_1_tests_sample_table`.`id` >= 1
   AND `wp_1_tests_sample_table`.`double` IN ('1.123','2.456','3.789');
+SQL;
+
+        global $wpdb;
+        $this->compareQueries($expectedQuery, $wpdb->last_query);
+    }
+
+    public function testDeleteWhere()
+    {
+        $finder = $this->initializeSampleTablesFinder();
+        $where = Where::new()->withCompare(Compare::columnValue(TableOne::POST_ID, 1, '>='));
+        $result = Write::on(TableOne::NAME, $finder)->deleteWhere($where);
+
+        static::assertFalse($result->isErrored());
+
+        $expectedQuery = <<<SQL
+DELETE FROM `wp_1_tests_sample_table` WHERE `wp_1_tests_sample_table`.`post_id` >= 1;
 SQL;
 
         global $wpdb;
