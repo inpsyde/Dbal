@@ -372,7 +372,7 @@ class Write
             $lastInsertId = (int)$wpdb->insert_id;
 
             $result = $isUpdate
-                ? $wpdb->update($table, $data, $formats, $whereData, $whereFormats ?? [])
+                ? $wpdb->update($table, $data, $whereData, $formats, $whereFormats ?? [])
                 : $wpdb->insert($table, $data, $formats);
 
             $insertId = $isUpdate ? null : $wpdb->insert_id;
