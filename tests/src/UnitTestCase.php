@@ -122,9 +122,7 @@ class UnitTestCase extends TestCase
     protected function initializeSampleTablesFinder(): SchemaFinder
     {
         $schemas = SchemasRegister::new();
-        $schemas->registerForInstall(new TableOne());
-        $schemas->registerForInstall(new TableTwo());
-        $schemas->registerForInstall(new TablePivot());
+        $schemas->registerForInstall(new TableOne(), new TableTwo(), new TablePivot());
 
         return SchemaFinder::new(WpSchemas::new(), $schemas);
     }

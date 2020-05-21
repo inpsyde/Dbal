@@ -45,22 +45,38 @@ class SchemasRegister
 
     /**
      * @param InstallableSchema $schema
+     *
      * @return SchemasRegister
      */
-    public function registerForInstall(InstallableSchema $schema): SchemasRegister
-    {
-        $this->registerFor($schema, self::INSTALL);
+    public function registerForInstall(
+        InstallableSchema $schema,
+        InstallableSchema ...$schemas
+    ): SchemasRegister {
+
+        \array_unshift($schemas, $schema);
+
+        foreach ($schemas as $schema) {
+            $this->registerFor($schema, self::INSTALL);
+        }
 
         return $this;
     }
 
     /**
      * @param InstallableSchema $schema
+     *
      * @return SchemasRegister
      */
-    public function registerForUninstall(InstallableSchema $schema): SchemasRegister
-    {
-        $this->registerFor($schema, self::UNINSTALL);
+    public function registerForUninstall(
+        InstallableSchema $schema,
+        InstallableSchema ...$schemas
+    ): SchemasRegister {
+
+        \array_unshift($schemas, $schema);
+
+        foreach ($schemas as $schema) {
+            $this->registerFor($schema, self::UNINSTALL);
+        }
 
         return $this;
     }
