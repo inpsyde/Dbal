@@ -9,6 +9,7 @@ use Inpsyde\Dbal\Dbal;
 use Inpsyde\Dbal\PhpErrors;
 use Inpsyde\Dbal\Result;
 use Inpsyde\Dbal\Schema\ColumnValueEncoder;
+use Inpsyde\Dbal\Schema\Index;
 use Inpsyde\Dbal\Schema\Schema;
 use Inpsyde\Dbal\Schema\SchemaFinder;
 
@@ -16,6 +17,11 @@ use Inpsyde\Dbal\Schema\SchemaFinder;
 // phpcs:disable WordPress.DB.PreparedSQLPlaceholders
 class Write
 {
+
+    private const CREATE = 'create';
+    private const UPDATE = 'update';
+    private const DELETE = 'delete';
+
     /**
      * @var Schema|null
      */
@@ -92,7 +98,7 @@ class Write
             $formats[] = $dataFormats[$key] ?? '%s';
         }
 
-        return $this->execute($data, $formats);
+        return $this->execute(self::CREATE, $data, $formats);
     }
 
     /**
@@ -164,15 +170,15 @@ class Write
         $columnNames = implode('`, `', $keys);
         $baseSql = "INSERT INTO `{$table}` (`{$columnNames}`) VALUES \n";
 
-        return $this->executeQuery($baseSql . $valuesSql, true);
+        return $this->executeQuery($baseSql . $valuesSql, self::CREATE);
     }
 
     /**
-     * @param array $insertData
+     * @param array $updateData
      * @param array $whereData
      * @return Result
      */
-    public function update(array $insertData, array $whereData): Result
+    public function update(array $updateData, array $whereData): Result
     {
         if (!$this->errors->isEmpty()) {
             return Result::new($this->errors);
@@ -181,7 +187,7 @@ class Write
         /** @var Schema $schema */
         $schema = $this->schema;
         $columns = $schema->columns();
-        [$updateValues, $dataFormats] = $columns->columnsInfoForDataUpdate($insertData);
+        [$updateValues, $dataFormats] = $columns->columnsInfoForDataUpdate($updateData);
         [$whereValues, $whereDataFormats] = $columns->columnsInfoForDataRead($whereData);
 
         $data = [];
@@ -203,7 +209,7 @@ class Write
             }
         }
 
-        return $this->execute($data, $formats, $where, $whereFormats);
+        return $this->execute(self::UPDATE, $data, $formats, $where, $whereFormats);
     }
 
     /**
@@ -222,14 +228,10 @@ class Write
 
         // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
 
-        /** @var Schema $schema */
-        $schema = $this->schema;
-        $indexes = $schema->indexes();
-        $primary = $indexes ? $indexes->primary() : null;
-        if (!$primary) {
-            $name = $this->finder->fullTableName($schema);
-
-            return Result::new(new \Error("Table {$name} doesn't have a primary column."));
+        try {
+            $primary = $this->findPrimary();
+        } catch (\Error $error) {
+            return Result::new($error);
         }
 
         return $this->update($data, [$primary->name() => $primaryValue]);
@@ -276,7 +278,88 @@ class Write
         $valuesSql = $this->buildFieldsSql($data, $formats, true);
         $whereClause = rtrim($where->clause($schema, $this->finder, Aliases::new($this->finder)));
 
-        return $this->executeQuery("UPDATE `{$table}` SET {$valuesSql} WHERE {$whereClause};");
+        return $this->executeQuery(
+            "UPDATE `{$table}` SET {$valuesSql} WHERE {$whereClause};",
+            self::UPDATE
+        );
+    }
+
+    /**
+     * @param array $whereData
+     * @return Result
+     */
+    public function delete(array $whereData): Result
+    {
+        if (!$this->errors->isEmpty()) {
+            return Result::new($this->errors);
+        }
+
+        /** @var Schema $schema */
+        $schema = $this->schema;
+        $columns = $schema->columns();
+        [$whereValues, $whereDataFormats] = $columns->columnsInfoForDataRead($whereData);
+
+        $where = [];
+        $whereFormats = [];
+
+        /** @var \Inpsyde\Dbal\Schema\Column $column */
+        foreach ($columns as $column) {
+            $name = $column->name();
+
+            if (array_key_exists($name, $whereValues)) {
+                $where[$name] = ColumnValueEncoder::for($column)->encode($whereValues[$name]);
+                $whereFormats[] = $whereDataFormats[$name] ?? '%s';
+            }
+        }
+
+        return $this->execute(self::DELETE, [], [], $where, $whereFormats);
+    }
+
+    /**
+     * @param \Inpsyde\Dbal\Query\Where $where
+     * @return Result
+     */
+    public function deleteWhere(Where $where): Result
+    {
+        if (!$this->errors->isEmpty()) {
+            return Result::new($this->errors);
+        }
+
+        /** @var Schema $schema */
+        $schema = $this->schema;
+        $table = $this->finder->fullTableName($schema);
+
+        if (!$where->hasClauses()) {
+            return Result::new(new \Error("Can't update {$table} without WHERE clauses."));
+        }
+
+        $whereClause = rtrim($where->clause($schema, $this->finder, Aliases::new($this->finder)));
+
+        return $this->executeQuery("DELETE FROM `{$table}` WHERE {$whereClause};", self::DELETE);
+    }
+
+    /**
+     * @param $primaryValue
+     * @return Result
+     *
+     * @psalm-suppress MissingParamType
+     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
+     */
+    public function deleteOnPrimary($primaryValue): Result
+    {
+        // phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
+
+        if (!$this->errors->isEmpty()) {
+            return Result::new($this->errors);
+        }
+
+        try {
+            $primary = $this->findPrimary();
+        } catch (\Error $error) {
+            return Result::new($error);
+        }
+
+        return $this->delete([$primary->name() => $primaryValue]);
     }
 
     /**
@@ -334,55 +417,99 @@ class Write
     }
 
     /**
+     * @param string $type
      * @param array $data
      * @param array $formats
-     * @param array|null $whereData
-     * @param array|null $whereFormats
+     * @param array $whereData
+     * @param array $whereFormats
      * @return \Inpsyde\Dbal\Result
      */
     private function execute(
-        array $data,
-        array $formats,
-        ?array $whereData = null,
-        ?array $whereFormats = null
+        string $type,
+        array $data = [],
+        array $formats = [],
+        array $whereData = [],
+        array $whereFormats = []
     ): Result {
 
-        $wpdb = Dbal::wpdb();
+        $finder = $this->finder;
 
+        $execute = function (\wpdb $wpdb, Schema $schema) use (
+            $type,
+            $data,
+            $formats,
+            $whereData,
+            $whereFormats,
+            $finder
+        ): int {
+
+            $table = $finder->fullTableName($schema);
+
+            switch ($type) {
+                case self::DELETE:
+                    return (int)$wpdb->delete($table, $whereData, $whereFormats);
+                case self::CREATE:
+                    return (int)$wpdb->insert($table, $data, $formats);
+                case self::UPDATE:
+                    return (int)$wpdb->update($table, $data, $whereData, $formats, $whereFormats);
+            }
+
+            return 0;
+        };
+
+        return $this->safeExecute($execute, $type);
+    }
+
+    /**
+     * @param string $query
+     * @param string $type
+     * @return Result
+     */
+    private function executeQuery(string $query, string $type): Result
+    {
+        $execute = static function (\wpdb $wpdb) use ($query): int {
+            return (int)$wpdb->query($query);
+        };
+
+        return $this->safeExecute($execute, $type);
+    }
+
+    /**
+     * @param callable $callback
+     * @param string $operation
+     * @return Result
+     */
+    private function safeExecute(callable $callback, string $operation): Result
+    {
+        $wpdb = Dbal::wpdb();
         $phpErrors = PhpErrors::convertToExceptions();
         $suppressErrors = $wpdb->suppress_errors(true);
-
         $errors = new ErrorCollector();
-        $isUpdate = $whereData !== null;
 
-        /** @var Schema $schema */
-        $schema = $this->schema;
-
-        $this->cache and $this->cache->cleanCacheForTables($schema->name());
-
-        $table = $this->finder->fullTableName($schema);
-        $autoIncrement = $schema->columns()->autoIncrement();
-        $checkAutoIncr = !$isUpdate && $autoIncrement;
-
-        $errorMessage = $isUpdate
-            ? "Failed updating data for {$table}"
-            : "Failed inserting data into {$table}";
+        $errorMessage = "Failed executing {$operation} operation.";
 
         try {
-            $lastInsertId = (int)$wpdb->insert_id;
+            /** @var Schema $schema */
+            $schema = $this->schema;
+            $table = $this->finder->fullTableName($schema);
+            switch ($operation) {
+                case self::CREATE:
+                    $errorMessage = "Failed inserting row(s) into {$table}.";
+                    break;
+                case self::DELETE:
+                    $errorMessage = "Failed deleting row(s) from {$table}.";
+                    break;
+                case self::UPDATE:
+                default:
+                    $errorMessage = "Failed updating row(s) of {$table}.";
+                    break;
+            }
 
-            $result = $isUpdate
-                ? $wpdb->update($table, $data, $formats, $whereData, $whereFormats ?? [])
-                : $wpdb->insert($table, $data, $formats);
+            $this->cache and $this->cache->cleanCacheForTables($schema->name());
+            $result = $callback($wpdb, $schema);
+            $errorMessage .= " Last query: {$wpdb->last_query}.";
 
-            $insertId = $isUpdate ? null : $wpdb->insert_id;
-            $errorMessage .= ". Last query: {$wpdb->last_query}.";
-
-            if (
-                !$result
-                || $wpdb->last_error
-                || ($checkAutoIncr && (!$insertId || ($lastInsertId === $insertId)))
-            ) {
+            if (!$result || $wpdb->last_error) {
                 $errors->withError($errorMessage);
                 $wpdb->last_error and $errors->withError($wpdb->last_error);
 
@@ -390,9 +517,12 @@ class Write
             }
 
             $data = (object)['rows' => (int)$result];
-            $checkAutoIncr and $data->insertId = $insertId;
+            if ($operation === self::CREATE) {
+                $data->insertId = (int)$wpdb->insert_id;
+            }
 
             return Result::new($data);
+
         } catch (Error $error) {
             $errors->withError($errorMessage);
             $errors->pushError($error);
@@ -410,54 +540,20 @@ class Write
     }
 
     /**
-     * @param string $query
-     * @param bool $isUpdate
-     * @return \Inpsyde\Dbal\Result
+     * @return Index|null
      */
-    private function executeQuery(string $query, bool $isUpdate = true): Result
+    private function findPrimary(): ?Index
     {
-        $wpdb = Dbal::wpdb();
-
-        $phpErrors = PhpErrors::convertToExceptions();
-        $suppressErrors = $wpdb->suppress_errors(true);
-
         /** @var Schema $schema */
         $schema = $this->schema;
-        $table = $this->finder->fullTableName($schema);
+        $indexes = $schema->indexes();
+        $primary = $indexes ? $indexes->primary() : null;
+        if (!$primary) {
+            $name = $this->finder->fullTableName($schema);
 
-        $this->cache and $this->cache->cleanCacheForTables($schema->name());
-
-        $errors = new ErrorCollector();
-
-        $errorMessage = $isUpdate
-            ? "Failed updating data for {$table}"
-            : "Failed inserting data into {$table}";
-
-        try {
-            $result = $wpdb->query($query);
-            $errorMessage .= ". Last query: {$wpdb->last_query}.";
-
-            if (!$result || $wpdb->last_error) {
-                $errors->withError($errorMessage);
-                $wpdb->last_error and $errors->withError($wpdb->last_error);
-
-                return Result::new($errors);
-            }
-
-            return Result::new((object)['rows' => (int)$result]);
-        } catch (Error $error) {
-            $errors->withError($errorMessage);
-            $errors->pushError($error);
-
-            return Result::new($errors);
-        } catch (\Throwable $throwable) {
-            $errors->withError($errorMessage);
-            $errors->withError($throwable->getMessage());
-
-            return Result::new($errors);
-        } finally {
-            $phpErrors->restoreHandler();
-            $wpdb->suppress_errors($suppressErrors);
+            throw new \Error("Table {$name} doesn't have a primary column.");
         }
+
+        return $primary;
     }
 }
