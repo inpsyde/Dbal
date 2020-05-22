@@ -34,9 +34,11 @@ class InstallationTest extends IntegrationTestCase
             Dbal::ACTION_REGISTER_SCHEMA,
             static function (SchemasRegister $register) use (&$theRegister) {
                 $theRegister = $register;
-                $theRegister->registerForInstall(new TableOne());
-                $theRegister->registerForInstall(new TableTwo());
-                $theRegister->registerForInstall(new TablePivot());
+                $theRegister->registerForInstall(
+                    new TableOne(),
+                    new TableTwo(),
+                    new TablePivot()
+                );
             }
         );
 
