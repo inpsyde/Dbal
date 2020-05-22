@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Inpsyde\Dbal\Tests\Unit;
 
-use Inpsyde\Dbal\Query\ErrorCollector;
+use Inpsyde\Dbal\ErrorCollector;
 use Inpsyde\Dbal\Tests\UnitTestCase;
 use Inpsyde\Dbal\Transaction;
 

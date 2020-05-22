@@ -8,6 +8,7 @@ use Inpsyde\Dbal\Dbal;
 
 class TableInstaller
 {
+
     public const ACTION_INSTALL = 'dbal.table-install';
     public const ACTION_UPDATE = 'dbal.table-update';
     public const ACTION_INSTALLED = 'dbal.table-installed';
@@ -15,6 +16,7 @@ class TableInstaller
 
     private const OPTION_VERSIONS = 'dbal_table_versions';
     private const OPTION_VERSIONS_NETWORK = 'dbal_table_versions_net';
+    private const UPDATE_PHP_PATH = 'wp-admin/includes/upgrade.php';
 
     /**
      * @var array<string,array>
@@ -193,7 +195,7 @@ class TableInstaller
     private function prepareInstall(InstallableSchema $schema): ?string
     {
         if (!function_exists('dbDelta')) {
-            require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+            require_once ABSPATH . self::UPDATE_PHP_PATH;
         }
 
         return $this->validateVersion($schema->version());

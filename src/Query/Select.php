@@ -6,6 +6,8 @@ namespace Inpsyde\Dbal\Query;
 
 use Inpsyde\Dbal\Cache;
 use Inpsyde\Dbal\Dbal;
+use Inpsyde\Dbal\Error;
+use Inpsyde\Dbal\ErrorCollector;
 use Inpsyde\Dbal\PhpErrors;
 use Inpsyde\Dbal\Schema\SchemaFinder;
 use Inpsyde\Dbal\Schema\Schemas;

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Tests\Unit\Query;
+namespace Inpsyde\Dbal\Tests\Unit;
 
-use Inpsyde\Dbal\Query\Error;
+use Inpsyde\Dbal\Error;
 use Inpsyde\Dbal\Tests\UnitTestCase;
 
 class ErrorTest extends UnitTestCase

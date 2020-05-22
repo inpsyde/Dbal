@@ -4,105 +4,81 @@ declare(strict_types=1);
 
 namespace Inpsyde\Dbal;
 
-use Inpsyde\Dbal\Query\Error;
-use Inpsyde\Dbal\Query\ErrorCollector;
-
+/**
+ * @template T of Error|null
+ */
 class Result
 {
+
     /**
      * @var mixed
      */
     private $value;
 
     /**
-     * @var \Inpsyde\Dbal\Query\ErrorCollector|null
+     * @var T
      */
-    private $errors;
+    private $error;
 
     /**
-     * @param mixed $value
-     * @return \Inpsyde\Dbal\Result
+     * @param $value
+     * @return Result
      *
+     * @psalm-suppress MissingParamType
      * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
      */
     public static function new($value): Result
     {
         // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-        if ($value instanceof ErrorCollector) {
-            return $value->isEmpty() ? new static(null, null) : new static(null, $value);
-        }
-
         if ($value instanceof Result) {
-            return new static($value->value, $value->errors);
+            return new static($value->value, $value->error);
         }
 
-        $maybeError = static::maybeCastToErrors($value);
-        if ($maybeError) {
-            return new static(null, $maybeError);
+        if ($value instanceof ErrorCollector) {
+            $value = $value->isEmpty() ? null : $value->error();
+        }
+
+        if ($value instanceof \Throwable) {
+            return new static(null, Error::fromThrowable($value));
         }
 
         return new static($value, null);
     }
 
     /**
-     * @param $value
-     * @return \Inpsyde\Dbal\Query\ErrorCollector|null
-     *
-     * @psalm-suppress MissingParamType
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-     */
-    private static function maybeCastToErrors($value): ?ErrorCollector
-    {
-        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-        if ($value instanceof Error) {
-            $errors = new ErrorCollector();
-            $errors->pushError($value);
-            $value = $errors;
-        }
-
-        if ($value instanceof \Throwable) {
-            $errors = new ErrorCollector();
-            $errors->withError($value->getMessage());
-            $value = $errors;
-        }
-
-        if (!$value instanceof ErrorCollector) {
-            return null;
-        }
-
-        return $value->isEmpty() ? null : $value;
-    }
-
-    /**
      * @param mixed $value
-     * @param \Inpsyde\Dbal\Query\ErrorCollector|null $errors
+     * @param T $error
      *
      * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
+     * @psalm-suppress MissingParamType
      */
-    private function __construct($value, ?ErrorCollector $errors)
+    private function __construct($value, ?Error $error)
     {
         // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-
         $this->value = $value;
-        $this->errors = $errors;
+        $this->error = $error;
     }
 
     /**
      * @return bool
      *
-     * @psalm-assert-if-false null $this->errors
-     * @psalm-assert-if-true ErrorCollector $this->errors
+     * @psalm-assert-if-true Result<Error> $this
+     * @psalm-assert-if-true Error $this->error
+     * @psalm-assert-if-false Result<null> $this
+     * @psalm-assert-if-false null $this->error
      */
     public function isErrored(): bool
     {
-        return $this->errors !== null;
+        return $this->error !== null;
     }
 
     /**
      * @return bool
      *
-     * @psalm-assert-if-true null $this->errors
-     * @psalm-assert-if-false ErrorCollector $this->errors
+     * @psalm-assert-if-false Result<Error> $this
+     * @psalm-assert-if-false Error $this->error
+     * @psalm-assert-if-true Result<null> $this
+     * @psalm-assert-if-true null $this->error
      */
     public function isValid(): bool
     {
@@ -117,30 +93,100 @@ class Result
     public function extract()
     {
         //phpcs:enable Inpsyde.CodeQuality.ReturnTypeDeclaration
-        if ($this->isErrored()) {
-            $this->errors->assert();
-        }
+        $this->assert();
 
         return $this->value;
     }
 
     /**
+     * @return void
+     */
+    public function assert(): void
+    {
+        if ($this->isErrored()) {
+            throw $this->error;
+        }
+    }
+
+    /**
+     * @return Error|null
+     * @psalm-return T
+     */
+    public function error(): ?Error
+    {
+        return $this->error ? $this->error : null;
+    }
+
+    /**
      * @param callable|null $onSuccess
      * @param callable|null $onError
-     * @return \Inpsyde\Dbal\Result
+     * @return Result
      */
     public function bind(?callable $onSuccess, ?callable $onError): Result
     {
+        try {
+            $callback = $this->isValid() ? $onSuccess : $onError;
+
+            return $callback
+                ? $this->merge(Result::new($callback($this->value)))
+                : static::new($this);
+        } catch (\Throwable $throwable) {
+            return $this->merge(Result::new(Error::fromThrowable($throwable)));
+        }
+    }
+
+    /**
+     * @param Result $result
+     * @return Result
+     */
+    public function merge(Result $result): Result
+    {
+        if ($result->isErrored()) {
+            if ($this->isErrored()) {
+                return $this->mergeError($result->error);
+            }
+
+            return static::new($result);
+        }
+
+        return $this->isErrored() ? static::new($this) : static::new($result);
+    }
+
+    /**
+     * @param Error $error
+     * @return Result<Error>
+     */
+    public function mergeError(Error $error): Result
+    {
+        $previous = $this->error();
+        if ($previous) {
+            /** @var Error $previous */
+            $error = $previous->merge($error);
+        }
+
+        /** @var Result<Error> $instance */
+        $instance = static::new($error);
+
+        return $instance;
+    }
+
+    /**
+     * @param callable $callback
+     * @param mixed $returnIfError
+     * @return mixed|null
+     *
+     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
+     * phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration
+     */
+    public function extractWith(callable $callback, $returnIfError = null)
+    {
+        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
+        // phpcs:enable Inpsyde.CodeQuality.ReturnTypeDeclaration
+
         if ($this->isValid()) {
-            return $onSuccess ? static::new($onSuccess($this->value)) : static::new($this->value);
+            return $callback($this->value);
         }
 
-        $value = $this->value;
-        if ($onError) {
-            $maybeError = static::maybeCastToErrors($onError($this->errors));
-            $maybeError and $value = $maybeError;
-        }
-
-        return static::new($value);
+        return $returnIfError;
     }
 }

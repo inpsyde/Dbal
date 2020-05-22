@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Inpsyde\Dbal\Tests\Unit\Query;
 
-use Inpsyde\Dbal\Query\Error;
+use Inpsyde\Dbal\Error;
 use Inpsyde\Dbal\Query\ResultSet;
 use Inpsyde\Dbal\Query\Select;
 use Inpsyde\Dbal\Tests\TableOne;
@@ -30,9 +30,13 @@ class ResultSetTest extends UnitTestCase
         static::assertSame([], iterator_to_array($set->autoPaginationIterator()));
         static::assertSame(0, count($set));
 
-        static::assertSame('{"error":"Test"}', json_encode($set));
         static::assertSame(
-            '{"error":"Test > Result set has no next page."}',
+            '{"errors":["Test"]}',
+            json_encode($set)
+        );
+
+        static::assertSame(
+            '{"errors":["Result set has no next page.","Test"]}',
             json_encode($set->nextPage())
         );
 
@@ -84,7 +88,7 @@ class ResultSetTest extends UnitTestCase
         static::assertEquals([$expected], $set->toArray());
         static::assertSame(json_encode([$expected]), json_encode($set));
         static::assertSame(
-            '{"error":"Result set has no next page."}',
+            '{"errors":["Result set has no next page."]}',
             json_encode($set->nextPage())
         );
     }

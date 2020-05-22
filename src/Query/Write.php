@@ -6,6 +6,8 @@ namespace Inpsyde\Dbal\Query;
 
 use Inpsyde\Dbal\Cache;
 use Inpsyde\Dbal\Dbal;
+use Inpsyde\Dbal\ErrorCollector;
+use Inpsyde\Dbal\Error;
 use Inpsyde\Dbal\PhpErrors;
 use Inpsyde\Dbal\Result;
 use Inpsyde\Dbal\Schema\ColumnValueEncoder;
@@ -38,7 +40,7 @@ class Write
     private $finder;
 
     /**
-     * @var \Inpsyde\Dbal\Query\ErrorCollector
+     * @var \Inpsyde\Dbal\ErrorCollector
      */
     private $errors;
 
@@ -432,29 +434,30 @@ class Write
         array $whereFormats = []
     ): Result {
 
+        switch ($type) {
+            case self::DELETE:
+                $func = 'delete';
+                $args = [$whereData, $whereFormats];
+                break;
+            case self::CREATE:
+                $func = 'insert';
+                $args = [$data, $formats];
+                break;
+            case self::UPDATE:
+                $func = 'update';
+                $args = [$data, $whereData, $formats, $whereFormats];
+                break;
+            default:
+                return Result::new(new Error("Invalid query type {$type}."));
+        }
+
         $finder = $this->finder;
 
-        $execute = function (\wpdb $wpdb, Schema $schema) use (
-            $type,
-            $data,
-            $formats,
-            $whereData,
-            $whereFormats,
-            $finder
-        ): int {
+        $execute = static function (\wpdb $wpdb, Schema $schema) use ($finder, $args, $func): int {
+            /** @var callable $method */
+            $method = [$wpdb, $func];
 
-            $table = $finder->fullTableName($schema);
-
-            switch ($type) {
-                case self::DELETE:
-                    return (int)$wpdb->delete($table, $whereData, $whereFormats);
-                case self::CREATE:
-                    return (int)$wpdb->insert($table, $data, $formats);
-                case self::UPDATE:
-                    return (int)$wpdb->update($table, $data, $whereData, $formats, $whereFormats);
-            }
-
-            return 0;
+            return (int)$method($finder->fullTableName($schema), ...$args);
         };
 
         return $this->safeExecute($execute, $type);
@@ -484,9 +487,8 @@ class Write
         $wpdb = Dbal::wpdb();
         $phpErrors = PhpErrors::convertToExceptions();
         $suppressErrors = $wpdb->suppress_errors(true);
-        $errors = new ErrorCollector();
 
-        $errorMessage = "Failed executing {$operation} operation.";
+        $error = new Error("Failed executing {$operation} operation.");
 
         try {
             /** @var Schema $schema */
@@ -494,26 +496,25 @@ class Write
             $table = $this->finder->fullTableName($schema);
             switch ($operation) {
                 case self::CREATE:
-                    $errorMessage = "Failed inserting row(s) into {$table}.";
+                    $error = new Error("Failed inserting row(s) into {$table}.");
                     break;
                 case self::DELETE:
-                    $errorMessage = "Failed deleting row(s) from {$table}.";
+                    $error = new Error("Failed deleting row(s) from {$table}.");
                     break;
                 case self::UPDATE:
                 default:
-                    $errorMessage = "Failed updating row(s) of {$table}.";
+                    $error = new Error("Failed updating row(s) of {$table}.");
                     break;
             }
 
-            $this->cache and $this->cache->cleanCacheForTables($schema->name());
             $result = $callback($wpdb, $schema);
-            $errorMessage .= " Last query: {$wpdb->last_query}.";
+            $error = Error::withMerged($error, "Errored query: {$wpdb->last_query}.");
+            $this->cache and $this->cache->cleanCacheForTables($schema->name());
 
             if (!$result || $wpdb->last_error) {
-                $errors->withError($errorMessage);
-                $wpdb->last_error and $errors->withError($wpdb->last_error);
+                $value = $wpdb->last_error ? new Error($wpdb->last_error) : null;
 
-                return Result::new($errors);
+                return Result::new($value)->mergeError($error);
             }
 
             $data = (object)['rows' => (int)$result];
@@ -522,17 +523,8 @@ class Write
             }
 
             return Result::new($data);
-
-        } catch (Error $error) {
-            $errors->withError($errorMessage);
-            $errors->pushError($error);
-
-            return Result::new($errors);
         } catch (\Throwable $throwable) {
-            $errors->withError($errorMessage);
-            $errors->withError($throwable->getMessage());
-
-            return Result::new($errors);
+            return Result::new(Error::withMergedThrowable($error, $throwable));
         } finally {
             $phpErrors->restoreHandler();
             $wpdb->suppress_errors($suppressErrors);
@@ -540,9 +532,9 @@ class Write
     }
 
     /**
-     * @return Index|null
+     * @return Index
      */
-    private function findPrimary(): ?Index
+    private function findPrimary(): Index
     {
         /** @var Schema $schema */
         $schema = $this->schema;

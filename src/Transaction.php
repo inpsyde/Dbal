@@ -4,12 +4,8 @@ declare(strict_types=1);
 
 namespace Inpsyde\Dbal;
 
-use Inpsyde\Dbal\Query\Error;
-use Inpsyde\Dbal\Query\ErrorCollector;
-
 class Transaction
 {
-
     public const REPEATABLE_READ = 1;
     public const READ_COMMITTED = 2;
     public const READ_UNCOMMITTED = 4;
@@ -86,7 +82,7 @@ class Transaction
 
     /**
      * @param callable $callback
-     * @return \Inpsyde\Dbal\Result
+     * @return Result
      */
     public function __invoke(callable $callback): Result
     {
@@ -129,7 +125,7 @@ class Transaction
     }
 
     /**
-     * @param \Inpsyde\Dbal\Query\ErrorCollector $errors
+     * @param ErrorCollector $errors
      * @return bool
      */
     private function startTransaction(ErrorCollector $errors): bool
@@ -150,7 +146,7 @@ class Transaction
 
     /**
      * @param callable $callback
-     * @param \Inpsyde\Dbal\Query\ErrorCollector $errors
+     * @param ErrorCollector $errors
      * @return array{0:mixed, 1:bool}
      *
      * phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration
@@ -186,7 +182,7 @@ class Transaction
 
     /**
      * @param string $query
-     * @param \Inpsyde\Dbal\Query\ErrorCollector $errors
+     * @param ErrorCollector $errors
      * @return void
      */
     private function executeQuery(string $query, ErrorCollector $errors): void
