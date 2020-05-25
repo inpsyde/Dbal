@@ -7,7 +7,7 @@ namespace Inpsyde\Dbal\Tests\Unit\Query;
 use Inpsyde\Dbal\Query\Aliases;
 use Inpsyde\Dbal\Query\Compare;
 use Inpsyde\Dbal\Query\Where;
-use Inpsyde\Dbal\Query\ErrorCollector;
+use Inpsyde\Dbal\ErrorCollector;
 use Inpsyde\Dbal\Query\Join;
 use Inpsyde\Dbal\Schema\Indexes;
 use Inpsyde\Dbal\Tests\TableOne;

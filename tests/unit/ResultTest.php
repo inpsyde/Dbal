@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Inpsyde\Dbal\Tests\Unit;
 
-use Inpsyde\Dbal\Query\Error;
-use Inpsyde\Dbal\Query\ErrorCollector;
+use Inpsyde\Dbal\Error;
+use Inpsyde\Dbal\ErrorCollector;
 use Inpsyde\Dbal\Result;
 use Inpsyde\Dbal\Tests\UnitTestCase;
 
@@ -86,6 +86,8 @@ class ResultTest extends UnitTestCase
             }
         );
 
+        $result->assert();
+
         static::assertFalse($result->isErrored());
         static::assertTrue($result->isValid());
         static::assertSame(456, $result->extract());
@@ -94,13 +96,10 @@ class ResultTest extends UnitTestCase
     public function testBindError()
     {
         $result = Result::new(new \Exception('Meh'))->bind(
-            function (): void {
+            static function (): void {
                 static::assertTrue(false);
             },
-            function (ErrorCollector $errors): \Exception {
-                static::assertFalse($errors->isEmpty());
-                static::assertSame('Meh', $errors->error()->getMessage());
-
+            static function (): \Exception {
                 return new \Exception('Meh meh!');
             }
         );
@@ -109,6 +108,65 @@ class ResultTest extends UnitTestCase
         static::assertFalse($result->isValid());
 
         $this->expectExceptionMessage('Meh meh!');
-        $result->extract();
+        $result->assert();
+    }
+    
+    public function testBindErrorMerge()
+    {
+        $result = Result::new(new \Exception('Meh'))->bind(
+            null,
+            static function (): Result {
+                return Result::new(new \Exception('Meh meh!'));
+            }
+        );
+
+        static::assertTrue($result->isErrored());
+        static::assertFalse($result->isValid());
+        static::assertInstanceOf(Error::class, $result->error());
+        static::assertSame('Meh meh!', $result->error()->getMessage());
+        static::assertInstanceOf(Error::class, $result->error());
+        static::assertSame('Meh', $result->error()->getPrevious()->getMessage());
+    }
+
+    public function testMergeAllSuccessPropagateResult()
+    {
+        $value = Result::new(1)->merge(Result::new(2))->merge(Result::new(3))->extract();
+
+        static::assertSame(3, $value);
+    }
+
+    public function testMergeOneErrorPropagatesIt()
+    {
+        $erroneous = Result::new(new \Exception('Meh'));
+        $result = Result::new(1)->merge($erroneous)->merge(Result::new(3))->merge(Result::new(4));
+
+        static::assertTrue($result->isErrored());
+        static::assertSame('Meh', $result->error()->getMessage());
+    }
+
+    public function testMergeMoreErrorsPropagatesAndMergeThem()
+    {
+        $result = Result::new(1)
+            ->merge(Result::new(new \Exception('First!')))
+            ->merge(Result::new(3))
+            ->merge(Result::new(new \Exception('Second!')))
+            ->merge(Result::new(4))
+            ->merge(Result::new(new \Exception('Third!')))
+            ->merge(Result::new(5));
+
+        static::assertTrue($result->isErrored());
+        static::assertSame('Third!', $result->error()->getMessage());
+        static::assertSame('Second!', $result->error()->getPrevious()->getMessage());
+        static::assertSame('First!', $result->error()->getPrevious()->getPrevious()->getMessage());
+    }
+
+    public function testExtractWith()
+    {
+        $id = Result::new((object)['id' => '2'])->extractWith(function (\stdClass $data): int {
+            return (int)($data->id ?? 0);
+        });
+
+        static::assertSame(2, $id);
+
     }
 }

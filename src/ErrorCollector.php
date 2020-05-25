@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Query;
+namespace Inpsyde\Dbal;
 
 final class ErrorCollector
 {

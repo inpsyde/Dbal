@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Inpsyde\Dbal\Query;
 
 use Inpsyde\Dbal\Dbal;
+use Inpsyde\Dbal\ErrorCollector;
 use Inpsyde\Dbal\Schema\Column;
 use Inpsyde\Dbal\Schema\ColumnValueEncoder;
 use Inpsyde\Dbal\Schema\Columns;
@@ -46,7 +47,7 @@ class Where
     ];
 
     /**
-     * @var array
+     * @var array<array>
      */
     private $clauses = [];
 

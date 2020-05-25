@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Inpsyde\Dbal\Tests\Unit\Query;
 
 use Inpsyde\Dbal\Query\Aliases;
-use Inpsyde\Dbal\Query\ErrorCollector;
+use Inpsyde\Dbal\ErrorCollector;
 use Inpsyde\Dbal\Tests\TableOne;
 use Inpsyde\Dbal\Tests\TableTwo;
 use Inpsyde\Dbal\Tests\UnitTestCase;

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Inpsyde\Dbal\Query;
 
+use Inpsyde\Dbal\Error;
+
 class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
 {
     /**
@@ -315,9 +317,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
     public function jsonSerialize()
     {
         if ($this->hasErrors()) {
-            $error = str_replace("\n", ' ', (string)$this->error->serialize());
-
-            return compact('error');
+            return ['errors' => $this->error->allMessages()];
         }
 
         return $this->hasResults() ? $this->toArray() : [];
