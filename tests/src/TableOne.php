@@ -12,7 +12,11 @@ use Inpsyde\Dbal\Schema\Indexes;
 
 class TableOne implements InstallableSchema
 {
+    // phpcs:ignore Inpsyde.CodeQuality.ForbiddenPublicProperty.Found
+    public static $version = '1.0.0';
+
     public const NAME = 'tests_sample_table';
+    public const NETWORK_WIDE = false;
 
     public const ID = 'id';
     public const POST_ID = 'post_id';
@@ -24,38 +28,25 @@ class TableOne implements InstallableSchema
     public const ENUM = 'enum';
 
     /**
-     * @var string
-     */
-    private $version;
-
-    /**
-     * @param string $version
-     */
-    public function __construct(string $version = '1.0.0')
-    {
-        $this->version = $version;
-    }
-
-    /**
      * @return string
      */
-    public function version(): string
+    public static function version(): string
     {
-        return $this->version;
+        return self::$version;
     }
 
     /**
      * @return bool
      */
-    public function isNetworkWide(): bool
+    public static function isNetworkWide(): bool
     {
-        return false;
+        return self::NETWORK_WIDE;
     }
 
     /**
      * @return string
      */
-    public function name(): string
+    public static function name(): string
     {
         return self::NAME;
     }
@@ -77,7 +68,7 @@ class TableOne implements InstallableSchema
                 ->retrieveAsDateTime(new \DateTimeZone('UTC')),
         ];
 
-        if ($this->version === '1.0.0') {
+        if (self::$version === '1.0.0') {
             $columns[] = Column::enum(self::ENUM, 'yes', 'no');
         }
 

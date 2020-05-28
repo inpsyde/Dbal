@@ -12,7 +12,9 @@ use Inpsyde\Dbal\Schema\Indexes;
 
 class TableTwo implements InstallableSchema
 {
+    public const VERSION = '1.0.0';
     public const NAME = 'tests_sample_table_two';
+    public const NETWORK_WIDE = false;
 
     public const ID = 'id';
     public const VARCHAR = 'varchar';
@@ -21,23 +23,23 @@ class TableTwo implements InstallableSchema
     /**
      * @return string
      */
-    public function version(): string
+    public static function version(): string
     {
-        return '1.0.0';
+        return self::VERSION;
     }
 
     /**
      * @return bool
      */
-    public function isNetworkWide(): bool
+    public static function isNetworkWide(): bool
     {
-        return false;
+        return self::NETWORK_WIDE;
     }
 
     /**
      * @return string
      */
-    public function name(): string
+    public static function name(): string
     {
         return self::NAME;
     }

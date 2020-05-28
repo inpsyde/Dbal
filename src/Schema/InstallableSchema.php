@@ -4,7 +4,7 @@ namespace Inpsyde\Dbal\Schema;
 
 interface InstallableSchema extends Schema
 {
-    public function version(): string;
+    public static function version(): string;
 
     public function onInstall(\wpdb $wpdb, string $fullTableName): void;
 

@@ -4,9 +4,9 @@ namespace Inpsyde\Dbal\Schema;
 
 interface Schema
 {
-    public function isNetworkWide(): bool;
+    public static function isNetworkWide(): bool;
 
-    public function name(): string;
+    public static function name(): string;
 
     public function columns(): Columns;
 

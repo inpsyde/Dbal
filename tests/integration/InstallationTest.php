@@ -58,14 +58,15 @@ class InstallationTest extends IntegrationTestCase
 
     public function testInstallationAndUpdate()
     {
-        $version = '1.0.0';
         $countInstalled = 0;
         $countUpdated = 0;
 
+        $tableOne = new TableOne();
+
         add_action(
             Dbal::ACTION_REGISTER_SCHEMA,
-            static function (SchemasRegister $register) use (&$version) {
-                $register->registerForInstall(new TableOne($version));
+            static function (SchemasRegister $register) use ($tableOne) {
+                $register->registerForInstall($tableOne);
             }
         );
 
@@ -109,7 +110,8 @@ class InstallationTest extends IntegrationTestCase
          * When version is different than "1.0.0" TableOne do not have an ENUM column
          * @see TableOne::columns()
          */
-        $version = '1.1.0';
+        $property = new \ReflectionProperty($tableOne, 'version');
+        $property->setValue($tableOne, '1.1.0');
 
         $this->resetDbal();
         Dbal::initialize();
