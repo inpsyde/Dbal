@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Inpsyde\Dbal\Tests\Unit;
 
-use Inpsyde\Dbal\ErrorCollector;
+use Inpsyde\Dbal\Error;
+use Inpsyde\Dbal\Result;
 use Inpsyde\Dbal\Tests\UnitTestCase;
 use Inpsyde\Dbal\Transaction;
 
@@ -13,10 +14,8 @@ class TransactionTest extends UnitTestCase
     public function testDefaultTransactionSuccess()
     {
         $result = Transaction::new()(
-            static function (callable $success, ErrorCollector $errors): void {
-                static::assertTrue($errors->isEmpty());
-
-                $success('Success!');
+            static function (): Result {
+                return Result::new('Success!');
             }
         );
 
@@ -33,8 +32,8 @@ class TransactionTest extends UnitTestCase
     public function testDefaultTransactionError()
     {
         $result = Transaction::new()(
-            static function (callable $success, ErrorCollector $errors): void {
-                $errors->withError('Failed!');
+            static function (): Error {
+                return new Error('Failed!');
             }
         );
 
@@ -57,15 +56,12 @@ class TransactionTest extends UnitTestCase
         );
 
         global $wpdb;
-
         $actualQueries = array_column($wpdb->queries, 0);
         $expectedQueries = ['START TRANSACTION;', 'COMMIT;'];
 
-        static::assertTrue($result->isErrored());
+        static::assertFalse($result->isErrored());
         static::assertSame($expectedQueries, $actualQueries);
-
-        $this->expectExceptionMessageMatches('/not signal/i');
-        $result->extract();
+        static::assertNull($result->extract());
     }
 
     public function testDefaultTransactionWithWarning()
@@ -222,6 +218,151 @@ class TransactionTest extends UnitTestCase
         ];
 
         static::assertSame($expectedQueries, $actualQueries);
+    }
+
+    public function testFailedQueryMakeItErroredEvenIfCallableReturnedValue()
+    {
+        $result = Transaction::new()(
+            static function (): Result {
+                global $wpdb;
+                $wpdb->last_error = 'Something failed!';
+
+                return Result::new(1);
+            }
+        );
+
+        static::assertTrue($result->isErrored());
+        static::assertSame('Something failed!', $result->error()->getMessage());
+    }
+
+    public function testMergingSuccessfulResultsInTransaction()
+    {
+        $f1 = static function (): Result {
+            return Result::new(1);
+        };
+
+        $f2 = static function (Result $result): Result {
+            return $result->merge(Result::new(2));
+        };
+
+        $f3 = static function (Result $result): Result {
+            return $result->merge(Result::new(3));
+        };
+
+        $result = Transaction::new()(
+            static function () use ($f1, $f2, $f3): Result {
+                return $f3($f2($f1()));
+            }
+        );
+
+        static::assertSame(3, $result->extract());
+    }
+
+    public function testMergingResultsWithErrorInTransaction()
+    {
+        $f1 = static function (): Result {
+            return Result::new(1);
+        };
+
+        $f2 = static function (Result $result): Result {
+            return $result->merge(Result::new(new \Exception('Meh')));
+        };
+
+        $f3 = static function (Result $result): Result {
+            return $result->merge(Result::new(3));
+        };
+
+        $result = Transaction::new()(
+            static function () use ($f1, $f2, $f3): Result {
+                return $f3($f2($f1()));
+            }
+        );
+
+        static::assertSame('Meh', $result->error()->getMessage());
+    }
+
+    public function testMultipleSuccessfulCallbacksInTransaction()
+    {
+        $f2 = static function (): Result {
+            return Result::new(2);
+        };
+
+        $f3 = static function (Result $result): Result {
+            return $result->merge(Result::new(3));
+        };
+
+        $result = Transaction::new()(
+            static function (): Result {
+                return Result::new(1);
+            },
+            static function () use ($f2, $f3): Result {
+                return $f3($f2());
+            },
+            static function (): Result {
+                return Result::new(4);
+            }
+        );
+
+        static::assertSame(4, $result->extract());
+    }
+
+    public function testMultipleCallbacksWithErrorsInTransaction()
+    {
+        $result = Transaction::new()(
+            static function (): Result {
+                return Result::new(1);
+            },
+            static function (): Error {
+                return new Error('First.');
+            },
+            static function (): int {
+                return 3;
+            },
+            static function (): Result {
+                return Result::new(new \Exception('Second.'));
+            },
+            static function (): Result {
+                return Result::new(5);
+            }
+        );
+
+        static::assertSame('Second.', $result->error()->getMessage());
+        static::assertSame('First.', $result->error()->getPrevious()->getMessage());
+    }
+
+    public function testMultipleCallbacksForwardingResultValue()
+    {
+        $insert1 = function (): Result {
+            $insert1 = Result::new(['rows' => 1, 'insertId' => 123]);
+            if ($insert1->isErrored()) {
+                return $insert1;
+            }
+
+            $data = new \stdClass();
+            $data->ids = [(int)$insert1->extract()['insertId']];
+
+            return  Result::new($data);
+        };
+
+        $insert2 = function (Result $previous): Result {
+            if ($previous->isErrored()) {
+                return $previous;
+            }
+
+            $insert2 = Result::new(['rows' => 1, 'insertId' => 456]);
+            if ($insert2->isErrored()) {
+                return $insert2;
+            }
+
+            $data = $previous->extract();
+            $data->ids[] = (int)$insert2->extract()['insertId'];
+
+            return Result::new($data);
+        };
+
+        $result = Transaction::new()($insert1, $insert2);
+
+        static::assertSame([123, 456], $result->extract()->ids);
     }
 
     public function testWithConsistentSnapshot()

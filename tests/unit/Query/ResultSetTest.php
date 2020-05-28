@@ -22,7 +22,7 @@ class ResultSetTest extends UnitTestCase
         $set = ResultSet::errored($error);
 
         static::assertTrue($set->hasErrors());
-        static::assertFalse($set->hasResults());
+        static::assertFalse($set->isValid());
         static::assertFalse($set->hasMorePages());
         static::assertNull($set->pagination());
         static::assertNull($set->first());
@@ -75,10 +75,10 @@ class ResultSetTest extends UnitTestCase
 
         $set = Select::from(TableOne::NAME, null, $finder)
             ->allCols()
-            ->firstResult();
+            ->pickFirst();
 
         static::assertFalse($set->hasErrors());
-        static::assertTrue($set->hasResults());
+        static::assertTrue($set->isValid());
         static::assertFalse($set->hasMorePages());
         static::assertNull($set->pagination());
         static::assertEquals($expected, $set->first());
@@ -204,10 +204,10 @@ class ResultSetTest extends UnitTestCase
         $set = Select::from(TableOne::NAME, null, $finder)
             ->allCols()
             ->paginated(1, 2)
-            ->allResults();
+            ->all();
 
         static::assertFalse($set->hasErrors());
-        static::assertTrue($set->hasResults());
+        static::assertTrue($set->isValid());
         static::assertTrue($set->hasMorePages());
         static::assertSame(2, $set->pagination()->perPage());
         static::assertSame(1, $set->pagination()->page());
@@ -272,7 +272,7 @@ class ResultSetTest extends UnitTestCase
         $set = Select::from(TableOne::NAME, null, $finder)
             ->allCols()
             ->paginated(1, 2)
-            ->allResults()
+            ->all()
             ->filter(static function (array $row): bool {
                 return $row[TableOne::ID] === 2;
             })
@@ -283,12 +283,53 @@ class ResultSetTest extends UnitTestCase
         $firstItem = iterator_to_array($set)[0];
 
         static::assertFalse($set->hasErrors());
-        static::assertTrue($set->hasResults());
+        static::assertTrue($set->isValid());
         static::assertFalse($set->hasMorePages());
         static::assertSame(2, $set->pagination()->perPage());
         static::assertSame(1, $set->pagination()->page());
         static::assertSame(1, $set->pagination()->totalPages());
         static::assertInstanceOf(\stdClass::class, $firstItem);
         static::assertEquals($expected, $firstItem);
+    }
+
+    public function testErroredToResult()
+    {
+        $error = new Error('Test');
+        $result = ResultSet::errored($error)->toResult();
+
+        static::assertSame('Test', $result->error()->getMessage());
+    }
+
+    public function testSingleRowToResult()
+    {
+        $row = [
+            TableOne::ID => '1',
+            TableOne::TEXT => 'Foo bar',
+            TableOne::SERIALIZED => serialize(['a', 'b']),
+            TableOne::INTEGER => '123',
+            TableOne::DOUBLE => '0.001',
+            TableOne::DATETIME => '2019-12-09 07:36:00',
+            TableOne::ENUM => 'yes',
+        ];
+
+        $finder = $this->initializeSampleTablesFinder();
+        $this->infixNextWpdbRowsResult($row);
+
+        $check = null;
+        Select::from(TableOne::NAME, null, $finder)
+            ->allCols()
+            ->pickFirst()
+            ->toResult()
+            ->bind(
+                static function (\Iterator $iterator) use (&$check) {
+                    static::assertSame(0.001, $iterator->current()[TableOne::DOUBLE]);
+                    $check = true; // make sure the above assertion ran.
+                },
+                static function () {
+                    static::assertFalse(true, 'bind "onError" branch should never be executed.');
+                }
+            );
+
+        static::assertTrue($check);
     }
 }

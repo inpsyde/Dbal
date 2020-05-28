@@ -911,7 +911,7 @@ class Select
     /**
      * @return ResultSet
      */
-    public function firstResult(): ResultSet
+    public function pickFirst(): ResultSet
     {
         if (!$this->errors->isEmpty()) {
             /** @psalm-suppress PossiblyNullArgument */
@@ -949,7 +949,7 @@ class Select
     /**
      * @return ResultSet
      */
-    public function allResults(): ResultSet
+    public function all(): ResultSet
     {
         if (!$this->errors->isEmpty()) {
             /** @psalm-suppress PossiblyNullArgument */
