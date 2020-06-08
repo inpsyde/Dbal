@@ -127,26 +127,27 @@ class ResultTest extends UnitTestCase
             throw new \Exception('I never run because previous failed!');
         };
 
-        $result = $function1()
+        $function1()
             ->bind($function2, [$errorCollector, 'pushError'])
             ->bind($function3, [$errorCollector, 'pushError']);
 
         static::assertFalse($errorCollector->isEmpty());
         static::assertSame('Failed!', $errorCollector->error()->getMessage());
-
-        static::assertTrue($result->isErrored());
-        static::assertSame('Failed!', $result->error()->getMessage());
     }
 
     public function testPushErrorToCollectorViaMerge()
     {
         $errorCollector = new ErrorCollector();
 
+        $secondFunctionRun = false;
+
         $function1 = static function (): Result {
             return Result::new(new \Error('Failed!'));
         };
 
-        $function2 = static function (): Result {
+        $function2 = static function () use (&$secondFunctionRun): Result {
+            $secondFunctionRun = true;
+
             return Result::new(1);
         };
 
@@ -162,6 +163,8 @@ class ResultTest extends UnitTestCase
         static::assertFalse($errorCollector->isEmpty());
         static::assertSame('Failed again!', $errorCollector->error()->getMessage());
         static::assertSame('Failed!', $errorCollector->error()->getPrevious()->getMessage());
+
+        static::assertTrue($secondFunctionRun);
     }
 
     public function testBindErrorMerge()
