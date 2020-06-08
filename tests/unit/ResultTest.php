@@ -110,6 +110,33 @@ class ResultTest extends UnitTestCase
         $this->expectExceptionMessage('Meh meh!');
         $result->assert();
     }
+
+    public function testPushErrorToCollectorViaBind()
+    {
+        $errorCollector = new ErrorCollector();
+
+        $function1 = static function (): Result {
+            return Result::new(new \Error('Failed!'));
+        };
+
+        $function2 = static function (): Result {
+            throw new \Exception('I never run because previous failed!');
+        };
+
+        $function3 = static function (): Result {
+            throw new \Exception('I never run because previous failed!');
+        };
+
+        $result = $function1()
+            ->bind($function2, [$errorCollector, 'pushError'])
+            ->bind($function3, [$errorCollector, 'pushError']);
+
+        static::assertFalse($errorCollector->isEmpty());
+        static::assertSame('Failed!', $errorCollector->error()->getMessage());
+
+        static::assertTrue($result->isErrored());
+        static::assertSame('Failed!', $result->error()->getMessage());
+    }
     
     public function testBindErrorMerge()
     {
