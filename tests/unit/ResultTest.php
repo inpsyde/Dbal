@@ -116,20 +116,26 @@ class ResultTest extends UnitTestCase
         $errorCollector = new ErrorCollector();
 
         $function1 = static function (): Result {
-            return Result::new(new \Error('Failed!'));
+            return Result::new(1);
         };
 
         $function2 = static function (): Result {
-            throw new \Exception('I never run because previous failed!');
+            return Result::new(new \Error('Failed!'));
         };
 
         $function3 = static function (): Result {
             throw new \Exception('I never run because previous failed!');
         };
 
+        $function4 = static function (): Result {
+            throw new \Exception('I never run because previous failed!');
+        };
+
         $function1()
-            ->bind($function2, [$errorCollector, 'pushError'])
-            ->bind($function3, [$errorCollector, 'pushError']);
+            ->bind($function2)
+            ->bind($function3)
+            ->bind($function4)
+            ->bind(null, [$errorCollector, 'pushError']);
 
         static::assertFalse($errorCollector->isEmpty());
         static::assertSame('Failed!', $errorCollector->error()->getMessage());
