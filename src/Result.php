@@ -122,7 +122,7 @@ class Result
      * @param callable|null $onError
      * @return Result
      */
-    public function bind(?callable $onSuccess, ?callable $onError): Result
+    public function bind(?callable $onSuccess = null, ?callable $onError = null): Result
     {
         try {
             $callback = $this->error ? $onError : $onSuccess;

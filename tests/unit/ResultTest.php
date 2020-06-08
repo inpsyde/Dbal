@@ -110,7 +110,69 @@ class ResultTest extends UnitTestCase
         $this->expectExceptionMessage('Meh meh!');
         $result->assert();
     }
-    
+
+    public function testPushErrorToCollectorViaBind()
+    {
+        $errorCollector = new ErrorCollector();
+
+        $function1 = static function (): Result {
+            return Result::new(1);
+        };
+
+        $function2 = static function (): Result {
+            return Result::new(new \Error('Failed!'));
+        };
+
+        $function3 = static function (): Result {
+            throw new \Exception('I never run because previous failed!');
+        };
+
+        $function4 = static function (): Result {
+            throw new \Exception('I never run because previous failed!');
+        };
+
+        $function1()
+            ->bind($function2)
+            ->bind($function3)
+            ->bind($function4)
+            ->bind(null, [$errorCollector, 'pushError']);
+
+        static::assertFalse($errorCollector->isEmpty());
+        static::assertSame('Failed!', $errorCollector->error()->getMessage());
+    }
+
+    public function testPushErrorToCollectorViaMerge()
+    {
+        $errorCollector = new ErrorCollector();
+
+        $secondFunctionRun = false;
+
+        $function1 = static function (): Result {
+            return Result::new(new \Error('Failed!'));
+        };
+
+        $function2 = static function () use (&$secondFunctionRun): Result {
+            $secondFunctionRun = true;
+
+            return Result::new(1);
+        };
+
+        $function3 = static function (): Result {
+            return Result::new(new \Exception('Failed again!'));
+        };
+
+        $function1()
+            ->merge($function2())
+            ->merge($function3())
+            ->bind(null, [$errorCollector, 'pushError']);
+
+        static::assertFalse($errorCollector->isEmpty());
+        static::assertSame('Failed again!', $errorCollector->error()->getMessage());
+        static::assertSame('Failed!', $errorCollector->error()->getPrevious()->getMessage());
+
+        static::assertTrue($secondFunctionRun);
+    }
+
     public function testBindErrorMerge()
     {
         $result = Result::new(new \Exception('Meh'))->bind(
