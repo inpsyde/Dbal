@@ -125,10 +125,11 @@ class Result
     public function bind(?callable $onSuccess, ?callable $onError): Result
     {
         try {
-            $callback = $this->isValid() ? $onSuccess : $onError;
+            $callback = $this->error ? $onError : $onSuccess;
+            $param = $this->error ?? $this->value;
 
             return $callback
-                ? $this->merge(Result::new($callback($this->value)))
+                ? $this->merge(Result::new($callback($param)))
                 : static::new($this);
         } catch (\Throwable $throwable) {
             return $this->merge(Result::new(Error::fromThrowable($throwable)));
