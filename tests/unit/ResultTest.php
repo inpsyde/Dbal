@@ -137,7 +137,33 @@ class ResultTest extends UnitTestCase
         static::assertTrue($result->isErrored());
         static::assertSame('Failed!', $result->error()->getMessage());
     }
-    
+
+    public function testPushErrorToCollectorViaMerge()
+    {
+        $errorCollector = new ErrorCollector();
+
+        $function1 = static function (): Result {
+            return Result::new(new \Error('Failed!'));
+        };
+
+        $function2 = static function (): Result {
+            return Result::new(1);
+        };
+
+        $function3 = static function (): Result {
+            return Result::new(new \Exception('Failed again!'));
+        };
+
+        $function1()
+            ->merge($function2())
+            ->merge($function3())
+            ->bind(null, [$errorCollector, 'pushError']);
+
+        static::assertFalse($errorCollector->isEmpty());
+        static::assertSame('Failed again!', $errorCollector->error()->getMessage());
+        static::assertSame('Failed!', $errorCollector->error()->getPrevious()->getMessage());
+    }
+
     public function testBindErrorMerge()
     {
         $result = Result::new(new \Exception('Meh'))->bind(
