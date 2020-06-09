@@ -82,7 +82,6 @@ class TableInstaller
         $dbCharsetCollate = $wpdb->get_charset_collate();
         $charsetCollate = $dbCharsetCollate ? " {$dbCharsetCollate}" : '';
 
-        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         if ($exists) {
             $oldColumns = (array)($wpdb->get_results("SHOW COLUMNS FROM `{$fullName}`") ?: []);
             $colsToDelete = array_diff(array_column($oldColumns, 'Field'), $columns->allNames());
@@ -90,7 +89,6 @@ class TableInstaller
                 $wpdb->query("ALTER TABLE `{$fullName}` DROP COLUMN `{$colToDelete}`");
             }
         }
-        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
         dbDelta("CREATE TABLE `{$fullName}` ({$columnsSql}{$keysSql}){$charsetCollate}");
 
@@ -127,9 +125,7 @@ class TableInstaller
         $deleted = true;
         /** @psalm-suppress MixedArgument */
         if ($this->tableExists($wpdb, $name)) {
-            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             $deleted = $wpdb->query("DROP TABLE {$name}") !== false;
-            // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         }
 
         $this->persistVersions($versions, $network);

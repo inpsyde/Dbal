@@ -1345,13 +1345,7 @@ final class Column
 
         $wpdb = Dbal::wpdb();
 
-        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        // phpcs:disable WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-
         return (string)$wpdb->prepare(" DEFAULT {$format}", $default);
-
-        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        // phpcs:enable WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
     }
 
     /**

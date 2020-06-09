@@ -16,7 +16,6 @@ class ResultTest extends UnitTestCase
         $result = Result::new(new \Exception('Meh'));
 
         static::assertTrue($result->isErrored());
-        static::assertFalse($result->isValid());
 
         $this->expectExceptionMessage('Meh');
         $result->extract();
@@ -29,7 +28,6 @@ class ResultTest extends UnitTestCase
         $result = Result::new($errors);
 
         static::assertTrue($result->isErrored());
-        static::assertFalse($result->isValid());
 
         $this->expectExceptionMessage('Meh');
         $result->extract();
@@ -40,7 +38,6 @@ class ResultTest extends UnitTestCase
         $result = Result::new(new ErrorCollector());
 
         static::assertFalse($result->isErrored());
-        static::assertTrue($result->isValid());
         static::assertNull($result->extract());
     }
 
@@ -49,7 +46,6 @@ class ResultTest extends UnitTestCase
         $result = Result::new(Result::new(true));
 
         static::assertFalse($result->isErrored());
-        static::assertTrue($result->isValid());
         static::assertTrue($result->extract());
     }
 
@@ -58,7 +54,6 @@ class ResultTest extends UnitTestCase
         $result = Result::new(Result::new(new \Exception('Meh')));
 
         static::assertTrue($result->isErrored());
-        static::assertFalse($result->isValid());
 
         $this->expectExceptionMessage('Meh');
         $result->extract();
@@ -69,7 +64,6 @@ class ResultTest extends UnitTestCase
         $result = Result::new(123);
 
         static::assertFalse($result->isErrored());
-        static::assertTrue($result->isValid());
         static::assertSame(123, $result->extract());
     }
 
@@ -89,7 +83,6 @@ class ResultTest extends UnitTestCase
         $result->assert();
 
         static::assertFalse($result->isErrored());
-        static::assertTrue($result->isValid());
         static::assertSame(456, $result->extract());
     }
 
@@ -105,7 +98,6 @@ class ResultTest extends UnitTestCase
         );
 
         static::assertTrue($result->isErrored());
-        static::assertFalse($result->isValid());
 
         $this->expectExceptionMessage('Meh meh!');
         $result->assert();
@@ -183,7 +175,6 @@ class ResultTest extends UnitTestCase
         );
 
         static::assertTrue($result->isErrored());
-        static::assertFalse($result->isValid());
         static::assertInstanceOf(Error::class, $result->error());
         static::assertSame('Meh meh!', $result->error()->getMessage());
         static::assertInstanceOf(Error::class, $result->error());

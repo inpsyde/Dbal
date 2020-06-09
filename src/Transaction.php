@@ -82,123 +82,118 @@ class Transaction
 
     /**
      * @param callable $callback
+     * @param callable ...$callbacks
      * @return Result
      */
-    public function __invoke(callable $callback): Result
+    public function __invoke(callable $callback, callable ...$callbacks): Result
     {
         $wpdb = Dbal::wpdb();
 
         $suppressErrors = $wpdb->suppress_errors(true);
-        $errors = new ErrorCollector();
-        $result = $errors;
+        $result = Result::new(null);
         $rollback = false;
 
         $phpErrors = PhpErrors::convertToExceptions();
 
         try {
-            $started = $this->startTransaction($errors);
+            $result = $this->prepareTransaction($result);
+            if (!$result->isErrored()) {
+                $result = $this->startTransaction($result);
+                $result->isErrored() and $rollback = true;
+            }
 
-            [$result, $rollback] =  $errors->isEmpty()
-                ? $this->applyCallback($callback, $errors)
-                : [$errors, $started];
-
-            if (!$rollback && $result === null) {
-                $errors->withError('Transaction callback did not signal any result.');
-                $result = $errors;
+            if (!$result->isErrored()) {
+                $result = $this->applyCallback($callback, ...$callbacks);
+                $result->isErrored() and $rollback = true;
             }
         } catch (Error $error) {
-            $errors->pushError($error);
+            $result = $result->mergeError($error);
             $rollback = true;
-            $result = $errors;
         } catch (\Throwable $throwable) {
-            $errors->withError($throwable->getMessage());
+            $result = $result->mergeError(Error::fromThrowable($throwable));
             $rollback = true;
-            $result = $errors;
         } finally {
-            $rollback and $this->executeQuery('ROLLBACK;', $errors);
-
+            $rollback and $result = $this->executeQuery('ROLLBACK;', $result);
             $phpErrors->restoreHandler();
             $wpdb->suppress_errors($suppressErrors);
 
-            return Result::new($result);
+            return $result;
         }
     }
 
     /**
-     * @param ErrorCollector $errors
-     * @return bool
+     * @param Result $result
+     * @return Result
      */
-    private function startTransaction(ErrorCollector $errors): bool
+    private function prepareTransaction(Result $result): Result
     {
         if ($this->isolation) {
-            $this->executeQuery("SET TRANSACTION ISOLATION LEVEL {$this->isolation};", $errors);
+            $result = $this->executeQuery(
+                "SET TRANSACTION ISOLATION LEVEL {$this->isolation};",
+                $result
+            );
         }
 
-        if (!$errors->isEmpty()) {
-            return false;
-        }
+        return $result;
+    }
 
+    /**
+     * @param Result $result
+     * @return Result
+     */
+    private function startTransaction(Result $result): Result
+    {
         $startQuery = $this->mode ? "START TRANSACTION {$this->mode};" : 'START TRANSACTION;';
-        $this->executeQuery($startQuery, $errors);
 
-        return true;
+        return $this->executeQuery($startQuery, $result);
     }
 
     /**
      * @param callable $callback
-     * @param ErrorCollector $errors
-     * @return array{0:mixed, 1:bool}
-     *
-     * phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration
+     * @param callable ...$callbacks
+     * @return Result
      */
-    private function applyCallback(callable $callback, ErrorCollector $errors): array
+    private function applyCallback(callable $callback, callable ...$callbacks): Result
     {
         // phpcs:enable Inpsyde.CodeQuality.ReturnTypeDeclaration
 
-        $success = null;
+        array_unshift($callbacks, $callback);
 
-        // phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-        $signal = static function ($result) use (&$success) {
-            // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-            $success = $result;
-        };
-
-        $callback($signal, $errors);
+        $result = Result::new(null);
+        foreach ($callbacks as $callback) {
+            $result = $result->merge(Result::new($callback($result)));
+        }
 
         $wpdb = Dbal::wpdb();
 
         if ($wpdb->last_error) {
-            $errors->withError($wpdb->last_error);
+            $result = $result->mergeError(new Error($wpdb->last_error));
         }
 
-        if (!$errors->isEmpty()) {
-            return [$errors, true];
-        }
-
-        $this->executeQuery('COMMIT;', $errors);
-
-        return [$success, !$errors->isEmpty()];
+        return $result->isErrored() ? $result : $this->executeQuery('COMMIT;', $result);
     }
 
     /**
      * @param string $query
-     * @param ErrorCollector $errors
-     * @return void
+     * @param Result $result
+     * @return Result
      */
-    private function executeQuery(string $query, ErrorCollector $errors): void
+    private function executeQuery(string $query, Result $result): Result
     {
         $wpdb = Dbal::wpdb();
 
-        $result = $wpdb->query($query); // phpcs:ignore
+        $queryResult = $wpdb->query($query);
         if ($wpdb->last_error) {
-            $errors->withError($wpdb->last_error);
+            $result = $result->mergeError(new Error($wpdb->last_error));
             $wpdb->last_error = '';
 
-            return;
+            return $result;
         }
 
-        if ($result === false) {
-            $errors->withError("Error executing query: {$query}.");
+        if ($queryResult === false) {
+            $result = $result->mergeError(new Error("Error executing query: {$query}."));
         }
+
+        return $result;
     }
 }

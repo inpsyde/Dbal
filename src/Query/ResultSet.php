@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Inpsyde\Dbal\Query;
 
 use Inpsyde\Dbal\Error;
+use Inpsyde\Dbal\Result;
 
 class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
 {
@@ -154,7 +155,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
      *
      * @psalm-assert-if-true Select $this->select
      */
-    public function hasResults(): bool
+    public function isValid(): bool
     {
         return !$this->hasErrors() && $this->rows && $this->results;
     }
@@ -177,7 +178,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
     {
         // phpcs:enable Inpsyde.CodeQuality.ReturnTypeDeclaration
 
-        if (!$this->hasResults()) {
+        if (!$this->isValid()) {
             return null;
         }
 
@@ -194,14 +195,14 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
      */
     public function nextPage(): ResultSet
     {
-        if (!$this->hasResults() || !$this->hasMorePages()) {
+        if (!$this->isValid() || !$this->hasMorePages()) {
             return static::errored(new Error('Result set has no next page.', 0, $this->error));
         }
 
         /** @var Pagination $nextPagination */
         $nextPagination = $this->pagination->forNextPage();
 
-        $resultsSet = $this->select->paginatedWith($nextPagination)->allResults();
+        $resultsSet = $this->select->paginatedWith($nextPagination)->all();
         $resultsSet->map = $this->map;
         $resultsSet->filter = $this->filter;
 
@@ -224,7 +225,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
      */
     public function map(callable $callback): ResultSet
     {
-        if ($this->hasResults()) {
+        if ($this->isValid()) {
             $this->map = $callback;
         }
 
@@ -237,7 +238,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
      */
     public function filter(callable $callback): ResultSet
     {
-        if ($this->hasResults()) {
+        if ($this->isValid()) {
             $this->filter = $callback;
         }
 
@@ -249,7 +250,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
      */
     public function getIterator()
     {
-        if ($this->hasResults()) {
+        if ($this->isValid()) {
             return $this->yieldResults();
         }
 
@@ -261,7 +262,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
      */
     public function autoPaginationIterator(): \Traversable
     {
-        if (!$this->hasResults()) {
+        if (!$this->isValid()) {
             return new \EmptyIterator();
         }
 
@@ -270,7 +271,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
 
         while ($instance->hasMorePages()) {
             $instance = $instance->nextPage();
-            if (!$instance->hasResults()) {
+            if (!$instance->isValid()) {
                 break;
             }
 
@@ -283,7 +284,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
      */
     public function count()
     {
-        if (!$this->hasResults()) {
+        if (!$this->isValid()) {
             return 0;
         }
 
@@ -301,6 +302,14 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
     }
 
     /**
+     * @return Result
+     */
+    public function toResult(): Result
+    {
+        return $this->hasErrors() ? Result::new($this->error) : Result::new($this->getIterator());
+    }
+
+    /**
      * @param string $column
      * @return array
      */
@@ -308,7 +317,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
     {
         $this->assert();
 
-        return $this->hasResults() ? array_column($this->toArray(), $column) : [];
+        return $this->isValid() ? array_column($this->toArray(), $column) : [];
     }
 
     /**
@@ -320,7 +329,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
             return ['errors' => $this->error->allMessages()];
         }
 
-        return $this->hasResults() ? $this->toArray() : [];
+        return $this->isValid() ? $this->toArray() : [];
     }
 
     /**

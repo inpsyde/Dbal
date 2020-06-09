@@ -911,7 +911,7 @@ class Select
     /**
      * @return ResultSet
      */
-    public function firstResult(): ResultSet
+    public function pickFirst(): ResultSet
     {
         if (!$this->errors->isEmpty()) {
             /** @psalm-suppress PossiblyNullArgument */
@@ -949,7 +949,7 @@ class Select
     /**
      * @return ResultSet
      */
-    public function allResults(): ResultSet
+    public function all(): ResultSet
     {
         if (!$this->errors->isEmpty()) {
             /** @psalm-suppress PossiblyNullArgument */
@@ -1433,8 +1433,6 @@ class Select
         try {
             $sql = $this->buildSql();
 
-            // phpcs:disable WordPress.DB.PreparedSQL.NotPrepared
-
             $rows = $wpdb->get_results($sql, ARRAY_A);
             if (!$rows || !is_array($rows)) {
                 $rows = [];
@@ -1457,8 +1455,6 @@ class Select
             }
 
             return $this->executed;
-
-            // phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
         } catch (\Throwable $throwable) {
             $this->pushError($throwable->getMessage());
 
