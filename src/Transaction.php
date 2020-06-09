@@ -159,7 +159,6 @@ class Transaction
 
         array_unshift($callbacks, $callback);
 
-        /** @var Result $result */
         $result = Result::new(null);
         foreach ($callbacks as $callback) {
             $result = $result->merge(Result::new($callback($result)));
