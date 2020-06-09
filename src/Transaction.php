@@ -164,7 +164,6 @@ class Transaction
             $result = $result->merge(Result::new($callback($result)));
         }
 
-        /** @var Result $result */
 
         $wpdb = Dbal::wpdb();
 
