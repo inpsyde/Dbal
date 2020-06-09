@@ -2,16 +2,10 @@
 
 function dispatch() {
   local COMMANDS=('qa' 'tests' 'cs' 'psalm' 'help' '--help' '-h' 'down')
-  declare -A ALIAS=(['all']='qa' ['phpunit']='tests' ['phpcs']='cs')
   local BASE_CMD="composer install --no-progress --no-suggest -q -o -n && composer"
   local COMMAND=$1
   local CMD
   local ERROR=0
-
-  # Normalize aliases
-  if [[ "${ALIAS["$COMMAND"]}" != '' ]]; then
-    COMMAND="${ALIAS["$COMMAND"]}"
-  fi
 
   # Command not recognized, print error then set command to help. Make sure exist code is 1.
   # shellcheck disable=SC2076
@@ -30,10 +24,10 @@ function dispatch() {
     printf "\nUsage:\n"
     printf "\$ docker-run <command>\n\n"
     printf "Commands:\n"
-    printf " - \"tests\" : Execute PHP unit tests (alias: \"phpunit\").\n"
-    printf " - \"cs\"    : Check code styles with PHPCS (alias: \"phpcs\").\n"
+    printf " - \"tests\" : Execute PHP unit tests.\n"
+    printf " - \"cs\"    : Check code styles with PHPCS.\n"
     printf " - \"psalm\" : Check code with Psalm.\n"
-    printf " - \"qa\"    : Execute all above (alias: \"all\").\n"
+    printf " - \"qa\"    : Execute all above.\n"
     printf " - \"down\"  : Shortcut to 'docker-compose down --volumes' in proper folder.\n"
 
     exit ${ERROR}
