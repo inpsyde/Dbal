@@ -164,18 +164,13 @@ class Transaction
             $result = $result->merge(Result::new($callback($result)));
         }
 
-
         $wpdb = Dbal::wpdb();
 
         if ($wpdb->last_error) {
             $result = $result->mergeError(new Error($wpdb->last_error));
         }
 
-        if ($result->isErrored()) {
-            return $result;
-        }
-
-        return $this->executeQuery('COMMIT;', $result);
+        return $result->isErrored() ? $result : $this->executeQuery('COMMIT;', $result);
     }
 
     /**
