@@ -184,7 +184,7 @@ class Result
         // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
         // phpcs:enable Inpsyde.CodeQuality.ReturnTypeDeclaration
 
-        if ($this->isValid()) {
+        if (!$this->isErrored()) {
             return $callback($this->value);
         }
 
