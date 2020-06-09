@@ -187,7 +187,7 @@ class Transaction
     {
         $wpdb = Dbal::wpdb();
 
-        $queryResult = $wpdb->query($query); // phpcs:ignore
+        $queryResult = $wpdb->query($query);
         if ($wpdb->last_error) {
             $result = $result->mergeError(new Error($wpdb->last_error));
             $wpdb->last_error = '';

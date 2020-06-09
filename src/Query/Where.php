@@ -627,8 +627,6 @@ class Where
             && is_array($columnValue)
             && in_array($operator, [self::IN, self::NOT_IN], true);
 
-        // phpcs:disable WordPress.DB.PreparedSQL.NotPrepared
-
         if (!$multiValue) {
             $operator = $operator ?? self::EQ;
             $clause and $clause .= " {$type} ";
@@ -650,8 +648,6 @@ class Where
 
             return $clause . (string)$wpdb->prepare($columnClause, ...$parsedValue);
         }
-
-        // phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
 
         if ($operator === null) {
             $operator = 'NULL';

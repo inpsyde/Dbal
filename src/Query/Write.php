@@ -15,8 +15,6 @@ use Inpsyde\Dbal\Schema\Index;
 use Inpsyde\Dbal\Schema\Schema;
 use Inpsyde\Dbal\Schema\SchemaFinder;
 
-// phpcs:disable WordPress.DB.PreparedSQL
-// phpcs:disable WordPress.DB.PreparedSQLPlaceholders
 class Write
 {
 

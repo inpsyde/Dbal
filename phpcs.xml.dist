@@ -10,6 +10,8 @@
     <rule ref="Inpsyde">
         <exclude name="WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize" />
         <exclude name="WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize" />
+        <exclude name="WordPress.DB.PreparedSQL" />
+        <exclude name="WordPress.DB.PreparedSQLPlaceholders" />
     </rule>
 
     <rule ref="Inpsyde.CodeQuality.Psr4">
