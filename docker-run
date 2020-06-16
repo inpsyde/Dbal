@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 
 function dispatch() {
-  local COMMANDS=('qa' 'tests' 'cs' 'psalm' 'help' '--help' '-h' 'down')
-  local BASE_CMD="composer install --no-progress --no-suggest -q -o -n && composer"
+  local COMMANDS=('qa' 'tests:unit' 'tests:integration' 'cs' 'psalm' 'help' '-h' 'down')
+  local PHP_VERSIONS=('7.2' '7.3' '7.4')
+  local BASE_CMD="composer install -q -n -a --no-progress --prefer-dist && composer"
   local COMMAND=$1
+  local PHP_VER=$2
   local CMD
   local ERROR=0
 
@@ -20,37 +22,69 @@ function dispatch() {
     ERROR=1
   fi
 
-  if [[ "$COMMAND" = "help" ]] || [[ "$COMMAND" = "--help" ]] || [[ "$COMMAND" = "--h" ]]; then
-    printf "\nUsage:\n"
-    printf "\$ docker-run <command>\n\n"
-    printf "Commands:\n"
-    printf " - \"tests\" : Execute PHP unit tests.\n"
-    printf " - \"cs\"    : Check code styles with PHPCS.\n"
-    printf " - \"psalm\" : Check code with Psalm.\n"
-    printf " - \"qa\"    : Execute all above.\n"
-    printf " - \"down\"  : Shortcut to 'docker-compose down --volumes' in proper folder.\n"
+  if [[ ! " ${PHP_VERSIONS[*]} " =~ " $PHP_VER " ]]; then
+    PHP_VER='7.4'
+  fi
 
+  if [[ "$COMMAND" = "help" ]] || [[ "$COMMAND" = "-h" ]]; then
+      cat << USAGE >&2
+
+docker-run command [php-version]
+docker-run -h
+
+Commands:
+    tests:unit            Execute PHP unit tests.
+    tests:integration     Execute PHP integration tests.
+    cs                    Check code styles with PHPCS.
+    psalm                 Check code with Psalm.
+    qa                    Execute all the above.
+    down                  Shortcut to 'docker-compose down --volumes'.
+    help                  Print this help. Equals to 'docker-run -h'.
+
+PHP versions:
+    7.2
+    7.3
+    7.4    (default)
+USAGE
     exit ${ERROR}
   fi
 
   if [[ "$COMMAND" = "down" ]]; then
-    cd 'tests/docker' && docker-compose down --volumes
+	cd 'tests/docker' && docker-compose down --volumes
+    docker-compose down --volumes
     exit 0
   fi
 
-  if [[ "$COMMAND" = "tests" ]]; then
-    COMMAND="tests:no-cov"
+  if [[ "$COMMAND" = "tests:unit" ]]; then
+    COMMAND="tests:unit:no-cov"
   fi
 
   CMD="$BASE_CMD $COMMAND"
 
-  if [[ "$COMMAND" = "tests:no-cov" ]] || [[ "$COMMAND" = "qa" ]]; then
+  if [[ "$COMMAND" = "tests:integration" ]] || [[ "$COMMAND" = "qa" ]]; then
     CMD="wait-for.sh dbal-mysql:3306 -t 15 -- $CMD"
   fi
 
-  printf "Executing '%s'...\n" "$CMD"
-  cd 'tests/docker' && docker-compose run --rm -T code sh -c "$CMD"
+  local WAIT_FOR_PATH="./tests/docker/php-${PHP_VER/./}/wait-for.sh"
+  if [[ ! -f "$WAIT_FOR_PATH" ]]; then
+    cp ./tests/docker/wait-for.sh ${WAIT_FOR_PATH}
+  fi
+
+  printf "Executing:\n  %s\n  in PHP v%s\n\n" "$CMD" "$PHP_VER"
+  cd 'tests/docker'
+
+  case "$PHP_VER" in
+    7.2)
+      docker-compose run --rm -T php72 sh -c "$CMD"
+      ;;
+    7.3)
+      docker-compose run --rm -T php73 sh -c "$CMD"
+      ;;
+    *)
+      docker-compose run --rm -T php74 sh -c "$CMD"
+      ;;
+  esac
 }
 
 # And go!
-dispatch "$1"
+dispatch "$1" "$2"

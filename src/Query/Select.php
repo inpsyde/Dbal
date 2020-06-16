@@ -1276,7 +1276,7 @@ class Select
                 return $this;
             }
 
-            if (!$raw && !$schema->columns()->hasColumn($column)) {
+            if (!$raw && ($column !== '*' && !$schema->columns()->hasColumn($column))) {
                 return $this->pushError(
                     "Column '{$column}' not found in '{$schemaName}' table. "
                     . 'Use a "raw" column to make use of MySQL functions. '

@@ -2,3 +2,6 @@
 /composer.lock
 /.phpunit.result.cache
 /tests/.env
+/tests/docker/php-72/wait-for.sh
+/tests/docker/php-73/wait-for.sh
+/tests/docker/php-74/wait-for.sh
