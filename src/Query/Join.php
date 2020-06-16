@@ -250,11 +250,20 @@ final class Join
         );
 
         if (!$sourceCol || !$targetCol) {
-            $this->errors->withError(
+            $targetName = $targetSchema ? sprintf("'%s'", $targetSchema->name()) : 'target expression';
+            $sourceName = $sourceSchema->name();
+            $sourceCol or $this->errors->withError(
                 sprintf(
-                    "Could not find a column on '%s' to be used to JOIN '%s'.",
-                    $sourceCol ? $targetSchema->name() : $sourceSchema->name(),
-                    $sourceCol ? $sourceSchema->name() : $targetSchema->name()
+                    "Could not find a column on '%s' to be used to JOIN %s.",
+                    $sourceName,
+                    $targetName
+                )
+            );
+            $targetCol or $this->errors->withError(
+                sprintf(
+                    "Could not find a column on %s to be used to JOIN '%s'.",
+                    $targetName,
+                    $sourceName
                 )
             );
 
@@ -359,8 +368,8 @@ final class Join
     }
 
     /**
-     * @param Schema|null $sourceSchema
-     * @param Schema $targetSchema
+     * @param Schema $sourceSchema
+     * @param Schema|null $targetSchema
      * @param string|null $columnNameOnSource
      * @param string|null $columnNameOnJoined
      * @return array{0:string|null, 1:string|null}
@@ -375,7 +384,7 @@ final class Join
         $sourceUsePrimary = false;
         $joinedUsePrimary = false;
 
-        if (!$columnNameOnSource && $sourceSchema) {
+        if (!$columnNameOnSource) {
             $columnNameOnSource = $this->findPrimaryColName($sourceSchema);
             $sourceUsePrimary = (bool)$columnNameOnSource;
         }
@@ -448,6 +457,7 @@ final class Join
         }
 
         $clause = "ON `{$sourceRef}`.`{$this->columnOnSource}` = ";
+        /** @var Schema $targetSchema */
         $targetRef = $this->alias ?? $finder->fullTableName($targetSchema);
         $clause .= "`{$targetRef}`.`{$this->columnOnTarget}`";
 

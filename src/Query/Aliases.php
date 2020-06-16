@@ -295,6 +295,7 @@ class Aliases
             return $this;
         }
 
+        /** @psalm-suppress PossiblyNullArgument */
         $schemaFullName = $rawSchema ?? $this->finder->fullTableName($schema);
         $this->columnsAliasData[$colName] = [$alias, $schemaFullName, $schemaName];
         $this->columnAliasToNames[$alias] = $colName;

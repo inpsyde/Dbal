@@ -40,6 +40,9 @@ class CacheTest extends UnitTestCase
         );
 
         Monkey\Functions\when('wp_using_ext_object_cache')->alias('__return_false');
+        Monkey\Functions\when('get_current_network_id')->justReturn(1);
+        Monkey\Functions\when('get_current_blog_id')->justReturn(1);
+        Monkey\Functions\when('wp_generate_uuid4')->justReturn(random_bytes(8));
     }
 
     public function testBaseSetAndGet()

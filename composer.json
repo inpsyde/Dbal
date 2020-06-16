@@ -58,7 +58,7 @@
             "@tests:unit:no-cov"
         ],
         "qa": [
-            "@tests:no-cov",
+            "@tests:unit:no-cov",
             "@cs",
             "@psalm"
         ]

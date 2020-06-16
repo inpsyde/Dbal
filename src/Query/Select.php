@@ -526,7 +526,10 @@ class Select
 
         $this->columns = [];
         if (!$tables) {
-            return $this->andRawCol('*', '');
+            /** @var Schema $schema */
+            $schema = $this->schema;
+
+            return $this->andRawCol($schema->name() . '.*', '');
         }
 
         foreach ($tables as $table) {
@@ -1293,13 +1296,14 @@ class Select
 
         $isRaw = $raw !== null;
 
+        /** @psalm-suppress PossiblyNullArgument */
         $target = $isRaw ? null : $this->finder->findSchema($targetTable);
         if (!$target && !$isRaw) {
             return $this->pushError("Could not find table '{$targetTable}' to join.");
         }
 
         if ($isRaw) {
-            if (!$isRaw) {
+            if ($raw === '') {
                 return $this->pushError("Raw JOIN expression can't be empty.");
             }
 
@@ -1334,16 +1338,19 @@ class Select
         $join = null;
 
         if ($isRaw) {
+            /** @psalm-suppress PossiblyNullArgument */
             $join = $type === Join::LEFT
                 ? Join::leftRaw($source, $raw, $alias, $columnOnSource, $columnOnJoined)
                 : Join::innerRaw($source, $raw, $alias, $columnOnSource, $columnOnJoined);
         } elseif ($where) {
+            /** @psalm-suppress PossiblyNullArgument */
             $join = $type === Join::LEFT
                 ? Join::leftWhere($source, $target, $where, $alias)
                 : Join::innerWhere($source, $target, $where, $alias);
         }
 
         if (!$join) {
+            /** @psalm-suppress PossiblyNullArgument */
             $join = $type === Join::LEFT
                 ? Join::left($source, $target, $columnOnSource, $columnOnJoined, $alias)
                 : Join::inner($source, $target, $columnOnSource, $columnOnJoined, $alias);
@@ -1357,6 +1364,7 @@ class Select
         $this->resetMemoized();
 
         if ($alias) {
+            /** @psalm-suppress PossiblyNullReference */
             $isRaw
                 ? $this->aliases->forRawSchema($alias)
                 : $this->aliases->forSchema($target->name(), $alias);
@@ -1364,6 +1372,7 @@ class Select
         }
 
         if ($this->errors->isEmpty()) {
+            /** @psalm-suppress PossiblyNullReference */
             $joinName = $alias ?? $target->name();
             $this->joins[$joinName] = $join;
         }
@@ -1387,7 +1396,10 @@ class Select
         /** @var Schema $mainSchema */
         $mainSchema = $this->schema;
 
-        [$column, $table] = Where::maybeSplitTableName($column, $this->errors);
+        [$column, $table] = $raw && substr_count($column, '(')
+            ? [$column, null]
+            : Where::maybeSplitTableName($column, $this->errors);
+
         if (!$this->errors->isEmpty()) {
             return $this;
         }
@@ -1407,6 +1419,7 @@ class Select
                 return $this;
             }
 
+            /** @psalm-suppress PossiblyNullReference */
             if (!$raw && ($column !== '*' && !$schema->columns()->hasColumn($column))) {
                 return $this->pushError(
                     "Column '{$column}' not found in '{$schemaName}' table. "
@@ -1604,25 +1617,18 @@ class Select
      */
     private function buildColumnsSql(): string
     {
-        /** @var Schema $mainSchema */
-        $mainSchema = $this->schema;
-        [, , $theMainAlias, $allMainAliases] = $this->aliases->resolveSchema($mainSchema->name());
-        $this->aliases->mergeErrors($this->errors);
-        if (!$this->errors->isEmpty()) {
-            return '';
-        }
-
-        $mainName = $mainSchema->name();
-        $mainHasColumns = !empty($this->columns[$mainName]);
-
-        while (!$mainHasColumns && ($theMainAlias || $allMainAliases)) {
-            $aMainAlias = $theMainAlias ?: reset($allMainAliases);
-            $mainHasColumns = !empty($this->columns[$aMainAlias]);
-        }
-
         $sql = '';
-        if (!$mainHasColumns) {
-            $this->columns[$theMainAlias ?? $mainName] = ['*' => ['*', true]];
+
+        if (!$this->columns) {
+            /** @var Schema $mainSchema */
+            $mainSchema = $this->schema;
+            [, , $theMainAlias] = $this->aliases->resolveSchema($mainSchema->name());
+            $this->aliases->mergeErrors($this->errors);
+            if (!$this->errors->isEmpty()) {
+                return '';
+            }
+
+            $this->columns[$theMainAlias ?? $mainSchema->name()] = ['*' => ['*', true]];
         }
 
         ksort($this->columns);
@@ -1662,6 +1668,12 @@ class Select
                 continue;
             }
 
+            if ($isRawAll && $colAlias) {
+                $sql and $sql .= ', ';
+                $sql .= "{$colRealName} AS `{$colAlias}`";
+                continue;
+            }
+
             $isRawSchema = $this->aliases->isRawSchemaAlias($table);
 
             [, $schema, $schemaAlias] = $isRawSchema
@@ -1673,6 +1685,7 @@ class Select
                 return '';
             }
 
+            /** @psalm-suppress PossiblyNullArgument */
             $tableRef = $schemaAlias ?? $this->finder->fullTableName($schema);
 
             $sql and $sql .= ', ';
