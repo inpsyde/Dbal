@@ -7,7 +7,7 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                php-versions: ['72', '73', '74']
+                php-versions: ['php72', 'php73', 'php74']
         steps:
             -   uses: actions/checkout@v2
 
@@ -15,8 +15,8 @@ jobs:
                 uses: canastro/copy-file-action@master
                 with:
                     source: "tests/docker/wait-for.sh"
-                    target: "tests/docker/php-${{ matrix.php-versions }}/wait-for.sh"
+                    target: "tests/docker/${{ matrix.php-versions }}/wait-for.sh"
 
             -   name: Run integration tests
                 working-directory: ./tests/docker
-                run: docker-compose run -T php${{ matrix.php-versions }} sh -c "wait-for.sh fasti-mysql:3306 -t 15 -- && composer install -q -n -a --no-progress --prefer-dist && composer tests:integration"
+                run: docker-compose run -T ${{ matrix.php-versions }} sh -c "wait-for.sh dbal-mysql:3306 -t 15 -- && composer install -q -n -a --no-progress --prefer-dist && composer tests:integration"
