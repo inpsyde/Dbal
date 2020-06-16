@@ -11,6 +11,7 @@ require_once ABSPATH . WPINC . '/wp-db.php';
 require_once ABSPATH . WPINC . '/functions.php';
 require_once ABSPATH . WPINC . '/formatting.php';
 require_once ABSPATH . WPINC . '/cache.php';
+require_once ABSPATH . WPINC . '/class-wp-query.php';
 
 function dbDelta(string $query) : void {
 }

@@ -65,7 +65,7 @@ USAGE
     CMD="wait-for.sh dbal-mysql:3306 -t 15 -- $CMD"
   fi
 
-  local WAIT_FOR_PATH="./tests/docker/php-${PHP_VER/./}/wait-for.sh"
+  local WAIT_FOR_PATH="./tests/docker/php${PHP_VER/./}/wait-for.sh"
   if [[ ! -f "$WAIT_FOR_PATH" ]]; then
     cp ./tests/docker/wait-for.sh ${WAIT_FOR_PATH}
   fi

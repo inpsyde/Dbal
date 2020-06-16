@@ -12,11 +12,13 @@ class WpQueryUtils
      */
     public static function buildSqlForArgs(array $args): string
     {
-        $postsRequest = '';
+        $sql = '';
         $query = new \WP_Query();
-        $filter = static function ($null, \WP_Query $currentQuery) use (&$postsRequest, &$query) {
+
+        /** @wp-hook posts_pre_query */
+        $filter = static function ($null, $currentQuery) use (&$sql, $query) {
             if ($currentQuery === $query) {
-                $postsRequest = $query->request;
+                $sql = $query->request;
 
                 return [];
             }
@@ -25,9 +27,10 @@ class WpQueryUtils
         };
 
         add_filter('posts_pre_query', $filter, PHP_INT_MAX, 2);
+        /** @psalm-suppress UndefinedDocblockClass */
         $query->query($args);
         remove_filter('posts_pre_query', $filter, PHP_INT_MAX);
 
-        return $postsRequest;
+        return (string)$sql;
     }
 }
