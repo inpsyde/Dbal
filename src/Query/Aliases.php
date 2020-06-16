@@ -22,6 +22,11 @@ class Aliases
     private $aliasToName = [];
 
     /**
+     * @var array<string, string>
+     */
+    private $rawSchemaAliases = [];
+
+    /**
      * @var array<string, array{0:string, 1:string|null, 2:string|null}>
      */
     private $columnsAliasData = [];
@@ -101,6 +106,39 @@ class Aliases
     }
 
     /**
+     * @param string $alias
+     * @return Aliases
+     */
+    public function forRawSchema(string $alias): Aliases
+    {
+        if (!$alias) {
+            $this->errors->withError("Raw schema alias for table can't be empty.");
+
+            return $this;
+        }
+
+        if (!Schemas::validateSchemaName($alias)) {
+            $this->errors->withError("'{$alias}' is not a valid schema alias.");
+
+            return $this;
+        }
+
+        if (!empty($this->aliasToName[$alias])) {
+            $already = $this->aliasToName[$alias];
+            $this->errors->withError(
+                "Schema aliases must be unique '{$alias}' already in use for '{$already}'."
+            );
+
+            return $this;
+        }
+
+        $this->aliasToName[$alias] = $alias;
+        $this->rawSchemaAliases[$alias] = $alias;
+
+        return $this;
+    }
+
+    /**
      * @param string $realName
      * @param string $alias
      * @param string $table
@@ -154,6 +192,15 @@ class Aliases
     }
 
     /**
+     * @param string $maybeAlias
+     * @return bool
+     */
+    public function isRawSchemaAlias(string $maybeAlias): bool
+    {
+        return $maybeAlias && ($this->rawSchemaAliases[$maybeAlias] ?? null) === $maybeAlias;
+    }
+
+    /**
      * @param string $table
      * @param string $name
      * @return array{0:string|null, 1:string|null, 2:string|null, 3:string|null}
@@ -199,14 +246,14 @@ class Aliases
 
     /**
      * @param bool $raw
-     * @param string $name
+     * @param string $colName
      * @param string $alias
      * @param string|null $table
      * @return Aliases
      */
-    private function withColumn(bool $raw, string $name, string $alias, ?string $table): Aliases
+    private function withColumn(bool $raw, string $colName, string $alias, ?string $table): Aliases
     {
-        if (!$name) {
+        if (!$colName) {
             $this->errors->withError("Could not set alias '{$alias}' for empty column name.");
 
             return $this;
@@ -231,14 +278,16 @@ class Aliases
         }
 
         if (!$table) {
-            $this->columnsAliasData[$name] = [$alias, null, null];
-            $this->columnAliasToNames[$alias] = $name;
+            $this->columnsAliasData[$colName] = [$alias, null, null];
+            $this->columnAliasToNames[$alias] = $colName;
 
             return $this;
         }
 
-        [$schemaName, $schema] = $this->resolveSchema($table);
-        if (!$schema) {
+        $rawSchema = $this->rawSchemaAliases[$table] ?? null;
+
+        [$schemaName, $schema] = $rawSchema ? [$rawSchema, null] : $this->resolveSchema($table);
+        if (!$schema && !$rawSchema) {
             $this->errors->withError(
                 "Could not set alias for column '{$raw}', table '{$table}' not found."
             );
@@ -246,10 +295,9 @@ class Aliases
             return $this;
         }
 
-        $schemaFullName = $this->finder->fullTableName($schema);
-
-        $this->columnsAliasData[$name] = [$alias, $schemaFullName, $schemaName];
-        $this->columnAliasToNames[$alias] = $name;
+        $schemaFullName = $rawSchema ?? $this->finder->fullTableName($schema);
+        $this->columnsAliasData[$colName] = [$alias, $schemaFullName, $schemaName];
+        $this->columnAliasToNames[$alias] = $colName;
 
         return $this;
     }

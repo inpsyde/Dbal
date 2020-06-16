@@ -9,31 +9,12 @@ use Inpsyde\Dbal\Query\Compare;
 use Inpsyde\Dbal\Query\Where;
 use Inpsyde\Dbal\ErrorCollector;
 use Inpsyde\Dbal\Query\Join;
-use Inpsyde\Dbal\Schema\Indexes;
 use Inpsyde\Dbal\Tests\TableOne;
 use Inpsyde\Dbal\Tests\TableTwo;
 use Inpsyde\Dbal\Tests\UnitTestCase;
 
 class JoinTest extends UnitTestCase
 {
-    public function testInstantiationFailsIfBothColumnMissing()
-    {
-        $errors = new ErrorCollector();
-        $join = Join::inner(new TableOne(), new TableTwo());
-        $join->mergeErrors($errors);
-
-        $this->expectExceptionMessageMatches('/at least a column/i');
-        $errors->assert();
-    }
-
-    public function testClauseIsEmptyWhenHasConstructorErrors()
-    {
-        $join = Join::left(new TableOne(), new TableTwo());
-        $finder = $this->initializeSampleTablesFinder();
-
-        static::assertSame('', $join->clause($finder, Aliases::new($finder)));
-    }
-
     public function testClauseIsEmptyWhenHasResolvingErrors()
     {
         $errors = new ErrorCollector();
@@ -146,5 +127,50 @@ class JoinTest extends UnitTestCase
         $expected .= "`{$one}`.`integer` >= `nd`.`id`";
 
         static::assertSame($expected, $clause);
+    }
+
+    public function testInnerJoinRawWithAutoColumns()
+    {
+        $raw = "SELECT ID as id FROM wp_posts WHERE ID > 0";
+
+        $join = Join::innerRaw(new TableOne(), $raw, 'p');
+        $finder = $this->initializeSampleTablesFinder();
+        $actual = $join->clause($finder, Aliases::new($finder));
+
+        $one = $finder->fullTableName(new TableOne());
+        $expected = "INNER JOIN ({$raw}) AS `p` ON ";
+        $expected .= "`{$one}`.`id` = `p`.`id`";
+
+        static::assertSame($expected, $actual);
+    }
+
+    public function testLeftJoinRawWithCustomColumns()
+    {
+        $raw = "SELECT ID FROM wp_posts WHERE ID > 0";
+
+        $join = Join::innerRaw(new TableOne(), $raw, 'p', TableOne::INTEGER, 'ID');
+        $finder = $this->initializeSampleTablesFinder();
+        $actual = $join->clause($finder, Aliases::new($finder));
+
+        $one = $finder->fullTableName(new TableOne());
+        $expected = "INNER JOIN ({$raw}) AS `p` ON ";
+        $expected .= "`{$one}`.`" .  TableOne::INTEGER . "` = `p`.`ID`";
+
+        static::assertSame($expected, $actual);
+    }
+
+    public function testLeftJoinRawOneCustomAndOneAutoColumn()
+    {
+        $raw = "SELECT ID as integer FROM wp_posts WHERE ID > 0";
+
+        $join = Join::innerRaw(new TableOne(), $raw, 'p', TableOne::INTEGER);
+        $finder = $this->initializeSampleTablesFinder();
+        $actual = $join->clause($finder, Aliases::new($finder));
+
+        $one = $finder->fullTableName(new TableOne());
+        $expected = "INNER JOIN ({$raw}) AS `p` ON ";
+        $expected .= "`{$one}`.`integer` = `p`.`integer`";
+
+        static::assertSame($expected, $actual);
     }
 }

@@ -115,4 +115,46 @@ class JoinWpTableTest extends QueriesTestCase
         static::assertSame((int)$id, $value[TableOne::POST_ID]);
         static::assertSame(['foo'], $value[TableOne::SERIALIZED]);
     }
+
+    /**
+     * @test
+     */
+    public function testSelectWithRawJoin()
+    {
+        $write = Dbal::writeOn(TableOne::NAME);
+        $baseData = [TableOne::TEXT => 'foo', TableOne::ENUM => 'yes'];
+
+        $expectedReverse = [];
+        $letters = ['Z', 'R', 'M', 'F', 'A'];
+        for ($i = 0; $i < 5; $i++) {
+            $id = wp_insert_post(['post_title' => $letters[$i]], true);
+            if (is_wp_error($id)) {
+                throw new \Exception($id->get_error_message());
+            }
+            $result = $write->insert(array_merge($baseData, [TableOne::POST_ID => $id]));
+            $expectedReverse[] = [
+                TableOne::ID => $result->extract()->insertId,
+                TableOne::POST_ID => $id,
+               'title' => $letters[$i],
+            ];
+        }
+
+        $posts = Dbal::wpdb()->posts;
+        $sql = "SELECT ID as post_id, post_title FROM {$posts}";
+
+        $select = Dbal::select(TableOne::NAME, 'o')
+            ->innerJoinRaw($sql, 'p', TableOne::POST_ID)
+            ->cols('o.' . TableOne::ID, 'o.' . TableOne::POST_ID)
+            ->andRawCol('p.post_title', 'title')
+            ->orderByRaw('p.post_title')
+            ->where(TableOne::POST_ID, 0, Where::GREATER)
+            ->all();
+
+        $select->assert();
+
+        $expected = array_reverse($expectedReverse, false);
+        $actual = $select->toArray();
+
+        static::assertSame($expected, $actual);
+    }
 }

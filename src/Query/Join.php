@@ -54,6 +54,11 @@ final class Join
     private $where;
 
     /**
+     * @var string|null
+     */
+    private $raw;
+
+    /**
      * @param Schema $sourceSchema
      * @param Schema $targetSchema
      * @param Aliases $aliases
@@ -95,6 +100,34 @@ final class Join
     ): Join {
 
         return new static(self::LEFT, $sourceSchema, $targetSchema, null, null, $alias, $where);
+    }
+
+    /**
+     * @param Schema $sourceSchema
+     * @param string $clause
+     * @param string $alias
+     * @param string|null $columnNameOnSource
+     * @param string|null $columnNameOnClause
+     * @return Join
+     */
+    public static function leftRaw(
+        Schema $sourceSchema,
+        string $clause,
+        string $alias,
+        ?string $columnNameOnSource = null,
+        ?string $columnNameOnClause = null
+    ): Join {
+
+        return new static(
+            self::LEFT,
+            $sourceSchema,
+            null,
+            $columnNameOnSource,
+            $columnNameOnClause,
+            $alias,
+            null,
+            $clause
+        );
     }
 
     /**
@@ -142,6 +175,34 @@ final class Join
     }
 
     /**
+     * @param Schema $sourceSchema
+     * @param string $clause
+     * @param string $alias
+     * @param string|null $columnNameOnSource
+     * @param string|null $columnNameOnClause
+     * @return Join
+     */
+    public static function innerRaw(
+        Schema $sourceSchema,
+        string $clause,
+        string $alias,
+        ?string $columnNameOnSource = null,
+        ?string $columnNameOnClause = null
+    ): Join {
+
+        return new static(
+            self::INNER,
+            $sourceSchema,
+            null,
+            $columnNameOnSource,
+            $columnNameOnClause,
+            $alias,
+            null,
+            $clause
+        );
+    }
+
+    /**
      * @param string $type
      * @param Schema $sourceSchema
      * @param Schema $targetSchema
@@ -149,30 +210,20 @@ final class Join
      * @param string|null $columnOnJoined
      * @param string|null $alias
      * @param Where|null $where
+     * @param string|null $raw
      */
     private function __construct(
         string $type,
         Schema $sourceSchema,
-        Schema $targetSchema,
+        ?Schema $targetSchema,
         ?string $columnOnSource = null,
         ?string $columnOnJoined = null,
         ?string $alias = null,
-        ?Where $where = null
+        ?Where $where = null,
+        ?string $raw = null
     ) {
 
         $this->errors = new ErrorCollector();
-
-        if ($columnOnSource === null && $columnOnJoined === null && $where === null) {
-            $this->errors->withError(
-                sprintf(
-                    "Please provide at least a column to use for JOIN between '%s' and '%s'.",
-                    $sourceSchema->name(),
-                    $targetSchema->name()
-                )
-            );
-
-            return;
-        }
 
         if ($where) {
             $this->type = $type;
@@ -180,6 +231,13 @@ final class Join
             $this->targetSchema = $targetSchema;
             $this->where = $where;
             $this->alias = $alias;
+
+            return;
+        }
+
+        if ($raw && (!$alias || $targetSchema)) {
+            $alias or $this->errors->withError('Alias is required for raw JOINs.');
+            $targetSchema and $this->errors->withError('Target schema not allowed for raw JOINs.');
 
             return;
         }
@@ -209,6 +267,7 @@ final class Join
         $this->columnOnSource = $sourceCol;
         $this->columnOnTarget = $targetCol;
         $this->alias = $alias;
+        $this->raw = $raw;
     }
 
     /**
@@ -238,11 +297,15 @@ final class Join
             return '';
         }
 
+        $clause = $this->type === self::INNER ? 'INNER JOIN ' : 'LEFT JOIN ';
+        if ($this->raw) {
+            return $clause . "($this->raw) AS `{$this->alias}` {$on}";
+        }
+
         /** @var Schema $targetSchema */
         $targetSchema = $this->targetSchema;
         $targetName = $finder->fullTableName($targetSchema);
 
-        $clause = $this->type === self::INNER ? 'INNER JOIN ' : 'LEFT JOIN ';
         $clause .= "`{$targetName}`";
         if ($this->alias) {
             $clause .= " AS `{$this->alias}`";
@@ -296,7 +359,7 @@ final class Join
     }
 
     /**
-     * @param Schema $sourceSchema
+     * @param Schema|null $sourceSchema
      * @param Schema $targetSchema
      * @param string|null $columnNameOnSource
      * @param string|null $columnNameOnJoined
@@ -304,7 +367,7 @@ final class Join
      */
     private function resolveColumns(
         Schema $sourceSchema,
-        Schema $targetSchema,
+        ?Schema $targetSchema,
         ?string $columnNameOnSource = null,
         ?string $columnNameOnJoined = null
     ): array {
@@ -312,9 +375,13 @@ final class Join
         $sourceUsePrimary = false;
         $joinedUsePrimary = false;
 
-        if (!$columnNameOnSource) {
+        if (!$columnNameOnSource && $sourceSchema) {
             $columnNameOnSource = $this->findPrimaryColName($sourceSchema);
             $sourceUsePrimary = (bool)$columnNameOnSource;
+        }
+
+        if (!$targetSchema) {
+            return [$columnNameOnSource, $columnNameOnJoined ?? $columnNameOnSource];
         }
 
         if (!$columnNameOnJoined) {
@@ -322,7 +389,7 @@ final class Join
             $joinedUsePrimary = (bool)$columnNameOnJoined;
         }
 
-        if ($columnNameOnSource === null && $columnNameOnJoined === null) {
+        if (!$columnNameOnSource && !$columnNameOnJoined) {
             return [null, null];
         }
 
@@ -368,9 +435,15 @@ final class Join
 
         /** @var Schema $sourceSchema */
         $sourceColName = $this->resolveColumn($this->columnOnSource ?? '', $sourceSchema, $aliases);
-        /** @var Schema $targetSchema */
-        $targetColName = $this->resolveColumn($this->columnOnTarget ?? '', $targetSchema, $aliases);
-        if (!$sourceColName || !$targetColName) {
+
+        $targetColName = '';
+        if (!$this->raw) {
+            $targetSearch = $this->columnOnTarget ?? '';
+            /** @var Schema $targetSchema */
+            $targetColName = $this->resolveColumn($targetSearch, $targetSchema, $aliases);
+        }
+
+        if (!$sourceColName || (!$targetColName && !$this->raw)) {
             return '';
         }
 

@@ -267,6 +267,60 @@ class Select
     }
 
     /**
+     * @param string $expression
+     * @param string $alias
+     * @param string|null $columnOnMain
+     * @param string|null $columnOnExpression
+     * @return Select
+     */
+    public function leftJoinRaw(
+        string $expression,
+        string $alias,
+        ?string $columnOnMain = null,
+        ?string $columnOnExpression = null
+    ): Select {
+
+        return $this->withJoin(
+            Join::LEFT,
+            null,
+            null,
+            $columnOnMain,
+            $columnOnExpression,
+            $alias,
+            null,
+            $expression
+        );
+    }
+
+    /**
+     * @param string $expression
+     * @param string $alias
+     * @param string $sourceTable
+     * @param string|null $columnOnMain
+     * @param string|null $columnOnExpression
+     * @return Select
+     */
+    public function leftJoinRawWith(
+        string $expression,
+        string $alias,
+        string $sourceTable,
+        ?string $columnOnMain = null,
+        ?string $columnOnExpression = null
+    ): Select {
+
+        return $this->withJoin(
+            Join::LEFT,
+            null,
+            $sourceTable,
+            $columnOnMain,
+            $columnOnExpression,
+            $alias,
+            null,
+            $expression
+        );
+    }
+
+    /**
      * @param string $joinTable
      * @param string|null $columnNameOnMain
      * @param string|null $columnNameOnJoined
@@ -356,6 +410,60 @@ class Select
             null,
             $alias,
             $where
+        );
+    }
+
+    /**
+     * @param string $expression
+     * @param string $alias
+     * @param string|null $columnOnMain
+     * @param string|null $columnOnExpression
+     * @return Select
+     */
+    public function innerJoinRaw(
+        string $expression,
+        string $alias,
+        ?string $columnOnMain = null,
+        ?string $columnOnExpression = null
+    ): Select {
+
+        return $this->withJoin(
+            Join::INNER,
+            null,
+            null,
+            $columnOnMain,
+            $columnOnExpression,
+            $alias,
+            null,
+            $expression
+        );
+    }
+
+    /**
+     * @param string $expression
+     * @param string $alias
+     * @param string $sourceTable
+     * @param string|null $columnOnMain
+     * @param string|null $columnOnExpression
+     * @return Select
+     */
+    public function innerJoinRawWith(
+        string $expression,
+        string $alias,
+        string $sourceTable,
+        ?string $columnOnMain = null,
+        ?string $columnOnExpression = null
+    ): Select {
+
+        return $this->withJoin(
+            Join::INNER,
+            null,
+            $sourceTable,
+            $columnOnMain,
+            $columnOnExpression,
+            $alias,
+            null,
+            $expression
         );
     }
 
@@ -1155,8 +1263,8 @@ class Select
 
     /**
      * @param string $type
-     * @param string $targetTable
-     * @param string $sourceTable
+     * @param string|null $targetTable
+     * @param string|null $sourceTable
      * @param string|null $columnOnSource
      * @param string|null $columnOnJoined
      * @param string|null $alias
@@ -1167,12 +1275,13 @@ class Select
      */
     private function withJoin(
         string $type,
-        string $targetTable,
+        ?string $targetTable,
         ?string $sourceTable,
         ?string $columnOnSource = null,
         ?string $columnOnJoined = null,
         ?string $alias = null,
-        ?Where $where = null
+        ?Where $where = null,
+        ?string $raw = null
     ): Select {
 
         // phpcs:enable Generic.Metrics.CyclomaticComplexity.TooHigh
@@ -1182,9 +1291,21 @@ class Select
             return $this;
         }
 
-        $target = $this->finder->findSchema($targetTable);
-        if (!$target) {
+        $isRaw = $raw !== null;
+
+        $target = $isRaw ? null : $this->finder->findSchema($targetTable);
+        if (!$target && !$isRaw) {
             return $this->pushError("Could not find table '{$targetTable}' to join.");
+        }
+
+        if ($isRaw) {
+            if (!$isRaw) {
+                return $this->pushError("Raw JOIN expression can't be empty.");
+            }
+
+            if (!$alias) {
+                return $this->pushError("Alias is required for raw JOINs.");
+            }
         }
 
         $sourceIsMain = $sourceTable === null;
@@ -1211,7 +1332,12 @@ class Select
         }
 
         $join = null;
-        if ($where) {
+
+        if ($isRaw) {
+            $join = $type === Join::LEFT
+                ? Join::leftRaw($source, $raw, $alias, $columnOnSource, $columnOnJoined)
+                : Join::innerRaw($source, $raw, $alias, $columnOnSource, $columnOnJoined);
+        } elseif ($where) {
             $join = $type === Join::LEFT
                 ? Join::leftWhere($source, $target, $where, $alias)
                 : Join::innerWhere($source, $target, $where, $alias);
@@ -1231,7 +1357,9 @@ class Select
         $this->resetMemoized();
 
         if ($alias) {
-            $this->aliases->forSchema($target->name(), $alias);
+            $isRaw
+                ? $this->aliases->forRawSchema($alias)
+                : $this->aliases->forSchema($target->name(), $alias);
             $this->aliases->mergeErrors($this->errors);
         }
 
@@ -1267,12 +1395,15 @@ class Select
         $tableName = null;
         if ($table || !$raw) {
             $tableName = $table === null ? $mainSchema->name() : $table;
+            $isRawAlias = $this->aliases->isRawSchemaAlias($tableName);
 
             /** @var Schema|null $schema */
-            [$schemaName, $schema, $schemaAlias] = $this->aliases->resolveSchema($tableName);
+            [$schemaName, $schema, $schemaAlias] = $isRawAlias
+                ? [$tableName, null, $tableName]
+                : $this->aliases->resolveSchema($tableName);
 
             $this->aliases->mergeErrors($this->errors);
-            if (!$this->errors->isEmpty() || !$schema) {
+            if (!$this->errors->isEmpty() || (!$schema && !$isRawAlias)) {
                 return $this;
             }
 
@@ -1383,7 +1514,10 @@ class Select
 
         $schemas = [];
         foreach ($this->columns as $tableNameOrAlias => $data) {
-            if ($tableNameOrAlias === self::RAW_COL_KEY) {
+            if (
+                $tableNameOrAlias === self::RAW_COL_KEY
+                || $this->aliases->isRawSchemaAlias($tableNameOrAlias)
+            ) {
                 continue;
             }
 
@@ -1480,8 +1614,9 @@ class Select
 
         $mainName = $mainSchema->name();
         $mainHasColumns = !empty($this->columns[$mainName]);
-        while (!$mainHasColumns && $allMainAliases) {
-            $aMainAlias = array_shift($allMainAliases);
+
+        while (!$mainHasColumns && ($theMainAlias || $allMainAliases)) {
+            $aMainAlias = $theMainAlias ?: reset($allMainAliases);
             $mainHasColumns = !empty($this->columns[$aMainAlias]);
         }
 
@@ -1511,6 +1646,7 @@ class Select
         $isRawAll = $table === self::RAW_COL_KEY;
         $hasAll = !empty($columns['*']);
         foreach ($columns as [$colName, $isRaw]) {
+            // If we're getting all columns, we don't need more.
             if ($colName !== '*' && $hasAll && !$isRaw) {
                 continue;
             }
@@ -1526,9 +1662,14 @@ class Select
                 continue;
             }
 
-            [, $schema, $schemaAlias] = $this->aliases->resolveSchema($table);
+            $isRawSchema = $this->aliases->isRawSchemaAlias($table);
+
+            [, $schema, $schemaAlias] = $isRawSchema
+                ? [null, null, $table]
+                : $this->aliases->resolveSchema($table);
+
             $this->aliases->mergeErrors($this->errors);
-            if (!$this->errors->isEmpty() || !$schema) {
+            if (!$this->errors->isEmpty() || (!$schema && !$isRawSchema)) {
                 return '';
             }
 
@@ -1540,7 +1681,7 @@ class Select
                 continue;
             }
 
-            $sql .= $isRaw ? $colRealName : "`{$tableRef}`.`{$colRealName}`";
+            $sql .= ($isRaw && !$isRawSchema) ? $colRealName : "`{$tableRef}`.`{$colRealName}`";
             $colAlias and $sql .= " AS `{$colAlias}`";
         }
 

@@ -29,4 +29,10 @@ class QueriesTestCase extends IntegrationTestCase
 
         Dbal::initialize();
     }
+
+    protected function tearDown(): void
+    {
+        $this->resetDb();
+        parent::tearDown();
+    }
 }
