@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Inpsyde\Dbal;
 
-final class Dbal
+class Dbal
 {
     public const ACTION_REGISTER_SCHEMA = 'dbal.register-schema';
     public const ACTION_READY = 'dbal.ready';
@@ -45,9 +45,7 @@ final class Dbal
             Cache::class => $cache,
         ];
 
-        $initializer = static function () {
-            $schemas = self::schemas();
-            $schemaFinder = self::schemaFinder();
+        $initializer = static function () use($schemas, $schemaFinder) {
 
             do_action(self::ACTION_REGISTER_SCHEMA, $schemas, $schemaFinder);
 
@@ -58,9 +56,9 @@ final class Dbal
             do_action(self::ACTION_READY);
         };
 
-        did_action('plugins_loaded') > 0
+        did_action('setup_theme') > 0
             ? $initializer()
-            : add_action('plugins_loaded', $initializer, 2);
+            : add_action('setup_theme', $initializer);
 
         return self::$objects;
     }
