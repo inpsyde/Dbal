@@ -225,38 +225,43 @@ class Cache
 
         $wpdb = Dbal::wpdb();
 
-        $cleanPosts = function () use ($wpdb): void {
-            $this->cleanCacheForTables($wpdb->posts, $wpdb->postmeta);
+        $cleanTables = function (array $tablesToClean): void {
+            $tables = array_filter($tablesToClean);
+            $tables and $this->cleanCacheForTables(...$tables);
         };
 
-        $cleanTaxonomy = function () use ($wpdb): void {
-            $this->cleanCacheForTables($wpdb->terms, $wpdb->term_taxonomy, $wpdb->termmeta);
+        $cleanPosts = static function () use ($cleanTables, $wpdb): void {
+            $cleanTables([$wpdb->posts, $wpdb->postmeta]);
         };
 
-        $cleanUsers = function () use ($wpdb): void {
-            $this->cleanCacheForTables($wpdb->users, $wpdb->signups, $wpdb->registration_log);
+        $cleanTaxonomy = static function () use ($cleanTables, $wpdb): void {
+            $cleanTables([$wpdb->terms, $wpdb->term_taxonomy, $wpdb->termmeta]);
         };
 
-        $cleanComments = function () use ($wpdb): void {
-            $this->cleanCacheForTables($wpdb->comments, $wpdb->commentmeta);
+        $cleanUsers = static function () use ($cleanTables, $wpdb): void {
+            $cleanTables([$wpdb->users, $wpdb->signups, $wpdb->registration_log]);
         };
 
-        $cleanBlogs = function () use ($wpdb): void {
-            $this->cleanCacheForTables($wpdb->blogs, $wpdb->blogmeta);
+        $cleanComments = static function () use ($cleanTables, $wpdb): void {
+            $cleanTables([$wpdb->comments, $wpdb->commentmeta]);
         };
 
-        $cleanSites = function () use ($wpdb): void {
-            $this->cleanCacheForTables($wpdb->site, $wpdb->sitemeta, $wpdb->sitecategories);
+        $cleanBlogs = static function () use ($cleanTables, $wpdb): void {
+            $cleanTables([$wpdb->blogs, $wpdb->blogmeta]);
         };
 
-        $cleanOptions = function () use ($wpdb): void {
-            $this->cleanCacheForTables($wpdb->options);
+        $cleanSites = static function () use ($cleanTables, $wpdb): void {
+            $cleanTables([$wpdb->site, $wpdb->sitemeta, $wpdb->sitecategories]);
         };
 
-        $cleanMeta = function (string $type) use ($wpdb): callable {
-            return function () use ($type, $wpdb): void {
+        $cleanOptions = static function () use ($cleanTables, $wpdb): void {
+            $cleanTables([$wpdb->options]);
+        };
+
+        $cleanMeta = static function (string $type) use ($cleanTables, $wpdb): callable {
+            return static function () use ($type, $cleanTables, $wpdb): void {
                 $table = "{$type}meta";
-                $this->cleanCacheForTables((string)$wpdb->{$table});
+                $cleanTables([$wpdb->{$table}]);
             };
         };
 

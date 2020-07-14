@@ -45,7 +45,7 @@ class Dbal
             Cache::class => $cache,
         ];
 
-        $initializer = static function () use($schemas, $schemaFinder) {
+        $initializer = static function () use ($schemas, $schemaFinder) {
 
             do_action(self::ACTION_REGISTER_SCHEMA, $schemas, $schemaFinder);
 
