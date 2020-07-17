@@ -18,6 +18,11 @@ class Cache
     private static $fallback = [];
 
     /**
+     * @var array<string, string>
+     */
+    private static $tableKeys = [];
+
+    /**
      * @var bool
      */
     private $initialized = false;
@@ -121,21 +126,38 @@ class Cache
      * In this way, when any of the tables changes (and Cache::cleanCacheForTables() is called)
      * all the cached value belonging, even partially, to that table are then invalidated.
      *
-     * @param string $table
+     * @param string $tableName
      * @param string ...$tables
      * @return string
      */
-    public function buildCacheKeyForTables(string $table, string ...$tables): string
+    public function buildCacheKeyForTables(string $tableName, string ...$tables): string
     {
-        array_unshift($tables, $table);
+        $tableNames = [$tableName];
+        if ($tables) {
+            array_unshift($tables, $tableName);
+            sort($tables, SORT_STRING);
+            $tableNames = $tables;
+        }
 
-        $values = [];
+        [$netPrefix, $sitePrefix] = $this->siteCachePrefixes();
+        $tableNamesKey = $sitePrefix . implode('', $tableNames);
+        $tableNamesKeySiteWide = $netPrefix . implode('', $tableNames);
+        $tableNamesCached = static::$tableKeys[$tableNamesKey] ?? '';
+        $tableNamesKeySiteWideCached = static::$tableKeys[$tableNamesKeySiteWide] ?? '';
+        if ($tableNamesCached || $tableNamesKeySiteWideCached) {
+            return $tableNamesCached ?: $tableNamesKeySiteWideCached;
+        }
+
+        $keys = '';
+        $done = [];
         $allNetwork = true;
-        foreach ($tables as $table) {
-            if (isset($values[$table])) {
+        foreach ($tableNames as $tableName) {
+            if (!$tableName || isset($done[$tableName])) {
                 continue;
             }
-            $schema = $this->finder->findSchema($table);
+
+            $done[$tableName] = 1;
+            $schema = $this->finder->findSchema($tableName);
             if (!$schema) {
                 continue;
             }
@@ -149,30 +171,18 @@ class Cache
                 wp_cache_set($key, $lastTableUpdate, self::TABLES_GROUP);
             }
 
-            $values[$table] = (string)$lastTableUpdate;
+            $keys .= (string)$lastTableUpdate;
         }
 
-        $netId = (string)get_current_network_id();
-        $overallNetKey = self::OVERALL_KEY . "_{$netId}";
-        $overallNet = wp_cache_get($overallNetKey, self::GROUP);
-        if (!$overallNet) {
-            $overallNet = microtime();
-            wp_cache_set($overallNetKey, $overallNet, self::GROUP);
+        if (!$keys) {
+            return (string)microtime();
         }
 
-        $overallSiteKey = sprintf('%s_%s', $overallNetKey, (string)get_current_blog_id());
-        $overallSite = $allNetwork ? '' : wp_cache_get($overallSiteKey, self::GROUP);
-        if (!$overallSite && !$allNetwork) {
-            $overallSite = microtime();
-            wp_cache_set($overallSiteKey, $overallSite, self::GROUP);
-        }
+        $key = $allNetwork ? md5($netPrefix . $keys) : md5($sitePrefix . $keys);
+        $cacheKey = $allNetwork ? $tableNamesKeySiteWide : $tableNamesKey;
+        static::$tableKeys[$cacheKey] = $key;
 
-        ksort($values);
-
-        $overallNet = (string)$overallNet;
-        $overallSite = (string)$overallSite;
-
-        return md5($overallNet . $overallSite . implode('|', $values));
+        return $key;
     }
 
     /**
@@ -185,7 +195,7 @@ class Cache
         array_unshift($tables, $table);
 
         foreach ($tables as $table) {
-            $schema = $this->finder->findSchema($table);
+            $schema = $table ? $this->finder->findSchema($table) : '';
             if (!$schema) {
                 continue;
             }
@@ -197,27 +207,63 @@ class Cache
     /**
      * @return void
      */
-    public function flushForSite(): void
+    public function cleanCacheForSite(): void
     {
-        $netId = (string)get_current_network_id();
-        $siteId = (string)get_current_network_id();
-        $overallSiteKey = sprintf('%s_%s_%s', self::OVERALL_KEY, $netId, $siteId);
-        wp_cache_delete($overallSiteKey, self::GROUP);
+        wp_cache_delete($this->siteKey(), self::GROUP);
     }
 
     /**
      * @return void
      */
-    public function flushForNetwork(): void
+    public function cleanCacheForNetwork(): void
     {
-        $overallNetKey = sprintf('%s_%s', self::OVERALL_KEY, (string)get_current_network_id());
-        wp_cache_delete($overallNetKey, self::GROUP);
+        wp_cache_delete($this->networkKey(), self::GROUP);
+    }
+
+    /**
+     * @return array{string, string}
+     */
+    private function siteCachePrefixes(): array
+    {
+        $overallNetKey = $this->networkKey();
+        $overallNet = (string)(wp_cache_get($overallNetKey, self::GROUP) ?: '');
+        if (!$overallNet) {
+            $overallNet = (string)microtime();
+            wp_cache_set($overallNetKey, $overallNet, self::GROUP);
+        }
+
+        $overallSiteKey = $this->siteKey();
+        $overallSite = (string)(wp_cache_get($overallSiteKey, self::GROUP) ? : '');
+        if (!$overallSite) {
+            $overallSite = (string)microtime();
+            wp_cache_set($overallSiteKey, $overallSite, self::GROUP);
+        }
+
+        return [$overallNet, $overallSite];
+    }
+
+    /**
+     * @return string
+     */
+    private function networkKey(): string
+    {
+        return sprintf('%s_%s', self::OVERALL_KEY, (string)get_current_network_id());
+    }
+
+    /**
+     * @return string
+     */
+    private function siteKey(): string
+    {
+        return sprintf('%s_%s', $this->networkKey(), (string)get_current_blog_id());
     }
 
     /**
      * @return void
      *
      * phpcs:disable Inpsyde.CodeQuality.FunctionLength
+     *
+     * @psalm-suppress DocblockTypeContradiction
      */
     private function addCleanCacheHooks()
     {
@@ -226,31 +272,43 @@ class Cache
         $wpdb = Dbal::wpdb();
 
         $cleanPosts = function () use ($wpdb): void {
-            $this->cleanCacheForTables($wpdb->posts, $wpdb->postmeta);
+            $this->cleanCacheForTables($wpdb->posts ?? '', $wpdb->postmeta ?? '');
         };
 
         $cleanTaxonomy = function () use ($wpdb): void {
-            $this->cleanCacheForTables($wpdb->terms, $wpdb->term_taxonomy, $wpdb->termmeta);
+            $this->cleanCacheForTables(
+                $wpdb->terms ?? '',
+                $wpdb->term_taxonomy ?? '',
+                $wpdb->termmeta ?? ''
+            );
         };
 
         $cleanUsers = function () use ($wpdb): void {
-            $this->cleanCacheForTables($wpdb->users, $wpdb->signups, $wpdb->registration_log);
+            $this->cleanCacheForTables(
+                $wpdb->users ?? '',
+                $wpdb->signups ?? '',
+                $wpdb->registration_log ?? ''
+            );
         };
 
         $cleanComments = function () use ($wpdb): void {
-            $this->cleanCacheForTables($wpdb->comments, $wpdb->commentmeta);
+            $this->cleanCacheForTables($wpdb->comments ?? '', $wpdb->commentmeta ?? '');
         };
 
         $cleanBlogs = function () use ($wpdb): void {
-            $this->cleanCacheForTables($wpdb->blogs, $wpdb->blogmeta);
+            $this->cleanCacheForTables($wpdb->blogs ?? '', $wpdb->blogmeta ?? '');
         };
 
         $cleanSites = function () use ($wpdb): void {
-            $this->cleanCacheForTables($wpdb->site, $wpdb->sitemeta, $wpdb->sitecategories);
+            $this->cleanCacheForTables(
+                $wpdb->site ?? '',
+                $wpdb->sitemeta ?? '',
+                $wpdb->sitecategories ?? ''
+            );
         };
 
         $cleanOptions = function () use ($wpdb): void {
-            $this->cleanCacheForTables($wpdb->options);
+            $this->cleanCacheForTables($wpdb->options ?? '');
         };
 
         $cleanMeta = function (string $type) use ($wpdb): callable {
