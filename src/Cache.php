@@ -202,6 +202,8 @@ class Cache
 
             wp_cache_delete($this->finder->fullTableName($schema), self::TABLES_GROUP);
         }
+
+        static::$tableKeys = [];
     }
 
     /**

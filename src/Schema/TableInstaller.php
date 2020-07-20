@@ -142,7 +142,9 @@ class TableInstaller
      */
     private function tableExists(\wpdb $wpdb, string $tableName): bool
     {
-        return (bool)$wpdb->query($wpdb->prepare('SHOW TABLES LIKE %s', $tableName));
+        return (bool)$wpdb->query(
+            (string)($wpdb->prepare('SHOW TABLES LIKE %s', $tableName) ?? '')
+        );
     }
 
     /**

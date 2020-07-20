@@ -413,7 +413,7 @@ class Write
             $escParams[] = $value;
         }
 
-        return Dbal::wpdb()->prepare(implode(', ', $valuesSql), $escParams) ?? '';
+        return (string)(Dbal::wpdb()->prepare(implode(', ', $valuesSql), $escParams) ?? '');
     }
 
     /**
