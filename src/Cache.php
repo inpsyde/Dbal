@@ -139,9 +139,16 @@ class Cache
             $tableNames = $tables;
         }
 
-        [$netPrefix, $sitePrefix] = $this->siteCachePrefixes();
-        $tableNamesKey = $sitePrefix . implode('', $tableNames);
-        $tableNamesKeySiteWide = $netPrefix . implode('', $tableNames);
+        [
+            $netPrefix,
+            $sitePrefix,
+        ] = $this->siteCachePrefixes();
+
+        [
+            $tableNamesKey,
+            $tableNamesKeySiteWide,
+        ] = $this->siteCachePrefixesForTables(...$tableNames);
+
         $tableNamesCached = static::$tableKeys[$tableNamesKey] ?? '';
         $tableNamesKeySiteWideCached = static::$tableKeys[$tableNamesKeySiteWide] ?? '';
         if ($tableNamesCached || $tableNamesKeySiteWideCached) {
@@ -186,16 +193,18 @@ class Cache
     }
 
     /**
-     * @param string $table
-     * @param string ...$tables
+     * @param string $tableName
+     * @param string ...$tableNames
      * @return void
      */
-    public function cleanCacheForTables(string $table, string ...$tables): void
+    public function cleanCacheForTables(string $tableName, string ...$tableNames): void
     {
-        array_unshift($tables, $table);
+        array_unshift($tableNames, $tableName);
 
-        foreach ($tables as $table) {
-            $schema = $table ? $this->finder->findSchema($table) : '';
+        $this->cleanTableKeysForTables(...$tableNames);
+
+        foreach ($tableNames as $tableName) {
+            $schema = $tableName ? $this->finder->findSchema($tableName) : '';
             if (!$schema) {
                 continue;
             }
@@ -218,6 +227,49 @@ class Cache
     public function cleanCacheForNetwork(): void
     {
         wp_cache_delete($this->networkKey(), self::GROUP);
+    }
+
+    /**
+     * @param string ...$tableNames
+     */
+    private function cleanTableKeysForTables(string ...$tableNames): void
+    {
+        [
+            $tableNamesKey,
+            $tableNamesKeySiteWide,
+        ] = $this->siteCachePrefixesForTables(...$tableNames);
+
+        if (count($tableNames) > 1) {
+            unset(
+                static::$tableKeys[$tableNamesKey],
+                static::$tableKeys[$tableNamesKeySiteWide]
+            );
+            return;
+        }
+
+        $tableName = (string)array_shift($tableNames);
+        foreach (array_keys(static::$tableKeys) as $key) {
+            if (strpos($key, $tableName) !== false) {
+                unset(static::$tableKeys[$key]);
+            }
+        }
+    }
+
+    /**
+     * @param string ...$tableNames
+     *
+     * @return array<int, string>
+     */
+    private function siteCachePrefixesForTables(string ...$tableNames): array
+    {
+        [$netPrefix, $sitePrefix] = $this->siteCachePrefixes();
+        $tableNamesKey = $sitePrefix . implode('', $tableNames);
+        $tableNamesKeySiteWide = $netPrefix . implode('', $tableNames);
+
+        return [
+            $tableNamesKey,
+            $tableNamesKeySiteWide,
+        ];
     }
 
     /**

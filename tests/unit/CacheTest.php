@@ -124,7 +124,7 @@ class CacheTest extends UnitTestCase
 
         $cache = Cache::new($this->initializeSampleTablesFinder());
 
-        $generate = function (string $key) use ($cache, $ta1, $ta2): array {
+        $generate = static function (string $key) use ($cache, $ta1, $ta2): array {
             $key = $cache->buildCacheKeyForTables($ta1, $ta2) . $key;
             $get = $cache->get($key);
             if ($get === null) {
