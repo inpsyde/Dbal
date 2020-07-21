@@ -234,23 +234,15 @@ class Cache
      */
     private function cleanTableKeysForTables(string ...$tableNames): void
     {
-        [
-            $tableNamesKey,
-            $tableNamesKeySiteWide,
-        ] = $this->siteCachePrefixesForTables(...$tableNames);
-
-        if (count($tableNames) > 1) {
-            unset(
-                static::$tableKeys[$tableNamesKey],
-                static::$tableKeys[$tableNamesKeySiteWide]
-            );
+        if (!static::$tableKeys) {
             return;
         }
 
-        $tableName = (string)array_shift($tableNames);
-        foreach (array_keys(static::$tableKeys) as $key) {
-            if (strpos($key, $tableName) !== false) {
-                unset(static::$tableKeys[$key]);
+        foreach ($tableNames as $tableName) {
+            foreach (array_keys(static::$tableKeys) as $key) {
+                if (strpos($key, $tableName) !== false) {
+                    unset(static::$tableKeys[$key]);
+                }
             }
         }
     }
