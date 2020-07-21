@@ -139,16 +139,9 @@ class Cache
             $tableNames = $tables;
         }
 
-        [
-            $netPrefix,
-            $sitePrefix,
-        ] = $this->siteCachePrefixes();
-
-        [
-            $tableNamesKey,
-            $tableNamesKeySiteWide,
-        ] = $this->siteCachePrefixesForTables(...$tableNames);
-
+        [$netPrefix, $sitePrefix] = $this->siteCachePrefixes();
+        $tableNamesKey = $sitePrefix . implode('', $tableNames);
+        $tableNamesKeySiteWide = $netPrefix . implode('', $tableNames);
         $tableNamesCached = static::$tableKeys[$tableNamesKey] ?? '';
         $tableNamesKeySiteWideCached = static::$tableKeys[$tableNamesKeySiteWide] ?? '';
         if ($tableNamesCached || $tableNamesKeySiteWideCached) {
@@ -193,24 +186,24 @@ class Cache
     }
 
     /**
-     * @param string $tableName
-     * @param string ...$tableNames
+     * @param string $table
+     * @param string ...$tables
      * @return void
      */
-    public function cleanCacheForTables(string $tableName, string ...$tableNames): void
+    public function cleanCacheForTables(string $table, string ...$tables): void
     {
-        array_unshift($tableNames, $tableName);
+        array_unshift($tables, $table);
 
-        $this->cleanTableKeysForTables(...$tableNames);
-
-        foreach ($tableNames as $tableName) {
-            $schema = $tableName ? $this->finder->findSchema($tableName) : '';
+        foreach ($tables as $table) {
+            $schema = $table ? $this->finder->findSchema($table) : '';
             if (!$schema) {
                 continue;
             }
 
             wp_cache_delete($this->finder->fullTableName($schema), self::TABLES_GROUP);
         }
+
+        static::$tableKeys = [];
     }
 
     /**
@@ -227,49 +220,6 @@ class Cache
     public function cleanCacheForNetwork(): void
     {
         wp_cache_delete($this->networkKey(), self::GROUP);
-    }
-
-    /**
-     * @param string ...$tableNames
-     */
-    private function cleanTableKeysForTables(string ...$tableNames): void
-    {
-        if (!static::$tableKeys) {
-            return;
-        }
-
-        foreach ($tableNames as $tableName) {
-            $this->cleanTableKeysForTable($tableName);
-        }
-    }
-
-    /**
-     * @param string $tableName
-     */
-    private function cleanTableKeysForTable(string $tableName): void
-    {
-        foreach (array_keys(static::$tableKeys) as $key) {
-            if (strpos($key, $tableName) !== false) {
-                unset(static::$tableKeys[$key]);
-            }
-        }
-    }
-
-    /**
-     * @param string ...$tableNames
-     *
-     * @return array<int, string>
-     */
-    private function siteCachePrefixesForTables(string ...$tableNames): array
-    {
-        [$netPrefix, $sitePrefix] = $this->siteCachePrefixes();
-        $tableNamesKey = $sitePrefix . implode('', $tableNames);
-        $tableNamesKeySiteWide = $netPrefix . implode('', $tableNames);
-
-        return [
-            $tableNamesKey,
-            $tableNamesKeySiteWide,
-        ];
     }
 
     /**
