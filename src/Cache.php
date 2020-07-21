@@ -239,10 +239,18 @@ class Cache
         }
 
         foreach ($tableNames as $tableName) {
-            foreach (array_keys(static::$tableKeys) as $key) {
-                if (strpos($key, $tableName) !== false) {
-                    unset(static::$tableKeys[$key]);
-                }
+            $this->cleanTableKeysForTable($tableName);
+        }
+    }
+
+    /**
+     * @param string $tableName
+     */
+    private function cleanTableKeysForTable(string $tableName): void
+    {
+        foreach (array_keys(static::$tableKeys) as $key) {
+            if (strpos($key, $tableName) !== false) {
+                unset(static::$tableKeys[$key]);
             }
         }
     }
