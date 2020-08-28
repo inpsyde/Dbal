@@ -509,7 +509,7 @@ class Write
             $error = Error::withMerged($error, "Errored query: {$wpdb->last_query}.");
             $this->cache and $this->cache->cleanCacheForTables($schema->name());
 
-            if (!$result || $wpdb->last_error) {
+            if ($result === false || $wpdb->last_error) {
                 $value = $wpdb->last_error ? new Error($wpdb->last_error) : null;
 
                 return Result::new($value)->mergeError($error);
