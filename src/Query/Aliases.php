@@ -47,7 +47,7 @@ class Aliases
      */
     public static function new(?SchemaFinder $finder = null): Aliases
     {
-        return new static($finder);
+        return new self($finder);
     }
 
     /**
@@ -162,7 +162,7 @@ class Aliases
 
     /**
      * @param string $maybeAlias
-     * @return array{0:string|null, 1:\Inpsyde\Dbal\Schema\Schema|null, 2:string|null, 3:array<string>}
+     * @return array{string|null, \Inpsyde\Dbal\Schema\Schema|null, string|null, array<string>}
      */
     public function resolveSchema(string $maybeAlias): array
     {

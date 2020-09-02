@@ -86,7 +86,7 @@ class Where
      */
     public static function new(): Where
     {
-        return new static();
+        return new self();
     }
 
     private function __construct()
@@ -793,7 +793,9 @@ class Where
 
         if ($operator === self::IN || $operator === self::NOT_IN) {
             if (!is_array($value)) {
-                $this->errors->withError('"IN" and "NOT IN" operators are allowed only for arrays.');
+                $this->errors->withError(
+                    '"IN" and "NOT IN" operators are allowed only for arrays.'
+                );
             }
 
             return $operator;

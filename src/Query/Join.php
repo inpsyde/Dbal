@@ -250,7 +250,9 @@ final class Join
         );
 
         if (!$sourceCol || !$targetCol) {
-            $targetName = $targetSchema ? sprintf("'%s'", $targetSchema->name()) : 'target expression';
+            $targetName = $targetSchema
+                ? sprintf("'%s'", $targetSchema->name())
+                : 'target expression';
             $sourceName = $sourceSchema->name();
             $sourceCol or $this->errors->withError(
                 sprintf(

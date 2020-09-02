@@ -945,7 +945,7 @@ final class Column
             && ((int)($this->attributes[self::ATTR_PRECISION] ?? 0) < 255)
         ) {
             throw new \Exception(
-                "{$this->type} columns requires a size of at least 255 bytes to store serialized values."
+                "{$this->type} column size must be 255 bytes or more to store serialized values."
             );
         }
 

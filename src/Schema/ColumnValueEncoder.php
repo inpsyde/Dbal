@@ -42,7 +42,7 @@ class ColumnValueEncoder
      */
     public static function forCore(Column $column, WpSchema $schema): ColumnValueEncoder
     {
-        $instance = new static($column);
+        $instance = new self($column);
         $instance->core = true;
         if (!empty(self::CORE_MAYBE_SERIALIZED[$schema->name()][$column->name()])) {
             $instance->coreMaybeSerialized = true;
@@ -57,7 +57,7 @@ class ColumnValueEncoder
      */
     public static function for(Column $column): ColumnValueEncoder
     {
-        return new static($column);
+        return new self($column);
     }
 
     /**
@@ -82,7 +82,7 @@ class ColumnValueEncoder
         }
 
         if ($this->core && $this->coreMaybeSerialized) {
-            return maybe_unserialize($value);
+            return maybe_unserialize((string)$value);
         }
 
         if (!$this->core && $this->column->isSerialized()) {
@@ -360,7 +360,7 @@ class ColumnValueEncoder
     private function encodeForCore($value): ?string
     {
         if ($this->coreMaybeSerialized) {
-            return is_scalar($value) ? (string)$value : (string)maybe_serialize($value);
+            return is_scalar($value) ? (string)$value : (string)maybe_serialize((string)$value);
         }
 
         if ($value instanceof \DateTimeInterface) {
@@ -382,8 +382,8 @@ class ColumnValueEncoder
      */
     private function encodeSerialized($value): ?string
     {
-        if (is_serialized($value)) {
-            return (string)$value;
+        if (is_string($value) && is_serialized($value)) {
+            return $value;
         }
 
         if (is_array($value) || $value instanceof \stdClass) {

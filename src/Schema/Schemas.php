@@ -27,11 +27,11 @@ class Schemas implements \Countable, \IteratorAggregate
 
     /**
      * @param Schema $schema
-     * @return static
+     * @return Schemas
      */
     public static function new(Schema ...$schemas): Schemas
     {
-        return new static(...$schemas);
+        return new self(...$schemas);
     }
 
     /**

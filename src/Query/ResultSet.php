@@ -68,7 +68,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
         array $row
     ): ResultSet {
 
-        return new static($select, $results, null, $row);
+        return new self($select, $results, null, $row);
     }
 
     /**
@@ -76,7 +76,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
      */
     public static function empty(): ResultSet
     {
-        return new static();
+        return new self();
     }
 
     /**
@@ -93,7 +93,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
         array ...$rows
     ): ResultSet {
 
-        return new static($select, $results, $pagination, ...$rows);
+        return new self($select, $results, $pagination, ...$rows);
     }
 
     /**

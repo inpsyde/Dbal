@@ -54,7 +54,7 @@ class Write
         ?Cache $cache = null
     ): Write {
 
-        return new static($tableName, $finder, $cache);
+        return new self($tableName, $finder, $cache);
     }
 
     /**

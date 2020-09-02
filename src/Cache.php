@@ -37,7 +37,7 @@ class Cache
      */
     public static function new(SchemaFinder $finder): Cache
     {
-        return new static($finder);
+        return new self($finder);
     }
 
     /**
@@ -98,7 +98,10 @@ class Cache
          * When using external object cache, do not store values bigger than 1Mb, and use a static
          * array as cache instead.
          */
-        if (wp_using_ext_object_cache() && (strlen((string)maybe_serialize($value))) > 1024000) {
+        if (
+            wp_using_ext_object_cache()
+            && ((strlen((string)maybe_serialize((string)$value))) > 1024000)
+        ) {
             self::$fallback[$key] = $value;
 
             return;

@@ -32,7 +32,7 @@ class Transaction
     public static function new(int $flags = self::DEFAULT): Transaction
     {
         if ($flags === self::DEFAULT) {
-            return new static('', '');
+            return new self('', '');
         }
 
         $mode = '';
@@ -67,7 +67,7 @@ class Transaction
                 break;
         }
 
-        return new static($mode, $isolation);
+        return new self($mode, $isolation);
     }
 
     /**

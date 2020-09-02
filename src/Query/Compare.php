@@ -8,7 +8,7 @@ use Inpsyde\Dbal\ErrorCollector;
 use Inpsyde\Dbal\Schema\SchemaFinder;
 use Inpsyde\Dbal\Schema\Schema;
 
-class Compare
+final class Compare
 {
     public const CAST_DATE = 'DATE';
     public const CAST_DATETIME = 'DATETIME';

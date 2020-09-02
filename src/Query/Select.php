@@ -127,7 +127,7 @@ class Select
         ?Cache $cache = null
     ): Select {
 
-        return new static($tableName, $alias, $finder, $cache);
+        return new self($tableName, $alias, $finder, $cache);
     }
 
     /**

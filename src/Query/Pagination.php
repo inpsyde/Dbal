@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Inpsyde\Dbal\Query;
 
-class Pagination
+final class Pagination
 {
     /**
      * @var int|null

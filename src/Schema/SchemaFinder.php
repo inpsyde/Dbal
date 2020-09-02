@@ -23,7 +23,7 @@ class SchemaFinder
      */
     public static function new(WpSchemas $wpSchema, SchemasRegister $schemas): SchemaFinder
     {
-        return new static($wpSchema, $schemas);
+        return new self($wpSchema, $schemas);
     }
 
     /**

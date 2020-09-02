@@ -31,7 +31,7 @@ class ResultsParser
             $parsers[] = ColumnsResultParser::new($table->columns(), $table->name(), $aliases);
         }
 
-        return new static(...$parsers);
+        return new self(...$parsers);
     }
 
     /**

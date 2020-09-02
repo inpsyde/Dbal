@@ -35,7 +35,7 @@ class ColumnsResultParser
         Aliases $aliases
     ): ColumnsResultParser {
 
-        return new static($columns, $schemaName, $aliases);
+        return new self($columns, $schemaName, $aliases);
     }
 
     /**

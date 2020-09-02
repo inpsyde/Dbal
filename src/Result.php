@@ -7,7 +7,7 @@ namespace Inpsyde\Dbal;
 /**
  * @template T of Error|null
  */
-class Result
+final class Result
 {
 
     /**

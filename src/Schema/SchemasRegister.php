@@ -33,7 +33,7 @@ class SchemasRegister
      */
     public static function new(): SchemasRegister
     {
-        return new static();
+        return new self();
     }
 
     /**

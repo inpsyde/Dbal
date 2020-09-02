@@ -34,7 +34,7 @@ class TableInstaller
      */
     public static function new(SchemaFinder $schemaFinder): TableInstaller
     {
-        return new static($schemaFinder);
+        return new self($schemaFinder);
     }
 
     /**
