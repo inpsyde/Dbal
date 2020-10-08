@@ -251,16 +251,24 @@ class Write
 
         /** @var Schema $schema */
         $schema = $this->schema;
-        $table = $this->finder->fullTableName($schema);
+        $tableName = $this->finder->fullTableName($schema);
 
         if (!$where->hasClauses()) {
-            return Result::new(new \Error("Can't update {$table} without WHERE clauses."));
+            return Result::new(new \Error("Can't update {$tableName} without WHERE clauses."));
         }
 
         $columns = $schema->columns();
-        [$updateValues, $dataFormats] = $columns->columnsInfoForDataUpdate($data);
+        /**
+         * @var array<string, integer|float|string> $parsedData
+         * @var array<string, string> $formats
+         * @var array<int, string> $missing
+         */
+        [$updateValues, $dataFormats, $missing] = $columns->columnsInfoForDataUpdate($data);
+
+        static::assertNotMissing($missing, $tableName, true);
+
         if (!$updateValues) {
-            return Result::new(new \Error("Can't update {$table} without data."));
+            return Result::new(new \Error("Can't update {$tableName} without data."));
         }
 
         $data = [];
@@ -279,7 +287,7 @@ class Write
         $whereClause = rtrim($where->clause($schema, $this->finder, Aliases::new($this->finder)));
 
         return $this->executeQuery(
-            "UPDATE `{$table}` SET {$valuesSql} WHERE {$whereClause};",
+            "UPDATE `{$tableName}` SET {$valuesSql} WHERE {$whereClause};",
             self::UPDATE
         );
     }
@@ -370,19 +378,14 @@ class Write
     {
         /** @var Schema $schema */
         $schema = $this->schema;
+        $tableName = $this->finder->fullTableName($schema);
         $columns = $schema->columns();
         [$data, $formats, $missing] = $columns->columnsInfoForDataInsert($data);
 
-        $name = $schema->name();
-        if ($missing) {
-            $missingStr = count($missing) === 1 ? " column: " : " columns: ";
-            $missingCol = implode("', '", $missing);
-            $missingStr .= "'{$missingCol}'";
-            throw new \Exception("Error inserting row in {$name} table, missing {$missingStr}.");
-        }
+        static::assertNotMissing($missing, $tableName, false);
 
         if (!$data) {
-            throw new \Exception("Error inserting row in {$name} table, no data.");
+            throw new \Exception("Error inserting row in {$tableName} table, no data.");
         }
 
         $toPrepare = [];
@@ -396,6 +399,35 @@ class Write
         }
 
         return [$toPrepare, $formats];
+    }
+
+    /**
+     * @param array|null $missing
+     * @param string $tableName
+     * @param bool $isUpdate
+     */
+    private static function assertNotMissing(
+        ?array $missing,
+        string $tableName,
+        bool $isUpdate
+    ): void {
+
+        if (!$missing) {
+            return;
+        }
+
+        $one = count($missing) === 1;
+        $missingStr = $one ? "column: '" : "columns: '";
+        $missingStr .= implode("', '", $missing) . "'";
+        $be = $one ? 'is' : 'are';
+        $task = $isUpdate ? 'updating' : 'inserting';
+        $reason = $isUpdate
+            ? "{$missingStr} can not be null"
+            : "{$missingStr} {$be} missing or null";
+
+        throw new \Exception(
+            sprintf('Error %s row in %s table, %s.', $task, $tableName, $reason)
+        );
     }
 
     /**

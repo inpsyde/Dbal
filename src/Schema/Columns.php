@@ -168,10 +168,11 @@ final class Columns implements \IteratorAggregate, \Countable
         /**
          * @var array<string, integer|float|string> $parsedData
          * @var array<string, string> $formats
+         * @var array<int, string> $missing
          */
-        [$parsedData, $formats] = $this->columnsInfoForData(null, $data, false, true);
+        [$parsedData, $formats, $missing] = $this->columnsInfoForData(null, $data, false, true);
 
-        return [$parsedData, $formats];
+        return [$parsedData, $formats, $missing];
     }
 
     /**
@@ -253,8 +254,18 @@ final class Columns implements \IteratorAggregate, \Countable
             $name = $column->name();
             $required = $forInsert && $column->isRequiredOnInsert();
 
-            if (!array_key_exists($name, $data) || ($data[$name] === null)) {
+            if (!array_key_exists($name, $data)) {
                 $required and $missing[] = $name;
+                continue;
+            }
+
+            $isValueNull = $data[$name] === null;
+            if ($isValueNull && $forEditing && !$column->isNullable()) {
+                $missing[] = $name;
+                continue;
+            }
+            if ($isValueNull && $forEditing) {
+                $parsedData[$name] = null;
                 continue;
             }
 
@@ -269,7 +280,7 @@ final class Columns implements \IteratorAggregate, \Countable
             );
         }
 
-        return $forInsert ? [$parsedData, $formats, $missing] : [$parsedData, $formats];
+        return $forEditing ? [$parsedData, $formats, $missing] : [$parsedData, $formats];
     }
 
     /**
