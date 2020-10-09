@@ -22,6 +22,7 @@ class TableOne implements InstallableSchema
     public const DOUBLE = 'double';
     public const DATETIME = 'datetime';
     public const ENUM = 'enum';
+    public const CAN_BE_NULL = 'can_be_null';
 
     /**
      * @var string
@@ -69,6 +70,7 @@ class TableOne implements InstallableSchema
             Column::entityId(self::ID),
             Column::bigInt(self::POST_ID)->makeNotNull()->makeUnsigned(),
             Column::text(self::TEXT)->makeNotNull(),
+            Column::text(self::CAN_BE_NULL),
             Column::text(self::SERIALIZED)->storeSerialized(),
             Column::smallInt(self::INTEGER, 1)->makeNotNull()->makeUnsigned(),
             Column::double(self::DOUBLE, 11, 8, 0.0)->makeNotNull(),

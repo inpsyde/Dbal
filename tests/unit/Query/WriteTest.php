@@ -88,15 +88,18 @@ SQL;
     {
         $finder = $this->initializeSampleTablesFinder();
 
+        Write::on(TableOne::NAME, $finder)->insert(
+            ['text' => 'one', 'integer' => '11', 'can_be_null' => 'not null']
+        );
         $result = Write::on(TableOne::NAME, $finder)->updateWhere(
-            ['text' => 'one', 'integer' => '11'],
+            ['text' => 'one', 'integer' => '11', 'can_be_null' => null],
             Where::new()->with('id', 1, '>=')->and('double', [1.123, 2.456, 3.789], 'IN')
         );
 
         static::assertFalse($result->isErrored());
 
         $expectedQuery = <<<SQL
-UPDATE `wp_1_tests_sample_table` SET `text` = 'one', `integer` = 11
+UPDATE `wp_1_tests_sample_table` SET `text` = 'one', `can_be_null` = '', `integer` = 11
 WHERE `wp_1_tests_sample_table`.`id` >= 1
   AND `wp_1_tests_sample_table`.`double` IN ('1.123','2.456','3.789');
 SQL;
@@ -109,15 +112,18 @@ SQL;
     {
         $finder = $this->initializeSampleTablesFinder();
 
+        Write::on(TableOne::NAME, $finder)->insert(
+            ['text' => 'one', 'integer' => '11', 'can_be_null' => 'not null']
+        );
         $result = Write::on(TableOne::NAME, $finder)->update(
-            ['text' => 'one', 'integer' => '11'],
+            ['text' => 'one', 'integer' => '11', 'can_be_null' => null],
             ['id' => 1, 'double' => 1.123]
         );
 
         $result->extract();
 
         $expectedQuery = <<<SQL
-UPDATE `wp_1_tests_sample_table` SET `text` = 'one', `integer` = 11
+UPDATE `wp_1_tests_sample_table` SET `text` = 'one', `can_be_null` = NULL, `integer` = 11
 WHERE `id` = 1 AND `double` = '1.123'
 SQL;
 
