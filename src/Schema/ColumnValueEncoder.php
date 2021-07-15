@@ -239,12 +239,11 @@ class ColumnValueEncoder
         if (!is_numeric($value)) {
             return $this->column->isNullable() ? null : $this->defaultValue();
         }
-
+        $value = $isReal ? (float)$value : (int)$value;
         if ($this->column->isBit() || $this->column->isUnsigned()) {
             $value = abs($value);
         }
-
-        return $isReal ? (float)$value : (int)$value;
+        return $value;
     }
 
     /**
