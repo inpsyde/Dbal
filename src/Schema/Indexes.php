@@ -33,7 +33,7 @@ final class Indexes
     private function __construct(Index $key, Index ...$keys)
     {
         array_unshift($keys, $key);
-        
+
         foreach ($keys as $key) {
             if (!$key->isPrimary()) {
                 continue;

@@ -111,7 +111,7 @@ final class Error extends \Error
 
         return $messages;
     }
-    
+
     /**
      * @return string
      */
