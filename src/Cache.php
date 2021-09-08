@@ -100,7 +100,7 @@ class Cache
          */
         if (
             wp_using_ext_object_cache()
-            && ((strlen((string)maybe_serialize((string)$value))) > 1024000)
+            && ((strlen((string)maybe_serialize($value))) > 1024000)
         ) {
             self::$fallback[$key] = $value;
 
