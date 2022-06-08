@@ -1609,6 +1609,7 @@ class Select
         } finally {
             $phpErrors->restoreHandler();
             $wpdb->suppress_errors($suppressErrors);
+            $this->where = null;
         }
     }
 
