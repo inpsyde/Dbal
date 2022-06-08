@@ -115,17 +115,17 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
         $this->rows = $rows;
     }
 
-    private function __clone()
+    public function __clone()
     {
     }
 
     // phpcs:disable PHPCompatibility.FunctionDeclarations.NonStaticMagicMethods.__sleepMethodVisibility
-    private function __sleep()
+    public function __sleep()
     {
         // phpcs:enable PHPCompatibility.FunctionDeclarations.NonStaticMagicMethods.__sleepMethodVisibility
     }
 
-    private function __wakeup()
+    public function __wakeup()
     {
     }
 

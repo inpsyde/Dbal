@@ -6,3 +6,4 @@
 /tests/docker/php73/wait-for.sh
 /tests/docker/php74/wait-for.sh
 .idea/
+.DS_Store

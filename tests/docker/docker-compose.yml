@@ -1,5 +1,20 @@
 version: '3.7'
 services:
+  php8:
+    build:
+      context: ./php8
+    container_name: dbal-php-8
+    depends_on:
+      - mysql
+    environment:
+      WORDPRESS_DB_HOST: dbal-mysql
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+    volumes:
+      - type: bind
+        source: ../../
+        target: /app
   php74:
     build:
       context: ./php74
