@@ -119,14 +119,14 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
     {
     }
 
-    // phpcs:disable PHPCompatibility.FunctionDeclarations.NonStaticMagicMethods.__sleepMethodVisibility
-    private function __sleep()
+    public function __sleep()
     {
-        // phpcs:enable PHPCompatibility.FunctionDeclarations.NonStaticMagicMethods.__sleepMethodVisibility
+        throw new \Exception(__CLASS__ . ' does not support serialization.');
     }
 
-    private function __wakeup()
+    public function __wakeup()
     {
+        throw new \Exception(__CLASS__ . ' does not support serialization.');
     }
 
     /**
