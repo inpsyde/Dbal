@@ -25,7 +25,7 @@ jobs:
         if: ${{ !contains(github.event.head_commit.message, 'integration-tests skip') }}
         strategy:
             matrix:
-                php-version: [ '7.2', '7.3', '7.4' ]
+                php-version: [ '7.2', '7.3', '7.4', '8.0' ]
                 wp-version: [ '5.8', '5.9', '6.0' ]
         steps:
             -   name: Checkout
@@ -46,7 +46,8 @@ jobs:
             -   name: Install Dependencies
                 uses: ramsey/composer-install@v2
 
-            -   name: Run integration tests (PHP ${{ matrix.php-version }}, WP ${{ matrix.wp-version }})
+            -   name: Run integration tests
+                working-directory: ./tests
                 run: |
-                    chmod u+x ./tests/integration-tests.sh
-                    ./tests/integration-tests.sh ${{ matrix.php-version }}
+                    chmod u+x ./integration-tests.sh
+                    ./integration-tests.sh ${{ matrix.php-version }}
