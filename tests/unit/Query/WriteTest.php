@@ -12,7 +12,10 @@ use Inpsyde\Dbal\Tests\UnitTestCase;
 
 class WriteTest extends UnitTestCase
 {
-    public function testInsert()
+    /**
+     * @test
+     */
+    public function testInsert(): void
     {
         $finder = $this->initializeSampleTablesFinder();
 
@@ -38,7 +41,10 @@ SQL;
         $this->compareQueries($expectedQuery, $wpdb->last_query);
     }
 
-    public function testInsertMany()
+    /**
+     * @test
+     */
+    public function testInsertMany(): void
     {
         $finder = $this->initializeSampleTablesFinder();
 
@@ -84,7 +90,10 @@ SQL;
         $this->compareQueries($expectedQuery, $wpdb->last_query);
     }
 
-    public function testUpdateWhere()
+    /**
+     * @test
+     */
+    public function testUpdateWhere(): void
     {
         $finder = $this->initializeSampleTablesFinder();
 
@@ -108,7 +117,10 @@ SQL;
         $this->compareQueries($expectedQuery, $wpdb->last_query);
     }
 
-    public function testUpdate()
+    /**
+     * @test
+     */
+    public function testUpdate(): void
     {
         $finder = $this->initializeSampleTablesFinder();
 
@@ -131,7 +143,10 @@ SQL;
         $this->compareQueries($expectedQuery, $wpdb->last_query);
     }
 
-    public function testDeleteWhere()
+    /**
+     * @test
+     */
+    public function testDeleteWhere(): void
     {
         $finder = $this->initializeSampleTablesFinder();
         $where = Where::new()->withCompare(Compare::columnValue(TableOne::POST_ID, 1, '>='));
@@ -147,7 +162,10 @@ SQL;
         $this->compareQueries($expectedQuery, $wpdb->last_query);
     }
 
-    public function testDelete()
+    /**
+     * @test
+     */
+    public function testDelete(): void
     {
         $finder = $this->initializeSampleTablesFinder();
         $result = Write::on(TableOne::NAME, $finder)->delete([TableOne::POST_ID => 1]);
@@ -162,7 +180,10 @@ SQL;
         $this->compareQueries($expectedQuery, $wpdb->last_query);
     }
 
-    public function testDeleteOnPrimary()
+    /**
+     * @test
+     */
+    public function testDeleteOnPrimary(): void
     {
         $finder = $this->initializeSampleTablesFinder();
         $result = Write::on(TableOne::NAME, $finder)->deleteOnPrimary(1);

@@ -149,7 +149,7 @@ class Dbal
 
     /**
      * @param int $flags
-     * @return \Inpsyde\Dbal\Transaction
+     * @return Transaction
      */
     public static function transaction(int $flags = Transaction::DEFAULT): Transaction
     {

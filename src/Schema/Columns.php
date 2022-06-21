@@ -6,7 +6,6 @@ namespace Inpsyde\Dbal\Schema;
 
 final class Columns implements \IteratorAggregate, \Countable
 {
-
     /**
      * @var array<string, Column>
      */
@@ -88,7 +87,7 @@ final class Columns implements \IteratorAggregate, \Countable
     }
 
     /**
-     * @return \Inpsyde\Dbal\Schema\Column|null
+     * @return Column|null
      */
     public function autoIncrement(): ?Column
     {
@@ -116,15 +115,10 @@ final class Columns implements \IteratorAggregate, \Countable
     /**
      * @param string $column
      * @param mixed $value
-     * @return array{0:integer|float|string|array|null, 1:string|null}
-     *
-     * @psalm-suppress MissingParamType
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
+     * @return array{integer|float|string|array|null, string|null}
      */
     public function selectColumnInfo(string $column, $value): array
     {
-        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-
         if (!$this->hasColumn($column)) {
             return [null, null];
         }
@@ -154,14 +148,14 @@ final class Columns implements \IteratorAggregate, \Countable
          * @var array<string, string> $formats
          * @var array<int, string> $missing
          */
-        [$parsedData, $formats, $missing] = $this->columnsInfoForData(null, $data, true, false);
+        [$parsedData, $formats, $missing] = $this->columnsInfoForData($data, true, false);
 
         return [$parsedData, $formats, $missing];
     }
 
     /**
      * @param array $data
-     * @return array{0:array<string, integer|float|string>, 1:array<string, string>}
+     * @return array{array<string, integer|float|string>, array<string, string>}
      */
     public function columnsInfoForDataUpdate(array $data): array
     {
@@ -170,14 +164,14 @@ final class Columns implements \IteratorAggregate, \Countable
          * @var array<string, string> $formats
          * @var array<int, string> $missing
          */
-        [$parsedData, $formats, $missing] = $this->columnsInfoForData(null, $data, false, true);
+        [$parsedData, $formats, $missing] = $this->columnsInfoForData($data, false, true);
 
         return [$parsedData, $formats, $missing];
     }
 
     /**
      * @param array $data
-     * @return array{0:array<string, integer|float|string>, 1:array<string, string>}
+     * @return array{array<string, integer|float|string>, array<string, string>}
      */
     public function columnsInfoForDataRead(array $data): array
     {
@@ -185,7 +179,7 @@ final class Columns implements \IteratorAggregate, \Countable
          * @var array<string, integer|float|string> $parsedData
          * @var array<string, string> $formats
          */
-        [$parsedData, $formats] = $this->columnsInfoForData(null, $data, false, false);
+        [$parsedData, $formats] = $this->columnsInfoForData($data, false, false);
 
         return [$parsedData, $formats];
     }
@@ -206,7 +200,6 @@ final class Columns implements \IteratorAggregate, \Countable
                 $this->parsers[$name] = ColumnValueEncoder::for($column);
             }
 
-            /** @var ColumnValueEncoder $parser */
             $parser = $this->parsers[$name];
             $parsed[$name] = $parser->decode($row[$name]);
         }
@@ -225,32 +218,25 @@ final class Columns implements \IteratorAggregate, \Countable
     /**
      * @return int
      */
-    public function count()
+    public function count(): int
     {
         return count($this->columns);
     }
 
     /**
-     * @param array<string, Column>|null $columns
      * @param array $data
      * @param bool $forInsert
      * @param bool $forUpdate
      * @return array
      */
-    private function columnsInfoForData(
-        ?array $columns,
-        array $data,
-        bool $forInsert,
-        bool $forUpdate
-    ): array {
-
+    private function columnsInfoForData(array $data, bool $forInsert, bool $forUpdate): array
+    {
         $parsedData = [];
         $formats = [];
         $missing = $forInsert ? [] : null;
         $forEditing = $forInsert || $forUpdate;
 
-        /** @var Column $column */
-        foreach (($columns ?? $this->columns) as $column) {
+        foreach ($this->columns as $column) {
             $name = $column->name();
             $required = $forInsert && $column->isRequiredOnInsert();
 
@@ -291,10 +277,7 @@ final class Columns implements \IteratorAggregate, \Countable
      * @param array $parsedData
      * @param array $formats
      * @param array|null $missing
-     * @return array{0:array, 1:array, 2:array|null}
-     *
-     * @psalm-suppress MissingParamType
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
+     * @return array{array, array, array|null}
      */
     private function columnInfoForData(
         string $name,
@@ -305,8 +288,6 @@ final class Columns implements \IteratorAggregate, \Countable
         array $formats = [],
         ?array $missing = null
     ): array {
-
-        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
 
         $column = $this->columns[$name] ?? null;
         if (!$column instanceof Column) {

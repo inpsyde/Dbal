@@ -10,13 +10,12 @@ use Inpsyde\Dbal\Query\Select;
 use Inpsyde\Dbal\Tests\TableOne;
 use Inpsyde\Dbal\Tests\UnitTestCase;
 
-/**
- * phpcs:disable Inpsyde.CodeQuality.FunctionLength
- */
 class ResultSetTest extends UnitTestCase
 {
-
-    public function testErrored()
+    /**
+     * @test
+     */
+    public function testErrored(): void
     {
         $error = new Error('Test');
         $set = ResultSet::errored($error);
@@ -44,7 +43,10 @@ class ResultSetTest extends UnitTestCase
         $set->toArray();
     }
 
-    public function testSingleRow()
+    /**
+     * @test
+     */
+    public function testSingleRow(): void
     {
         $row = [
             TableOne::ID => '1',
@@ -93,7 +95,10 @@ class ResultSetTest extends UnitTestCase
         );
     }
 
-    public function testMultiPage()
+    /**
+     * @test
+     */
+    public function testMultiPage(): void
     {
         $rows = [
             1 => [
@@ -228,7 +233,10 @@ class ResultSetTest extends UnitTestCase
         }
     }
 
-    public function testFilteredMapped()
+    /**
+     * @test
+     */
+    public function testFilteredMapped(): void
     {
         $rows = [
             [
@@ -292,7 +300,10 @@ class ResultSetTest extends UnitTestCase
         static::assertEquals($expected, $firstItem);
     }
 
-    public function testErroredToResult()
+    /**
+     * @test
+     */
+    public function testErroredToResult(): void
     {
         $error = new Error('Test');
         $result = ResultSet::errored($error)->toResult();
@@ -300,7 +311,10 @@ class ResultSetTest extends UnitTestCase
         static::assertSame('Test', $result->error()->getMessage());
     }
 
-    public function testSingleRowToResult()
+    /**
+     * @test
+     */
+    public function testSingleRowToResult(): void
     {
         $row = [
             TableOne::ID => '1',
@@ -326,7 +340,7 @@ class ResultSetTest extends UnitTestCase
                     $check = true; // make sure the above assertion ran.
                 },
                 static function () {
-                    static::assertFalse(true, 'bind "onError" branch should never be executed.');
+                    static::fail('bind "onError" branch should never be executed.');
                 }
             );
 

@@ -27,7 +27,6 @@ class WpQueryUtils
         };
 
         add_filter('posts_pre_query', $filter, PHP_INT_MAX, 2);
-        /** @psalm-suppress UndefinedDocblockClass */
         $query->query($args);
         remove_filter('posts_pre_query', $filter, PHP_INT_MAX);
 

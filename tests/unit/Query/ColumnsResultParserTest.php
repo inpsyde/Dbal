@@ -14,7 +14,10 @@ use Inpsyde\Dbal\Tests\UnitTestCase;
 
 class ColumnsResultParserTest extends UnitTestCase
 {
-    public function testNewInstanceFailForEmptySchemaName()
+    /**
+     * @test
+     */
+    public function testNewInstanceFailForEmptySchemaName(): void
     {
         $aliases = Aliases::new($this->initializeSampleTablesFinder());
         $this->expectExceptionMessageMatches('/empty/i');
@@ -22,7 +25,10 @@ class ColumnsResultParserTest extends UnitTestCase
         ColumnsResultParser::new(Columns::new(Column::int('x')), '', $aliases);
     }
 
-    public function testParsingEmptyDataReturnsEmptyData()
+    /**
+     * @test
+     */
+    public function testParsingEmptyDataReturnsEmptyData(): void
     {
         $table = new TableOne();
         $finder = $this->initializeSampleTablesFinder();
@@ -32,7 +38,10 @@ class ColumnsResultParserTest extends UnitTestCase
         static::assertSame([], $parser->parse([]));
     }
 
-    public function testParsingDataNotInTableReturnsItUntouched()
+    /**
+     * @test
+     */
+    public function testParsingDataNotInTableReturnsItUntouched(): void
     {
         $table = new TableOne();
         $finder = $this->initializeSampleTablesFinder();
@@ -49,7 +58,10 @@ class ColumnsResultParserTest extends UnitTestCase
         static::assertSame($data, $parser->parse($data));
     }
 
-    public function testParsingNumericArrayReturnsItUntouched()
+    /**
+     * @test
+     */
+    public function testParsingNumericArrayReturnsItUntouched(): void
     {
         $table = new TableOne();
         $finder = $this->initializeSampleTablesFinder();
@@ -61,7 +73,10 @@ class ColumnsResultParserTest extends UnitTestCase
         static::assertSame($data, $parser->parse($data));
     }
 
-    public function testParseDataWithoutAlias()
+    /**
+     * @test
+     */
+    public function testParseDataWithoutAlias(): void
     {
         $table = new TableOne();
         $finder = $this->initializeSampleTablesFinder();
@@ -85,7 +100,10 @@ class ColumnsResultParserTest extends UnitTestCase
         static::assertSame($expected, $parser->parse($data));
     }
 
-    public function testParsingDataFromAnotherTableDoNothing()
+    /**
+     * @test
+     */
+    public function testParsingDataFromAnotherTableDoNothing(): void
     {
         $finder = $this->initializeSampleTablesFinder();
         $aliases = Aliases::new($finder)->forColumn(TableTwo::ID, 'tid', TableTwo::NAME);
@@ -100,7 +118,10 @@ class ColumnsResultParserTest extends UnitTestCase
         static::assertSame($data, $parser->parse($data));
     }
 
-    public function testParse()
+    /**
+     * @test
+     */
+    public function testParse(): void
     {
         $table = new TableOne();
 

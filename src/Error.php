@@ -6,7 +6,6 @@ namespace Inpsyde\Dbal;
 
 final class Error extends \Error
 {
-
     /**
      * @var bool
      */
@@ -38,7 +37,7 @@ final class Error extends \Error
 
     /**
      * @param \Throwable $error
-     * @return \Inpsyde\Dbal\Error
+     * @return Error
      */
     public static function fromThrowable(\Throwable $error): Error
     {
@@ -86,7 +85,7 @@ final class Error extends \Error
 
     /**
      * @param \Throwable $error
-     * @return \Inpsyde\Dbal\Error
+     * @return Error
      */
     public function merge(\Throwable $error): Error
     {

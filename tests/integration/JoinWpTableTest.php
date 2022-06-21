@@ -15,7 +15,7 @@ class JoinWpTableTest extends QueriesTestCase
     /**
      * @test
      */
-    public function testJoinWpPostsTable()
+    public function testJoinWpPostsTable(): void
     {
         $id = wp_insert_post(
             [
@@ -62,7 +62,7 @@ class JoinWpTableTest extends QueriesTestCase
     /**
      * @test
      */
-    public function testBuildQueryViaWpQueryAndUseAsClause()
+    public function testBuildQueryViaWpQueryAndUseAsClause(): void
     {
         $id = wp_insert_post(
             [
@@ -119,7 +119,7 @@ class JoinWpTableTest extends QueriesTestCase
     /**
      * @test
      */
-    public function testSelectWithRawJoin()
+    public function testSelectWithRawJoin(): void
     {
         $write = Dbal::writeOn(TableOne::NAME);
         $baseData = [TableOne::TEXT => 'foo', TableOne::ENUM => 'yes'];

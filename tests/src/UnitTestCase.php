@@ -73,15 +73,11 @@ class UnitTestCase extends TestCase
     }
 
     /**
-     * @param string $result
+     * @param mixed $result
      * @return void
-     *
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
      */
     protected function infixNextWpdbQueryResult($result): void
     {
-        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-
         global $wpdb;
         /** @var DummyWpdb $wpdb */
 
@@ -89,15 +85,12 @@ class UnitTestCase extends TestCase
     }
 
     /**
-     * @param string $result
+     * @param int $num
+     * @param mixed $result
      * @return void
-     *
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
      */
     protected function infixNumWpdbQueryResult(int $num, $result): void
     {
-        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-
         global $wpdb;
         /** @var DummyWpdb $wpdb */
 

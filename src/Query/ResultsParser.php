@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Inpsyde\Dbal\Query;
 
 use Inpsyde\Dbal\Schema\Schemas;
-use Inpsyde\Dbal\Schema\Schema;
 
 class ResultsParser
 {
@@ -26,7 +25,6 @@ class ResultsParser
         }
 
         $parsers = [];
-        /** @var Schema $table */
         foreach ($tables as $table) {
             $parsers[] = ColumnsResultParser::new($table->columns(), $table->name(), $aliases);
         }

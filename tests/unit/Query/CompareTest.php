@@ -6,6 +6,7 @@ namespace Inpsyde\Dbal\Tests\Unit\Query;
 
 use Inpsyde\Dbal\Query\Aliases;
 use Inpsyde\Dbal\Query\Compare;
+use Inpsyde\Dbal\Schema\Schema;
 use Inpsyde\Dbal\Schema\SchemaFinder;
 use Inpsyde\Dbal\Tests\TableOne;
 use Inpsyde\Dbal\Tests\TableTwo;
@@ -13,7 +14,10 @@ use Inpsyde\Dbal\Tests\UnitTestCase;
 
 class CompareTest extends UnitTestCase
 {
-    public function testBothColumns()
+    /**
+     * @test
+     */
+    public function testBothColumns(): void
     {
         [$mainTable, $finder, $aliases, $left, $right] = $this->prepareDependencies();
         $compare = Compare::columns($left, $right, '>');
@@ -27,7 +31,10 @@ class CompareTest extends UnitTestCase
         static::assertSame($expected, $params, "For {$left}, {$right}");
     }
 
-    public function testBothColumnsLeftCasted()
+    /**
+     * @test
+     */
+    public function testBothColumnsLeftCasted(): void
     {
         [$mainTable, $finder, $aliases, $left, $right] = $this->prepareDependencies();
         $compare = Compare::columns($left, $right, '>')->castLeft(Compare::CAST_UNSIGNED);
@@ -41,7 +48,10 @@ class CompareTest extends UnitTestCase
         static::assertSame($expected, $params, "For {$left}, {$right}");
     }
 
-    public function testBothColumnsRightCasted()
+    /**
+     * @test
+     */
+    public function testBothColumnsRightCasted(): void
     {
         [$mainTable, $finder, $aliases, $left, $right] = $this->prepareDependencies();
         $compare = Compare::columns($left, $right)->castRight(Compare::CAST_TIME);
@@ -55,7 +65,10 @@ class CompareTest extends UnitTestCase
         static::assertSame($expected, $params, "For {$left}, {$right}");
     }
 
-    public function testBothColumnsBothCasted()
+    /**
+     * @test
+     */
+    public function testBothColumnsBothCasted(): void
     {
         [$mainTable, $finder, $aliases, $left, $right] = $this->prepareDependencies();
         $compare = Compare::columns($left, $right)
@@ -71,7 +84,10 @@ class CompareTest extends UnitTestCase
         static::assertSame($expected, $params, "For {$left}, {$right}");
     }
 
-    public function testColumnAndValue()
+    /**
+     * @test
+     */
+    public function testColumnAndValue(): void
     {
         [$mainTable, $finder, $aliases, $leftCol] = $this->prepareDependencies();
         $compare = Compare::columnValue($leftCol, 32);
@@ -83,7 +99,10 @@ class CompareTest extends UnitTestCase
         static::assertSame($expected, $params, "For {$leftCol}");
     }
 
-    public function testColumnAndRawValue()
+    /**
+     * @test
+     */
+    public function testColumnAndRawValue(): void
     {
         [$mainTable, $finder, $aliases, $leftCol] = $this->prepareDependencies();
         $compare = Compare::columnRawValue($leftCol, 'NOW()');
@@ -94,7 +113,10 @@ class CompareTest extends UnitTestCase
         static::assertSame($expected, $params, "For {$leftCol}");
     }
 
-    public function testColumnCastedAndValue()
+    /**
+     * @test
+     */
+    public function testColumnCastedAndValue(): void
     {
         [$mainTable, $finder, $aliases, $leftCol] = $this->prepareDependencies();
         $compare = Compare::columnValue($leftCol, '0000-00-00 00:00:00', '>=')
@@ -108,7 +130,10 @@ class CompareTest extends UnitTestCase
         static::assertSame($expected, $params, "For {$leftCol}");
     }
 
-    public function testColumnCastedAndRawValue()
+    /**
+     * @test
+     */
+    public function testColumnCastedAndRawValue(): void
     {
         [$mainTable, $finder, $aliases, $leftCol] = $this->prepareDependencies();
         $compare = Compare::columnRawValue($leftCol, 'NOW()')->castLeft(Compare::CAST_DATETIME);
@@ -136,13 +161,7 @@ class CompareTest extends UnitTestCase
     }
 
     /**
-     * @return array{
-     *  0:\Inpsyde\Dbal\Schema\Schema,
-     *  1:\Inpsyde\Dbal\Schema\SchemaFinder,
-     *  2:Aliases,
-     *  3:string,
-     *  4:string
-     * }
+     * @return array{Schema, SchemaFinder, Aliases, string, string}
      */
     private function prepareDependencies(): array
     {

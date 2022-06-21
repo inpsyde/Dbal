@@ -13,7 +13,6 @@ use Inpsyde\Dbal\Schema\Indexes;
 class TableTwo implements InstallableSchema
 {
     public const NAME = 'tests_sample_table_two';
-
     public const ID = 'id';
     public const VARCHAR = 'varchar';
     public const DECIMAL = 'decimal';

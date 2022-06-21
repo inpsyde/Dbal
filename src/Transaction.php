@@ -27,7 +27,7 @@ class Transaction
 
     /**
      * @param int $flags
-     * @return \Inpsyde\Dbal\Transaction
+     * @return Transaction
      */
     public static function new(int $flags = self::DEFAULT): Transaction
     {
@@ -155,8 +155,6 @@ class Transaction
      */
     private function applyCallback(callable $callback, callable ...$callbacks): Result
     {
-        // phpcs:enable Inpsyde.CodeQuality.ReturnTypeDeclaration
-
         array_unshift($callbacks, $callback);
 
         $result = Result::new(null);

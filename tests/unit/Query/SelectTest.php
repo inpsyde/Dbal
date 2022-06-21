@@ -11,12 +11,13 @@ use Inpsyde\Dbal\Tests\TableOne;
 use Inpsyde\Dbal\Tests\TablePivot;
 use Inpsyde\Dbal\Tests\TableTwo;
 use Inpsyde\Dbal\Tests\UnitTestCase;
-use DateTime;
-use DateTimeImmutable;
 
 class SelectTest extends UnitTestCase
 {
-    public function testJoinViaPivot()
+    /**
+     * @test
+     */
+    public function testJoinViaPivot(): void
     {
         $finder = $this->initializeSampleTablesFinder();
 
@@ -39,7 +40,10 @@ QUERY;
         $this->compareQueries($expected, $select->buildSqlNoEscape());
     }
 
-    public function testCompletePaginatedSelect()
+    /**
+     * @test
+     */
+    public function testCompletePaginatedSelect(): void
     {
         $finder = $this->initializeSampleTablesFinder();
 
@@ -82,7 +86,10 @@ QUERY;
         $this->compareQueries($expected, $select->buildSqlNoEscape());
     }
 
-    public function testWhereEncoding()
+    /**
+     * @test
+     */
+    public function testWhereEncoding(): void
     {
         $finder = $this->initializeSampleTablesFinder();
 

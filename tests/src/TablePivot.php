@@ -13,7 +13,6 @@ use Inpsyde\Dbal\Schema\Indexes;
 class TablePivot implements InstallableSchema
 {
     public const NAME = 'tests_sample_table_pivot';
-
     public const ID = 'id';
     public const ONE = 'one_id';
     public const TWO = 'two_id';

@@ -13,7 +13,10 @@ use Inpsyde\Dbal\Tests\UnitTestCase;
 
 class WhereTest extends UnitTestCase
 {
-    public function testComplexClause()
+    /**
+     * @test
+     */
+    public function testComplexClause(): void
     {
         $main = new TableOne();
         $finder = $this->initializeSampleTablesFinder();

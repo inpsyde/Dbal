@@ -249,7 +249,7 @@ final class WpSchemas
             // phpcs:disable Inpsyde.CodeQuality.VariablesName.SnakeCaseVar
 
             /**
-             * Requiring `schema.php` changes two globals as side-effect, so we first backup and
+             * Requiring `schema.php` changes two globals as side effect, so we first back up and
              * then restore those, to make the whole operation transparent.
              *
              * @psalm-suppress InvalidGlobal

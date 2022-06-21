@@ -9,7 +9,6 @@ namespace Inpsyde\Dbal;
  */
 final class Result
 {
-
     /**
      * @var mixed
      */
@@ -21,15 +20,11 @@ final class Result
     private $error;
 
     /**
-     * @param $value
+     * @param mixed $value
      * @return Result
-     *
-     * @psalm-suppress MissingParamType
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
      */
     public static function new($value): Result
     {
-        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
         if ($value instanceof Result) {
             return new static($value->value, $value->error);
         }
@@ -48,13 +43,9 @@ final class Result
     /**
      * @param mixed $value
      * @param T $error
-     *
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-     * @psalm-suppress MissingParamType
      */
     private function __construct($value, ?Error $error)
     {
-        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
         $this->value = $value;
         $this->error = $error;
     }
@@ -87,12 +78,9 @@ final class Result
 
     /**
      * @return mixed
-     *
-     * phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration
      */
     public function extract()
     {
-        //phpcs:enable Inpsyde.CodeQuality.ReturnTypeDeclaration
         $this->assert();
 
         return $this->value;
@@ -165,25 +153,16 @@ final class Result
             $error = $previous->merge($error);
         }
 
-        /** @var Result<Error> $instance */
-        $instance = static::new($error);
-
-        return $instance;
+        return static::new($error);
     }
 
     /**
      * @param callable $callback
      * @param mixed $returnIfError
-     * @return mixed|null
-     *
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-     * phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration
+     * @return mixed
      */
     public function extractWith(callable $callback, $returnIfError = null)
     {
-        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-        // phpcs:enable Inpsyde.CodeQuality.ReturnTypeDeclaration
-
         if (!$this->isErrored()) {
             return $callback($this->value);
         }

@@ -169,15 +169,10 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
     }
 
     /**
-     * @return mixed|null
-     *
-     * @psalm-suppress MissingReturnType
-     * phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration
+     * @return mixed
      */
     public function first()
     {
-        // phpcs:enable Inpsyde.CodeQuality.ReturnTypeDeclaration
-
         if (!$this->isValid()) {
             return null;
         }
@@ -282,7 +277,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
     /**
      * @return int
      */
-    public function count()
+    public function count(): int
     {
         if (!$this->isValid()) {
             return 0;
@@ -323,7 +318,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
     /**
      * @return array
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         if ($this->hasErrors()) {
             return ['errors' => $this->error->allMessages()];

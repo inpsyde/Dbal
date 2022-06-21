@@ -9,7 +9,10 @@ use Inpsyde\Dbal\Tests\UnitTestCase;
 
 class PhpErrorsTest extends UnitTestCase
 {
-    public function testConvertToException()
+    /**
+     * @test
+     */
+    public function testConvertToException(): void
     {
         $phpErrors = PhpErrors::convertToExceptions();
 
@@ -19,7 +22,10 @@ class PhpErrorsTest extends UnitTestCase
         $phpErrors->restoreHandler();
     }
 
-    public function testConvertToExceptionDoNothingIfSilenced()
+    /**
+     * @test
+     */
+    public function testConvertToExceptionDoNothingIfSilenced(): void
     {
         $phpErrors = PhpErrors::convertToExceptions();
 

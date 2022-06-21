@@ -13,7 +13,6 @@ use Inpsyde\Dbal\Schema\Indexes;
 class TableOne implements InstallableSchema
 {
     public const NAME = 'tests_sample_table';
-
     public const ID = 'id';
     public const POST_ID = 'post_id';
     public const TEXT = 'text';
