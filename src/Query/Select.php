@@ -1279,18 +1279,19 @@ class Select
         $join = null;
 
         if ($raw !== null) {
-            /** @psalm-suppress PossiblyNullArgument */
+            /** @var string $alias */
             $join = $type === Join::LEFT
                 ? Join::leftRaw($source, $raw, $alias, $columnOnSource, $columnOnJoined)
                 : Join::innerRaw($source, $raw, $alias, $columnOnSource, $columnOnJoined);
         } elseif ($where) {
-            /** @var Schema $target $join */
+            /** @var Schema $target */
             $join = $type === Join::LEFT
                 ? Join::leftWhere($source, $target, $where, $alias)
                 : Join::innerWhere($source, $target, $where, $alias);
         }
 
         if (!$join) {
+            /** @var Schema $target */
             $join = $type === Join::LEFT
                 ? Join::left($source, $target, $columnOnSource, $columnOnJoined, $alias)
                 : Join::inner($source, $target, $columnOnSource, $columnOnJoined, $alias);
@@ -1304,6 +1305,7 @@ class Select
         $this->resetMemoized();
 
         if ($alias) {
+            /** @psalm-suppress PossiblyNullReference */
             ($raw !== null)
                 ? $this->aliases->forRawSchema($alias)
                 : $this->aliases->forSchema($target->name(), $alias);
@@ -1311,6 +1313,7 @@ class Select
         }
 
         if ($this->errors->isEmpty()) {
+            /** @var Schema $target */
             $joinName = $alias ?? $target->name();
             $this->joins[$joinName] = $join;
         }
