@@ -62,7 +62,7 @@ final class WpInstallExtension implements BeforeFirstTestHook, AfterLastTestHook
             return;
         }
 
-        if ($filter && stripos($filter, 'integration') === false) {
+        if (!$suite && $filter && stripos($filter, 'integration') === false) {
             return;
         }
 

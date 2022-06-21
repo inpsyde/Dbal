@@ -4,13 +4,13 @@ on:
     workflow_dispatch:
     pull_request:
         paths:
-            - '**/integration-tests.yml'
+            - '**/integration-tests'
             - '**/docker/**'
             - '**.php'
             - 'phpunit*'
     push:
         paths:
-            - '**/integration-tests.yml'
+            - '**/integration-tests'
             - '**/docker/**'
             - '**.php'
             - 'phpunit*'
@@ -20,23 +20,34 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
-    build:
+    integration-tests:
         runs-on: ubuntu-latest
-        if: ${{ !contains(github.event.head_commit.message, 'integration skip') }}
+        if: ${{ !contains(github.event.head_commit.message, 'integration-tests skip') }}
         continue-on-error: true
         strategy:
             fail-fast: false
             matrix:
-                php-versions: [ 'php72', 'php73', 'php74' ]
+                php-version: [ '7.2', '7.3', '7.4' ]
+                wp-version: [ '5.8', '5.9', '6.0' ]
         steps:
-            -   uses: actions/checkout@v2
+            -   name: Checkout
+                uses: actions/checkout@v3
 
-            -   name: Copy wait-for script
-                uses: canastro/copy-file-action@master
+            -   name: Setup PHP
+                uses: shivammathur/setup-php@v2
                 with:
-                    source: "tests/docker/wait-for.sh"
-                    target: "tests/docker/${{ matrix.php-versions }}/wait-for.sh"
+                    php-version: ${{ matrix.php-version }}
+                    coverage: none
 
-            -   name: Run integration tests
-                working-directory: ./tests/docker
-                run: docker-compose run -T ${{ matrix.php-versions }} sh -c "wait-for.sh dbal-mysql:3306 -t 15 -- && composer install -q -n -a --no-progress --prefer-dist && composer tests:integration"
+            -   name: Adjust Dependencies
+                run: |
+                    composer config --unset repositories.0
+                    composer remove inpsyde/php-coding-standards inpsyde/wp-stubs vimeo/psalm roots/wordpress --dev --no-update
+                    composer require roots/wordpress:{{ matrix.wp-version }} --no-update
+
+            -   name: Install Dependencies
+                uses: ramsey/composer-install@v2
+
+            -   name: Run integration tests (PHP ${{ matrix.php-version }}, WP {{ matrix.wp-version }})
+                working-directory: ./tests
+                run: integration-tests.sh ${{ matrix.php-version }}
