@@ -47,5 +47,6 @@ jobs:
                 uses: ramsey/composer-install@v2
 
             -   name: Run integration tests (PHP ${{ matrix.php-version }}, WP ${{ matrix.wp-version }})
-                working-directory: ./tests
-                run: integration-tests.sh ${{ matrix.php-version }}
+                run: |
+                    chmod u+x ./tests/integration-tests.sh
+                    ./tests/integration-tests.sh ${{ matrix.php-version }}
