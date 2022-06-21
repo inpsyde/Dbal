@@ -1284,6 +1284,7 @@ class Select
                 ? Join::leftRaw($source, $raw, $alias, $columnOnSource, $columnOnJoined)
                 : Join::innerRaw($source, $raw, $alias, $columnOnSource, $columnOnJoined);
         } elseif ($where) {
+            /** @var Schema $target $join */
             $join = $type === Join::LEFT
                 ? Join::leftWhere($source, $target, $where, $alias)
                 : Join::innerWhere($source, $target, $where, $alias);
@@ -1496,7 +1497,7 @@ class Select
      * @param string $targetTable
      * @param string|null $alias
      * @param string|null $raw
-     * @return array{Schema, Schema}|null
+     * @return array{Schema, Schema|null}|null
      */
     private function determineJoinSchema(
         ?string $sourceTable,
@@ -1543,7 +1544,7 @@ class Select
             }
         }
 
-        if (!$source || !$target) {
+        if (!$source) {
             return null;
         }
 
