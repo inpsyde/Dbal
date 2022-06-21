@@ -1,14 +1,33 @@
-name: PHP integration tests
-on: [push, pull_request]
+name: Integration Tests
+
+on:
+    workflow_dispatch:
+    pull_request:
+        paths:
+            - '**/integration-tests.yml'
+            - '**/docker/**'
+            - '**.php'
+            - 'phpunit*'
+    push:
+        paths:
+            - '**/integration-tests.yml'
+            - '**/docker/**'
+            - '**.php'
+            - 'phpunit*'
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
 jobs:
     build:
         runs-on: ubuntu-latest
-        if: "!contains(github.event.head_commit.message, 'ci skip')"
+        if: ${{ !contains(github.event.head_commit.message, 'integration skip') }}
         continue-on-error: true
         strategy:
             fail-fast: false
             matrix:
-                php-versions: ['php72', 'php73', 'php74']
+                php-versions: [ 'php72', 'php73', 'php74' ]
         steps:
             -   uses: actions/checkout@v2
 
