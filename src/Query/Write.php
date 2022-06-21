@@ -296,7 +296,6 @@ class Write
         $where = [];
         $whereFormats = [];
 
-        /** @var \Inpsyde\Dbal\Schema\Column $column */
         foreach ($columns as $column) {
             $name = $column->name();
 
@@ -382,7 +381,7 @@ class Write
     }
 
     /**
-     * @param array|null $missing
+     * @param list<string>|null $missing
      * @param string $tableName
      * @param bool $isUpdate
      */

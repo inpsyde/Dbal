@@ -437,11 +437,7 @@ class Where
                 continue;
             }
 
-            /**
-             * @var string $col
-             * @psalm-suppress PossiblyInvalidArgument
-             * @psalm-suppress InvalidArgument
-             */
+            /** @var string $col */
             $info = $this->columnAndSchemaInfo($col, ...$args);
 
             if (!$info) {
@@ -515,6 +511,7 @@ class Where
         $tableName = $table ?? $defaultSchema->name();
         [$tableRealName, $schema, $tableAlias] = $aliases->resolveSchema($tableName);
         $aliases->mergeErrors($this->errors);
+        /** @psalm-suppress ParadoxicalCondition */
         if (!$this->errors->isEmpty() || !$schema) {
             return null;
         }
@@ -604,12 +601,13 @@ class Where
             $format = '%s';
         }
 
-        $multiValue = $columnValue
-            && is_array($columnValue)
+        $multiValue = is_array($columnValue)
             && in_array($operator, [self::IN, self::NOT_IN], true);
 
         if (!$multiValue) {
-            $operator = $operator ?? self::EQ;
+            if ($operator === null) {
+                $operator = ($columnValue === null) ? self::IS : self::EQ;
+            }
             $clause and $clause .= " {$type} ";
             $columnClause = "{$column} {$operator} {$format}";
             $columnValue = $this->encodeValue($columnValue, $valueColumnObject);
@@ -617,31 +615,16 @@ class Where
             return $clause . (string)$wpdb->prepare($columnClause, $columnValue);
         }
 
-        if ($multiValue) {
-            $parsedValue = [];
-            foreach ($columnValue as $columnSingleValue) {
-                $parsedValue[] = $this->encodeValue($columnSingleValue, $valueColumnObject);
-            }
-
-            $inFormat = rtrim(str_repeat("{$format},", count($parsedValue)), ',');
-            $clause and $clause .= " {$type} ";
-            $columnClause = "{$column} {$operator} ({$inFormat}) ";
-
-            return $clause . (string)$wpdb->prepare($columnClause, ...$parsedValue);
+        $parsedValue = [];
+        foreach ($columnValue as $columnSingleValue) {
+            $parsedValue[] = $this->encodeValue($columnSingleValue, $valueColumnObject);
         }
 
-        if ($operator === null) {
-            $operator = 'NULL';
-        }
+        $inFormat = rtrim(str_repeat("{$format},", count($parsedValue)), ',');
+        $clause and $clause .= " {$type} ";
+        $columnClause = "{$column} {$operator} ({$inFormat}) ";
 
-        $type = gettype($columnValue);
-
-        $this->errors->withError(
-            "Error building WHERE clause for {$column}: operator {$operator} is not compatible "
-            . "with given column value of type {$type}."
-        );
-
-        return $clause;
+        return $clause . (string)$wpdb->prepare($columnClause, ...$parsedValue);
     }
 
     /**

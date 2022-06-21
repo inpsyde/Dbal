@@ -974,7 +974,7 @@ final class Column
         }
 
         if ($collation) {
-            $collationParts = explode('_', (string)$collation, 2);
+            $collationParts = explode('_', $collation, 2);
             if (empty($collationParts[1])) {
                 $collation = null;
             }
@@ -1295,6 +1295,7 @@ final class Column
         }
 
         $notNull = $this->attributes[self::ATTR_NOT_NULL] ?? false;
+        /** @var list<string> $choices */
         $choices = (array)($this->attributes[self::ATTR_CHOICES] ?? ['']);
 
         $def = "{$this->type}('" . implode("','", $choices) . "')";

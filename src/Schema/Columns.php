@@ -135,18 +135,14 @@ final class Columns implements \IteratorAggregate, \Countable
 
     /**
      * @param array $data
-     * @return array{
-     *  0:array<string, integer|float|string>,
-     *  1:array<string, string>,
-     *  2:array<int, string>
-     * }
+     * @return array{array<string, integer|float|string>, array<string, string>, list<string>}
      */
     public function columnsInfoForDataInsert(array $data): array
     {
         /**
          * @var array<string, integer|float|string> $parsedData
          * @var array<string, string> $formats
-         * @var array<int, string> $missing
+         * @var list<string> $missing
          */
         [$parsedData, $formats, $missing] = $this->columnsInfoForData($data, true, false);
 
@@ -155,14 +151,14 @@ final class Columns implements \IteratorAggregate, \Countable
 
     /**
      * @param array $data
-     * @return array{array<string, integer|float|string>, array<string, string>}
+     * @return array{array<string, integer|float|string>, array<string, string>, list<string>}
      */
     public function columnsInfoForDataUpdate(array $data): array
     {
         /**
          * @var array<string, integer|float|string> $parsedData
          * @var array<string, string> $formats
-         * @var array<int, string> $missing
+         * @var list<string> $missing
          */
         [$parsedData, $formats, $missing] = $this->columnsInfoForData($data, false, true);
 

@@ -113,6 +113,7 @@ class Transaction
             $result = $result->mergeError(Error::fromThrowable($throwable));
             $rollback = true;
         } finally {
+            /** @psalm-suppress PossiblyInvalidArgument */
             $rollback and $result = $this->executeQuery('ROLLBACK;', $result);
             $phpErrors->restoreHandler();
             $wpdb->suppress_errors($suppressErrors);
@@ -168,6 +169,7 @@ class Transaction
             $result = $result->mergeError(new Error($wpdb->last_error));
         }
 
+        /** @psalm-suppress PossiblyInvalidArgument */
         return $result->isErrored() ? $result : $this->executeQuery('COMMIT;', $result);
     }
 

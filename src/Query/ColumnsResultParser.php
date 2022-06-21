@@ -73,12 +73,12 @@ class ColumnsResultParser
                 continue;
             }
 
-            /** @var string $column */
             [$column, $alias, , $tableRealName] = $this->aliases->resolveColumn($key);
             if ($tableRealName && ($tableRealName !== $this->schema)) {
                 continue;
             }
 
+            /** @var string $column */
             $alias and $columnsToAlias[$column] = $alias;
             $toParse[$column] = $value;
         }

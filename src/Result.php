@@ -6,6 +6,10 @@ namespace Inpsyde\Dbal;
 
 /**
  * @template T of Error|null
+ *
+ * @psalm-suppress MixedReturnTypeCoercion
+ * @psalm-suppress InvalidReturnType
+ * @psalm-suppress InvalidReturnStatement
  */
 final class Result
 {
@@ -21,7 +25,7 @@ final class Result
 
     /**
      * @param mixed $value
-     * @return Result
+     * @return Result<T>
      */
     public static function new($value): Result
     {
@@ -78,6 +82,9 @@ final class Result
 
     /**
      * @return mixed
+     *
+     * @psalm-assert Result<null> $this
+     * @psalm-assert null $this->error
      */
     public function extract()
     {
@@ -88,6 +95,9 @@ final class Result
 
     /**
      * @return void
+     *
+     * @psalm-assert Result<null> $this
+     * @psalm-assert null $this->error
      */
     public function assert(): void
     {
@@ -97,18 +107,17 @@ final class Result
     }
 
     /**
-     * @return Error|null
-     * @psalm-return T
+     * @return T
      */
     public function error(): ?Error
     {
-        return $this->error ? $this->error : null;
+        return $this->error ?: null;
     }
 
     /**
      * @param callable|null $onSuccess
      * @param callable|null $onError
-     * @return Result
+     * @return Result<T>
      */
     public function bind(?callable $onSuccess = null, ?callable $onError = null): Result
     {
@@ -125,8 +134,8 @@ final class Result
     }
 
     /**
-     * @param Result $result
-     * @return Result
+     * @param Result<T> $result
+     * @return Result<T>
      */
     public function merge(Result $result): Result
     {

@@ -1351,6 +1351,7 @@ class Select
                 : $this->aliases->resolveSchema($tableName);
 
             $this->aliases->mergeErrors($this->errors);
+            /** @psalm-suppress ParadoxicalCondition */
             if (!$this->errors->isEmpty() || (!$schema && !$isRawAlias)) {
                 return $this;
             }
@@ -1788,6 +1789,7 @@ class Select
 
         [$tableRealName, $schema, $tableAlias] = $this->aliases->resolveSchema($tableName);
         $this->aliases->mergeErrors($this->errors);
+        /** @psalm-suppress ParadoxicalCondition */
         if (!$this->errors->isEmpty()) {
             return null;
         }

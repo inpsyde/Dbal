@@ -67,10 +67,7 @@ class ColumnValueEncoder
 
     /**
      * @param mixed $value
-     * @return mixed|null
-     *
-     * @psalm-suppress MissingReturnType
-     * @psalm-suppress MissingParamType
+     * @return mixed
      */
     public function decode($value)
     {
@@ -386,9 +383,10 @@ class ColumnValueEncoder
         }
 
         if (is_string($value)) {
+            /** @psalm-suppress UnusedFunctionCall */
             json_decode($value);
 
-            return json_last_error() === JSON_ERROR_NONE ? (string)$value : $default;
+            return json_last_error() === JSON_ERROR_NONE ? $value : $default;
         }
 
         if (is_int($value)) {

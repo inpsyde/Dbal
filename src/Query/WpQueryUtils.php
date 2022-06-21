@@ -15,7 +15,12 @@ class WpQueryUtils
         $sql = '';
         $query = new \WP_Query();
 
-        /** @wp-hook posts_pre_query */
+        /**
+         * @wp-hook posts_pre_query
+         *
+         * @psalm-suppress MissingClosureParamType
+         * @psalm-suppress MissingClosureReturnType
+         */
         $filter = static function ($null, $currentQuery) use (&$sql, $query) {
             if ($currentQuery === $query) {
                 $sql = $query->request;

@@ -85,13 +85,21 @@ class Cache
      */
     public function set(string $key, $value): void
     {
+        if (is_resource($value)) {
+            return;
+        }
+
+        /** @var string|object|array $strValue */
+        $strValue = is_scalar($value) ? (string)$value : ($value ?? '');
+
         /*
          * When using external object cache, do not store values bigger than 1Mb, and use a static
          * array as cache instead.
          */
         if (
-            wp_using_ext_object_cache()
-            && ((strlen((string)maybe_serialize($value))) > 1024000)
+            ($value !== null)
+            && wp_using_ext_object_cache()
+            && ((strlen((string)maybe_serialize($strValue))) > 1024000)
         ) {
             self::$fallback[$key] = $value;
 

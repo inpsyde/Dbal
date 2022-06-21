@@ -7,7 +7,7 @@ namespace Inpsyde\Dbal\Schema;
 final class Indexes
 {
     /**
-     * @var array<int,Index>
+     * @var list<Index>
      */
     private $keys;
 
@@ -23,18 +23,20 @@ final class Indexes
      */
     public static function new(Index $key, Index ...$keys): Indexes
     {
-        return new static($key, ...$keys);
+        return new static($key, ...array_values($keys));
     }
 
     /**
      * @param Index $key
-     * @param Index ...$keys
+     * @param list<Index> $keys
      */
     private function __construct(Index $key, Index ...$keys)
     {
         array_unshift($keys, $key);
 
+        $this->keys = [];
         foreach ($keys as $key) {
+            $this->keys[] = $key;
             if (!$key->isPrimary()) {
                 continue;
             }
@@ -45,8 +47,6 @@ final class Indexes
 
             $this->primary = $key;
         }
-
-        $this->keys = $keys;
     }
 
     /**

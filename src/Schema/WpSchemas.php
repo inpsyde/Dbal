@@ -205,12 +205,12 @@ final class WpSchemas
         }
 
         $sql = $this->loadWpSchema();
-        $definitionStartParts = explode("CREATE TABLE {$table} (", $sql, 2) ?: ['', ''];
+        $definitionStartParts = explode("CREATE TABLE {$table} (", $sql, 2);
         if (empty($definitionStartParts[1])) {
             return null;
         }
 
-        $rawSchemaParts = explode("PRIMARY KEY", $definitionStartParts[1], 2) ?: [''];
+        $rawSchemaParts = explode("PRIMARY KEY", $definitionStartParts[1], 2);
         if (empty($rawSchemaParts[1])) {
             return null;
         }
