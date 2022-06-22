@@ -31,21 +31,6 @@ jobs:
             -   name: Checkout
                 uses: actions/checkout@v3
 
-            -   name: Create Docker images cache folder
-                run: sudo mkdir -p /home/docker-cache
-
-            -   name: Save Docker images cache
-                id: docker-images-cache
-                uses: actions/cache@v3
-                with:
-                    path: /home/docker-cache
-                    key: ${{ runner.os }}-docker-images
-
-            -   if: ${{ steps.docker-images-cache.outputs.cache-hit == true }}
-                name: Copy Docker images data from cache folder
-                continue-on-error: true
-                run: sudo cp -rf /home/docker-cache/ /var/lib/docker/overlay2/
-
             -   name: Setup PHP
                 uses: shivammathur/setup-php@v2
                 with:
@@ -66,8 +51,3 @@ jobs:
                 run: |
                     chmod u+x ./integration-tests.sh
                     ./integration-tests.sh ${{ matrix.php-version }}
-
-            -   if: ${{ steps.docker-images-cache.outputs.cache-hit == false }}
-                name: Copy Docker images data to cache folder
-                run: sudo cp -rf /var/lib/docker/overlay2/ /home/docker-cache/
-                continue-on-error: true
