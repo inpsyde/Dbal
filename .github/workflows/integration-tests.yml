@@ -31,7 +31,11 @@ jobs:
             -   name: Checkout
                 uses: actions/checkout@v3
 
-            -   run: docker info
+            -   name: Restore Docker images cache
+                uses: actions/cache@v3
+                with:
+                    path: /var/lib/docker/overlay2
+                    key: ${{ runner.os }}-docker-images
 
             -   name: Setup PHP
                 uses: shivammathur/setup-php@v2
