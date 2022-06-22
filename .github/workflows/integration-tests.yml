@@ -32,7 +32,7 @@ jobs:
                 uses: actions/checkout@v3
 
             -   name: Create Docker images cache folder
-                run: mkdir -p /home/docker-cache
+                run: sudo mkdir -p /home/docker-cache
 
             -   name: Save Docker images cache
                 id: docker-images-cache
