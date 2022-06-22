@@ -13,7 +13,7 @@ if [[ ! "$2" == "" ]]; then
 fi
 
 cd "docker"
-docker-compose up -d
+docker-compose --profile "php${PHP_VER}" up -d
 sleep 5
 docker-compose run --rm "php${PHP_VER}" sh -c "${COMPOSER_TESTS}"
 docker-compose down --volumes

@@ -1,6 +1,7 @@
-version: '3.7'
+version: '3.9'
 services:
     php80:
+        profiles: ["php80"]
         build:
             context: ./php80
         container_name: dbal-php-80
@@ -16,6 +17,7 @@ services:
                 source: ../../
                 target: /app
     php74:
+        profiles: ["php74"]
         build:
             context: ./php74
         container_name: dbal-php-74
@@ -31,6 +33,7 @@ services:
                 source: ../../
                 target: /app
     php73:
+        profiles: ["php73"]
         build:
             context: ./php73
         container_name: dbal-php-73
@@ -46,6 +49,7 @@ services:
                 source: ../../
                 target: /app
     php72:
+        profiles: ["php72"]
         build:
             context: ./php72
         container_name: dbal-php-72
