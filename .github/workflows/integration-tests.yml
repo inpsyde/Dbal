@@ -31,10 +31,7 @@ jobs:
             -   name: Checkout
                 uses: actions/checkout@v3
 
-            -   uses: whoan/docker-build-with-cache-action@v5
-                with:
-                    compose_file: ./tests/docker/docker-compose.yml
-                    push_image_and_stages: false
+            -   run: docker info
 
             -   name: Setup PHP
                 uses: shivammathur/setup-php@v2
