@@ -51,7 +51,6 @@ jobs:
 
             -   name: Cache Docker Layers
                 uses: satackey/action-docker-layer-caching
-                continue-on-error: true
 
             -   name: Run integration tests
                 working-directory: ./tests
