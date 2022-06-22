@@ -50,7 +50,8 @@ jobs:
                 uses: ramsey/composer-install@v2
 
             -   name: Cache Docker Layers
-                uses: satackey/action-docker-layer-caching
+                uses: satackey/action-docker-layer-caching@main
+                continue-on-error: true
 
             -   name: Run integration tests
                 working-directory: ./tests
