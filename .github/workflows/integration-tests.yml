@@ -31,7 +31,7 @@ jobs:
             -   name: Checkout
                 uses: actions/checkout@v3
 
-            -   name: Restore Docker images cache
+            -   name: Save Docker images cache
                 uses: actions/cache@v3
                 with:
                     path: /var/lib/docker/overlay2
@@ -43,13 +43,13 @@ jobs:
                     php-version: ${{ matrix.php-version }}
                     coverage: none
 
-            -   name: Adjust Dependencies
+            -   name: Adjust Composer Dependencies
                 run: |
                     composer config --unset repositories.0
                     composer remove inpsyde/php-coding-standards inpsyde/wp-stubs vimeo/psalm roots/wordpress --dev --no-update
                     composer require roots/wordpress:${{ matrix.wp-version }} --no-update
 
-            -   name: Install Dependencies
+            -   name: Install Composer Dependencies
                 uses: ramsey/composer-install@v2
 
             -   name: Run integration tests
