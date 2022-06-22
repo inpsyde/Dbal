@@ -24,4 +24,4 @@ jobs:
         if: ${{ !contains(github.event.head_commit.message, 'cs skip') }}
         uses: inpsyde/reusable-workflows/.github/workflows/coding-standards-php.yml@main
         secrets:
-            COMPOSER_AUTH_JSON: ${{ secrets.COMPOSER_AUTH_JSON }}
+            COMPOSER_AUTH_JSON: ${{ secrets.PACKAGIST_AUTH_JSON }}
