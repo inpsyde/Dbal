@@ -119,4 +119,17 @@ class UnitTestCase extends TestCase
 
         return SchemaFinder::new(WpSchemas::new(), $schemas);
     }
+
+    /**
+     * @param string $expectedRaw
+     * @param string $actualRaw
+     * @return void
+     */
+    protected function assertSameQuery(string $expectedRaw, string $actualRaw): void
+    {
+        $expected = trim(preg_replace('/\s+/', ' ', $expectedRaw));
+        $actual = trim(preg_replace('/\s+/', ' ', $actualRaw));
+
+        static::assertSame($expected, $actual);
+    }
 }

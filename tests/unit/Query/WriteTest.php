@@ -38,7 +38,7 @@ INSERT INTO `wp_1_tests_sample_table`
     VALUES (123, '', '{$serialized}', 1, '1.23')
 SQL;
         global $wpdb;
-        $this->compareQueries($expectedQuery, $wpdb->last_query);
+        $this->assertSameQuery($expectedQuery, $wpdb->last_query);
     }
 
     /**
@@ -87,7 +87,7 @@ INSERT INTO `wp_1_tests_sample_table` (`post_id`, `text`, `integer`, `datetime`)
 SQL;
 
         global $wpdb;
-        $this->compareQueries($expectedQuery, $wpdb->last_query);
+        $this->assertSameQuery($expectedQuery, $wpdb->last_query);
     }
 
     /**
@@ -114,7 +114,7 @@ WHERE `wp_1_tests_sample_table`.`id` >= 1
 SQL;
 
         global $wpdb;
-        $this->compareQueries($expectedQuery, $wpdb->last_query);
+        $this->assertSameQuery($expectedQuery, $wpdb->last_query);
     }
 
     /**
@@ -140,7 +140,7 @@ WHERE `id` = 1 AND `double` = '1.123'
 SQL;
 
         global $wpdb;
-        $this->compareQueries($expectedQuery, $wpdb->last_query);
+        $this->assertSameQuery($expectedQuery, $wpdb->last_query);
     }
 
     /**
@@ -159,7 +159,7 @@ DELETE FROM `wp_1_tests_sample_table` WHERE `wp_1_tests_sample_table`.`post_id` 
 SQL;
 
         global $wpdb;
-        $this->compareQueries($expectedQuery, $wpdb->last_query);
+        $this->assertSameQuery($expectedQuery, $wpdb->last_query);
     }
 
     /**
@@ -177,7 +177,7 @@ DELETE FROM `wp_1_tests_sample_table` WHERE `post_id` = 1
 SQL;
 
         global $wpdb;
-        $this->compareQueries($expectedQuery, $wpdb->last_query);
+        $this->assertSameQuery($expectedQuery, $wpdb->last_query);
     }
 
     /**
@@ -191,19 +191,6 @@ SQL;
 
         $expectedQuery = "DELETE FROM `wp_1_tests_sample_table` WHERE `id` = 1";
         global $wpdb;
-        $this->compareQueries($expectedQuery, $wpdb->last_query);
-    }
-
-    /**
-     * @param string $expectedRaw
-     * @param string $actualRaw
-     * @return void
-     */
-    private function compareQueries(string $expectedRaw, string $actualRaw): void
-    {
-        $expected = trim(preg_replace('/\s+/', ' ', $expectedRaw));
-        $actual = trim(preg_replace('/\s+/', ' ', $actualRaw));
-
-        static::assertSame($expected, $actual);
+        $this->assertSameQuery($expectedQuery, $wpdb->last_query);
     }
 }
