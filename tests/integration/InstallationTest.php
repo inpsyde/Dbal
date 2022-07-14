@@ -16,7 +16,10 @@ use Inpsyde\Dbal\Tests\TableTwo;
 
 class InstallationTest extends IntegrationTestCase
 {
-    public function testRegisterForInstall()
+    /**
+     * @test
+     */
+    public function testRegisterForInstall(): void
     {
         /** @var SchemasRegister $theRegister */
         $theRegister = null;
@@ -56,7 +59,10 @@ class InstallationTest extends IntegrationTestCase
         $this->resetDb();
     }
 
-    public function testInstallationAndUpdate()
+    /**
+     * @test
+     */
+    public function testInstallationAndUpdate(): void
     {
         $version = '1.0.0';
         $countInstalled = 0;
@@ -106,7 +112,7 @@ class InstallationTest extends IntegrationTestCase
         }
 
         /**
-         * When version is different than "1.0.0" TableOne do not have an ENUM column
+         * When version is different from "1.0.0" TableOne do not have an ENUM column
          * @see TableOne::columns()
          */
         $version = '1.1.0';

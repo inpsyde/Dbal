@@ -12,7 +12,10 @@ use Inpsyde\Dbal\Tests\UnitTestCase;
 
 class AliasesTest extends UnitTestCase
 {
-    public function testForSchemaFailsForEmptySchema()
+    /**
+     * @test
+     */
+    public function testForSchemaFailsForEmptySchema(): void
     {
         $aliases = Aliases::new($this->initializeSampleTablesFinder());
         $collector = new ErrorCollector();
@@ -24,7 +27,10 @@ class AliasesTest extends UnitTestCase
         $collector->assert();
     }
 
-    public function testForSchemaFailsForEmptyTable()
+    /**
+     * @test
+     */
+    public function testForSchemaFailsForEmptyTable(): void
     {
         $aliases = Aliases::new($this->initializeSampleTablesFinder());
         $collector = new ErrorCollector();
@@ -36,7 +42,10 @@ class AliasesTest extends UnitTestCase
         $collector->assert();
     }
 
-    public function testForSchemaFailsForBadAliasName()
+    /**
+     * @test
+     */
+    public function testForSchemaFailsForBadAliasName(): void
     {
         $aliases = Aliases::new($this->initializeSampleTablesFinder());
         $collector = new ErrorCollector();
@@ -48,7 +57,10 @@ class AliasesTest extends UnitTestCase
         $collector->assert();
     }
 
-    public function testForSchemaFailsForInvalidTable()
+    /**
+     * @test
+     */
+    public function testForSchemaFailsForInvalidTable(): void
     {
         $aliases = Aliases::new($this->initializeSampleTablesFinder());
         $collector = new ErrorCollector();
@@ -60,7 +72,10 @@ class AliasesTest extends UnitTestCase
         $collector->assert();
     }
 
-    public function testForSchemaFailsForAlreadyUsedAlias()
+    /**
+     * @test
+     */
+    public function testForSchemaFailsForAlreadyUsedAlias(): void
     {
         $aliases = Aliases::new($this->initializeSampleTablesFinder());
         $collector = new ErrorCollector();
@@ -73,7 +88,10 @@ class AliasesTest extends UnitTestCase
         $collector->assert();
     }
 
-    public function testResolveSchemaFailsForEmptyName()
+    /**
+     * @test
+     */
+    public function testResolveSchemaFailsForEmptyName(): void
     {
         $aliases = Aliases::new($this->initializeSampleTablesFinder());
         $collector = new ErrorCollector();
@@ -85,7 +103,10 @@ class AliasesTest extends UnitTestCase
         $collector->assert();
     }
 
-    public function testSimpleSchemaAliasResolvedByName()
+    /**
+     * @test
+     */
+    public function testSimpleSchemaAliasResolvedByName(): void
     {
         $aliases = Aliases::new($this->initializeSampleTablesFinder());
         $collector = new ErrorCollector();
@@ -102,7 +123,10 @@ class AliasesTest extends UnitTestCase
         static::assertSame(['bar'], $aliases);
     }
 
-    public function testSimpleSchemaAliasResolvedByAlias()
+    /**
+     * @test
+     */
+    public function testSimpleSchemaAliasResolvedByAlias(): void
     {
         $aliases = Aliases::new($this->initializeSampleTablesFinder());
         $collector = new ErrorCollector();
@@ -119,7 +143,10 @@ class AliasesTest extends UnitTestCase
         static::assertSame(['bar'], $allAliases);
     }
 
-    public function testSchemaAliasedMultipleTimesResolvedByAlias()
+    /**
+     * @test
+     */
+    public function testSchemaAliasedMultipleTimesResolvedByAlias(): void
     {
         $aliases = Aliases::new($this->initializeSampleTablesFinder());
         $collector = new ErrorCollector();
@@ -128,7 +155,6 @@ class AliasesTest extends UnitTestCase
         $aliases = $aliases->forSchema(TableOne::NAME, 'bar');
         $aliases = $aliases->forSchema(TableOne::NAME, 'baz');
 
-        /** @var Aliases $aliases */
         $aliases->mergeErrors($collector);
         $collector->assert();
 
@@ -152,7 +178,10 @@ class AliasesTest extends UnitTestCase
         static::assertSame(['foo', 'bar', 'baz'], $aliases3);
     }
 
-    public function testSchemaAliasedMultipleTimesResolvedByName()
+    /**
+     * @test
+     */
+    public function testSchemaAliasedMultipleTimesResolvedByName(): void
     {
         $aliases = Aliases::new($this->initializeSampleTablesFinder());
         $collector = new ErrorCollector();
@@ -161,7 +190,6 @@ class AliasesTest extends UnitTestCase
         $aliases = $aliases->forSchema(TableOne::NAME, 'bar');
         $aliases = $aliases->forSchema(TableOne::NAME, 'baz');
 
-        /** @var Aliases $aliases */
         $aliases->mergeErrors($collector);
         $collector->assert();
 
@@ -172,8 +200,11 @@ class AliasesTest extends UnitTestCase
         static::assertSame(null, $alias);
         static::assertSame(['foo', 'bar', 'baz'], $allAliases);
     }
-    
-    public function testForColumnFailsForEmptyName()
+
+    /**
+     * @test
+     */
+    public function testForColumnFailsForEmptyName(): void
     {
         $aliases = Aliases::new($this->initializeSampleTablesFinder());
         $collector = new ErrorCollector();
@@ -185,7 +216,10 @@ class AliasesTest extends UnitTestCase
         $collector->assert();
     }
 
-    public function testForColumnFailsForEmptyAlias()
+    /**
+     * @test
+     */
+    public function testForColumnFailsForEmptyAlias(): void
     {
         $aliases = Aliases::new($this->initializeSampleTablesFinder());
         $collector = new ErrorCollector();
@@ -197,7 +231,10 @@ class AliasesTest extends UnitTestCase
         $collector->assert();
     }
 
-    public function testForColumnFailsForEmptyTable()
+    /**
+     * @test
+     */
+    public function testForColumnFailsForEmptyTable(): void
     {
         $aliases = Aliases::new($this->initializeSampleTablesFinder());
         $collector = new ErrorCollector();
@@ -209,7 +246,10 @@ class AliasesTest extends UnitTestCase
         $collector->assert();
     }
 
-    public function testForColumnFailsForInvalidTable()
+    /**
+     * @test
+     */
+    public function testForColumnFailsForInvalidTable(): void
     {
         $aliases = Aliases::new($this->initializeSampleTablesFinder());
         $collector = new ErrorCollector();
@@ -221,7 +261,10 @@ class AliasesTest extends UnitTestCase
         $collector->assert();
     }
 
-    public function testResolveColumnFailsForEmptyName()
+    /**
+     * @test
+     */
+    public function testResolveColumnFailsForEmptyName(): void
     {
         $aliases = Aliases::new($this->initializeSampleTablesFinder());
         $collector = new ErrorCollector();
@@ -233,7 +276,10 @@ class AliasesTest extends UnitTestCase
         $collector->assert();
     }
 
-    public function testForColumnAndResolveByName()
+    /**
+     * @test
+     */
+    public function testForColumnAndResolveByName(): void
     {
         $aliases = Aliases::new($this->initializeSampleTablesFinder());
         $collector = new ErrorCollector();
@@ -250,7 +296,10 @@ class AliasesTest extends UnitTestCase
         static::assertSame(TableOne::NAME, $tableName);
     }
 
-    public function testForColumnAndResolveByAlias()
+    /**
+     * @test
+     */
+    public function testForColumnAndResolveByAlias(): void
     {
         $aliases = Aliases::new($this->initializeSampleTablesFinder());
         $collector = new ErrorCollector();
@@ -267,7 +316,10 @@ class AliasesTest extends UnitTestCase
         static::assertSame(TableOne::NAME, $tableName);
     }
 
-    public function testForRawColumnAndResolveByName()
+    /**
+     * @test
+     */
+    public function testForRawColumnAndResolveByName(): void
     {
         $aliases = Aliases::new($this->initializeSampleTablesFinder());
         $collector = new ErrorCollector();
@@ -284,7 +336,10 @@ class AliasesTest extends UnitTestCase
         static::assertSame(TableOne::NAME, $tableName);
     }
 
-    public function testForRawColumnNoTableAndResolveByName()
+    /**
+     * @test
+     */
+    public function testForRawColumnNoTableAndResolveByName(): void
     {
         $aliases = Aliases::new($this->initializeSampleTablesFinder());
         $collector = new ErrorCollector();
@@ -301,7 +356,10 @@ class AliasesTest extends UnitTestCase
         static::assertNull($tableName);
     }
 
-    public function testForRawColumnAndResolveByAlias()
+    /**
+     * @test
+     */
+    public function testForRawColumnAndResolveByAlias(): void
     {
         $aliases = Aliases::new($this->initializeSampleTablesFinder());
         $collector = new ErrorCollector();
@@ -318,7 +376,10 @@ class AliasesTest extends UnitTestCase
         static::assertSame(TableOne::NAME, $tableName);
     }
 
-    public function testForRawColumnNoTableAndResolveByAlias()
+    /**
+     * @test
+     */
+    public function testForRawColumnNoTableAndResolveByAlias(): void
     {
         $aliases = Aliases::new($this->initializeSampleTablesFinder());
         $collector = new ErrorCollector();

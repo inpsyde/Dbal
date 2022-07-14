@@ -27,7 +27,7 @@ class Transaction
 
     /**
      * @param int $flags
-     * @return \Inpsyde\Dbal\Transaction
+     * @return Transaction
      */
     public static function new(int $flags = self::DEFAULT): Transaction
     {
@@ -113,6 +113,7 @@ class Transaction
             $result = $result->mergeError(Error::fromThrowable($throwable));
             $rollback = true;
         } finally {
+            /** @psalm-suppress PossiblyInvalidArgument */
             $rollback and $result = $this->executeQuery('ROLLBACK;', $result);
             $phpErrors->restoreHandler();
             $wpdb->suppress_errors($suppressErrors);
@@ -155,8 +156,6 @@ class Transaction
      */
     private function applyCallback(callable $callback, callable ...$callbacks): Result
     {
-        // phpcs:enable Inpsyde.CodeQuality.ReturnTypeDeclaration
-
         array_unshift($callbacks, $callback);
 
         $result = Result::new(null);
@@ -170,6 +169,7 @@ class Transaction
             $result = $result->mergeError(new Error($wpdb->last_error));
         }
 
+        /** @psalm-suppress PossiblyInvalidArgument */
         return $result->isErrored() ? $result : $this->executeQuery('COMMIT;', $result);
     }
 

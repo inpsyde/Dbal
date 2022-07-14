@@ -10,7 +10,7 @@ class SchemasRegister
     private const UNINSTALL = 2;
 
     /**
-     * @var array<string,array{0:InstallableSchema, 1:int}>
+     * @var array<string, array{InstallableSchema, int}>
      */
     private $schemas = [];
 
@@ -45,7 +45,7 @@ class SchemasRegister
 
     /**
      * @param InstallableSchema $schema
-     *
+     * @param InstallableSchema ...$schemas
      * @return SchemasRegister
      */
     public function registerForInstall(
@@ -53,7 +53,7 @@ class SchemasRegister
         InstallableSchema ...$schemas
     ): SchemasRegister {
 
-        \array_unshift($schemas, $schema);
+        array_unshift($schemas, $schema);
 
         foreach ($schemas as $schema) {
             $this->registerFor($schema, self::INSTALL);
@@ -64,7 +64,7 @@ class SchemasRegister
 
     /**
      * @param InstallableSchema $schema
-     *
+     * @param InstallableSchema ...$schemas
      * @return SchemasRegister
      */
     public function registerForUninstall(
@@ -72,7 +72,7 @@ class SchemasRegister
         InstallableSchema ...$schemas
     ): SchemasRegister {
 
-        \array_unshift($schemas, $schema);
+        array_unshift($schemas, $schema);
 
         foreach ($schemas as $schema) {
             $this->registerFor($schema, self::UNINSTALL);

@@ -1,23 +1,53 @@
-name: PHP integration tests
-on: [push, pull_request]
-jobs:
-    build:
-        runs-on: ubuntu-latest
-        if: "!contains(github.event.head_commit.message, 'ci skip')"
-        continue-on-error: true
-        strategy:
-            fail-fast: false
-            matrix:
-                php-versions: ['php72', 'php73', 'php74']
-        steps:
-            -   uses: actions/checkout@v2
+name: Integration Tests
 
-            -   name: Copy wait-for script
-                uses: canastro/copy-file-action@master
+on:
+    workflow_dispatch:
+    pull_request:
+        paths:
+            - '**/integration-tests*'
+            - '**/docker/**'
+            - '**.php'
+            - 'phpunit*'
+    push:
+        paths:
+            - '**/integration-tests*'
+            - '**/docker/**'
+            - '**.php'
+            - 'phpunit*'
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    integration-tests:
+        runs-on: ubuntu-latest
+        if: ${{ !contains(github.event.head_commit.message, 'integration-tests skip') }}
+        strategy:
+            matrix:
+                php-version: [ '7.2', '7.3', '7.4', '8.0' ]
+                wp-version: [ '5.8', '5.9', '6.0' ]
+        steps:
+            -   name: Checkout
+                uses: actions/checkout@v3
+
+            -   name: Setup PHP
+                uses: shivammathur/setup-php@v2
                 with:
-                    source: "tests/docker/wait-for.sh"
-                    target: "tests/docker/${{ matrix.php-versions }}/wait-for.sh"
+                    php-version: ${{ matrix.php-version }}
+                    coverage: none
+
+            -   name: Adjust Composer Dependencies
+                run: |
+                    composer config --unset repositories.0
+                    composer remove inpsyde/php-coding-standards inpsyde/wp-stubs vimeo/psalm roots/wordpress --dev --no-update
+                    composer require roots/wordpress:${{ matrix.wp-version }} --no-update
+
+            -   name: Install Composer Dependencies
+                uses: ramsey/composer-install@v2
 
             -   name: Run integration tests
-                working-directory: ./tests/docker
-                run: docker-compose run -T ${{ matrix.php-versions }} sh -c "wait-for.sh dbal-mysql:3306 -t 15 -- && composer install -q -n -a --no-progress --prefer-dist && composer tests:integration"
+                working-directory: ./tests
+                run: |
+                    chmod u+x ./integration-tests.sh
+                    ./integration-tests.sh ${{ matrix.php-version }}

@@ -19,6 +19,8 @@ class SchemaFinder
     private $register;
 
     /**
+     * @param WpSchemas $wpSchema
+     * @param SchemasRegister $schemas
      * @return SchemaFinder
      */
     public static function new(WpSchemas $wpSchema, SchemasRegister $schemas): SchemaFinder
@@ -28,6 +30,7 @@ class SchemaFinder
 
     /**
      * @param WpSchemas $wpSchema
+     * @param SchemasRegister $schemas
      */
     private function __construct(WpSchemas $wpSchema, SchemasRegister $schemas)
     {
@@ -86,7 +89,7 @@ class SchemaFinder
             return null;
         }
 
-        $fullTableName = isset($wpdb->{$noPrefixName}) ? $wpdb->{$noPrefixName} : null;
+        $fullTableName = $wpdb->{$noPrefixName} ?? null;
 
         $columns = ($fullTableName && is_string($fullTableName))
             ? $this->wpSchema->loadTableColumns($fullTableName)
@@ -99,7 +102,7 @@ class SchemaFinder
         $global = in_array($noPrefixName, $wpdb->global_tables, true)
             || in_array($noPrefixName, $wpdb->ms_global_tables, true);
 
-        return WpSchema::new((string)$noPrefixName, $global, $columns);
+        return WpSchema::new($noPrefixName, $global, $columns);
     }
 
     /**

@@ -42,7 +42,6 @@ class Schemas implements \Countable, \IteratorAggregate
         $done = [];
         $this->schemas = [];
 
-        /** @var Schema $schema */
         foreach ($schemas as $schema) {
             $name = $schema->name();
             if (!empty($done[$name])) {
@@ -67,7 +66,7 @@ class Schemas implements \Countable, \IteratorAggregate
     /**
      * @return int
      */
-    public function count()
+    public function count(): int
     {
         return $this->count;
     }

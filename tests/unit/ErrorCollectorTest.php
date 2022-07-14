@@ -10,7 +10,10 @@ use Inpsyde\Dbal\Tests\UnitTestCase;
 
 class ErrorCollectorTest extends UnitTestCase
 {
-    public function testPushFlow()
+    /**
+     * @test
+     */
+    public function testPushFlow(): void
     {
         $collector = new ErrorCollector();
 
@@ -32,7 +35,10 @@ class ErrorCollectorTest extends UnitTestCase
         static::assertSame("First\n> Second\n> Third", $error->serialize());
     }
 
-    public function testAssert()
+    /**
+     * @test
+     */
+    public function testAssert(): void
     {
         $collector = new ErrorCollector();
 
@@ -44,7 +50,10 @@ class ErrorCollectorTest extends UnitTestCase
         $collector->assert();
     }
 
-    public function testPushFrom()
+    /**
+     * @test
+     */
+    public function testPushFrom(): void
     {
         $one = new ErrorCollector();
         $two = new ErrorCollector();

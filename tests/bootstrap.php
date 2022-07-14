@@ -1,19 +1,29 @@
 <?php // phpcs:disable
+
 declare(strict_types=1);
 
-$vendor = dirname(__DIR__).'/vendor';
+$testsDir = str_replace('\\', '/', __DIR__);
+$libDir = dirname($testsDir);
+$vendorDir = "{$libDir}/vendor";
+$autoload = "{$vendorDir}/autoload.php";
 
-if (!realpath($vendor)) {
+if (!is_file($autoload)) {
     die('Please install via Composer before running tests.');
 }
 
-putenv('VENDOR_DIR=' . $vendor);
-putenv('TESTS_DIR=' . __DIR__);
-putenv('LIB_DIR=' . dirname(__DIR__));
+putenv('VENDOR_DIR=' . $vendorDir);
+putenv('TESTS_DIR=' . $testsDir);
+putenv('LIB_DIR=' . $libDir);
+
+error_reporting(E_ALL);
 
 if (!defined('ABSPATH')) {
-    define('ABSPATH', getenv('VENDOR_DIR') . '/wordpress/wordpress/');
+    define('ABSPATH', "{$vendorDir}/wordpress/wordpress/");
 }
 
-require_once "{$vendor}/autoload.php";
-unset($vendor);
+if (!defined('PHPUNIT_COMPOSER_INSTALL')) {
+    define('PHPUNIT_COMPOSER_INSTALL', $autoload);
+    require_once $autoload;
+}
+
+unset($libDir, $testsDir, $vendorDir, $autoload);

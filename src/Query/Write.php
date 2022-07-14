@@ -17,7 +17,6 @@ use Inpsyde\Dbal\Schema\SchemaFinder;
 
 class Write
 {
-
     private const CREATE = 'create';
     private const UPDATE = 'update';
     private const DELETE = 'delete';
@@ -28,25 +27,25 @@ class Write
     private $schema;
 
     /**
-     * @var \Inpsyde\Dbal\Cache|null
+     * @var Cache|null
      */
     private $cache;
 
     /**
-     * @var \Inpsyde\Dbal\Schema\SchemaFinder
+     * @var SchemaFinder
      */
     private $finder;
 
     /**
-     * @var \Inpsyde\Dbal\ErrorCollector
+     * @var ErrorCollector
      */
     private $errors;
 
     /**
      * @param string $tableName
-     * @param \Inpsyde\Dbal\Schema\SchemaFinder|null $finder
-     * @param \Inpsyde\Dbal\Cache|null $cache
-     * @return \Inpsyde\Dbal\Query\Write
+     * @param SchemaFinder|null $finder
+     * @param Cache|null $cache
+     * @return Write
      */
     public static function on(
         string $tableName,
@@ -59,8 +58,8 @@ class Write
 
     /**
      * @param string $tableName
-     * @param \Inpsyde\Dbal\Schema\SchemaFinder|null $finder
-     * @param \Inpsyde\Dbal\Cache|null $cache
+     * @param SchemaFinder|null $finder
+     * @param Cache|null $cache
      */
     private function __construct(
         string $tableName,
@@ -79,7 +78,7 @@ class Write
 
     /**
      * @param array $insertData
-     * @return \Inpsyde\Dbal\Result
+     * @return Result
      */
     public function insert(array $insertData): Result
     {
@@ -94,7 +93,7 @@ class Write
         }
 
         $formats = [];
-        foreach ($data as $key => $value) {
+        foreach (array_keys($data) as $key) {
             $formats[] = $dataFormats[$key] ?? '%s';
         }
 
@@ -105,7 +104,7 @@ class Write
      * @param array $firstRow
      * @param array $secondRow
      * @param array[] $rows
-     * @return \Inpsyde\Dbal\Result
+     * @return Result
      */
     public function insertMany(array $firstRow, array $secondRow, array ...$rows): Result
     {
@@ -166,7 +165,6 @@ class Write
             $valuesSql .= "\t({$valueSql})";
         }
 
-        /** @var array<string> $keys */
         $columnNames = implode('`, `', $keys);
         $baseSql = "INSERT INTO `{$table}` (`{$columnNames}`) VALUES \n";
 
@@ -195,7 +193,6 @@ class Write
         $formats = [];
         $whereFormats = [];
 
-        /** @var \Inpsyde\Dbal\Schema\Column $column */
         foreach ($columns as $column) {
             $name = $column->name();
             if (array_key_exists($name, $updateValues)) {
@@ -214,19 +211,14 @@ class Write
 
     /**
      * @param array $data
-     * @param $primaryValue
+     * @param mixed $primaryValue
      * @return Result
-     *
-     * @psalm-suppress MissingParamType
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
      */
     public function updateOnPrimary(array $data, $primaryValue): Result
     {
         if (!$this->errors->isEmpty()) {
             return Result::new($this->errors);
         }
-
-        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
 
         try {
             $primary = $this->findPrimary();
@@ -238,9 +230,9 @@ class Write
     }
 
     /**
-     * @param \Inpsyde\Dbal\Schema\Schema $schema
+     * @param Schema $schema
      * @param array $data
-     * @param \Inpsyde\Dbal\Query\Where $where
+     * @param Where $where
      * @return Result
      */
     public function updateWhere(array $data, Where $where): Result
@@ -258,11 +250,6 @@ class Write
         }
 
         $columns = $schema->columns();
-        /**
-         * @var array<string, integer|float|string> $parsedData
-         * @var array<string, string> $formats
-         * @var array<int, string> $missing
-         */
         [$updateValues, $dataFormats, $missing] = $columns->columnsInfoForDataUpdate($data);
 
         static::assertNotMissing($missing, $tableName, true);
@@ -274,7 +261,6 @@ class Write
         $data = [];
         $formats = [];
 
-        /** @var \Inpsyde\Dbal\Schema\Column $column */
         foreach ($columns as $column) {
             $name = $column->name();
             if (array_key_exists($name, $updateValues)) {
@@ -310,7 +296,6 @@ class Write
         $where = [];
         $whereFormats = [];
 
-        /** @var \Inpsyde\Dbal\Schema\Column $column */
         foreach ($columns as $column) {
             $name = $column->name();
 
@@ -324,7 +309,7 @@ class Write
     }
 
     /**
-     * @param \Inpsyde\Dbal\Query\Where $where
+     * @param Where $where
      * @return Result
      */
     public function deleteWhere(Where $where): Result
@@ -347,16 +332,11 @@ class Write
     }
 
     /**
-     * @param $primaryValue
+     * @param mixed $primaryValue
      * @return Result
-     *
-     * @psalm-suppress MissingParamType
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
      */
     public function deleteOnPrimary($primaryValue): Result
     {
-        // phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-
         if (!$this->errors->isEmpty()) {
             return Result::new($this->errors);
         }
@@ -372,7 +352,7 @@ class Write
 
     /**
      * @param array $data
-     * @return array{0:array<string, mixed>, 1:array<string, string>}
+     * @return array{array<string, mixed>, array<string, string>}
      */
     private function prepareInsertData(array $data): array
     {
@@ -390,7 +370,6 @@ class Write
 
         $toPrepare = [];
 
-        /** @var \Inpsyde\Dbal\Schema\Column $column */
         foreach ($columns as $column) {
             $name = $column->name();
             if (array_key_exists($name, $data)) {
@@ -402,7 +381,7 @@ class Write
     }
 
     /**
-     * @param array|null $missing
+     * @param list<string>|null $missing
      * @param string $tableName
      * @param bool $isUpdate
      */
@@ -433,6 +412,7 @@ class Write
     /**
      * @param array<string, mixed> $data
      * @param array<string, string> $formats
+     * @param bool $update
      * @return string
      */
     private function buildFieldsSql(array $data, array $formats, bool $update): string
@@ -454,7 +434,7 @@ class Write
      * @param array $formats
      * @param array $whereData
      * @param array $whereFormats
-     * @return \Inpsyde\Dbal\Result
+     * @return Result
      */
     private function execute(
         string $type,

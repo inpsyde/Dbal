@@ -27,7 +27,7 @@ class Aliases
     private $rawSchemaAliases = [];
 
     /**
-     * @var array<string, array{0:string, 1:string|null, 2:string|null}>
+     * @var array<string, array{string, string|null, string|null}>
      */
     private $columnsAliasData = [];
 
@@ -184,7 +184,6 @@ class Aliases
 
         $aliases = array_keys($this->aliasToName, $name, true);
         if (!$aliased && count($aliases) === 1) {
-            /** @var string $alias */
             $alias = reset($aliases);
         }
 
@@ -203,7 +202,7 @@ class Aliases
     /**
      * @param string $table
      * @param string $name
-     * @return array{0:string|null, 1:string|null, 2:string|null, 3:string|null}
+     * @return array{string|null, string|null, string|null, string|null}
      */
     public function resolveColumn(string $name): array
     {

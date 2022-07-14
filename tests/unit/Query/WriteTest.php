@@ -12,7 +12,10 @@ use Inpsyde\Dbal\Tests\UnitTestCase;
 
 class WriteTest extends UnitTestCase
 {
-    public function testInsert()
+    /**
+     * @test
+     */
+    public function testInsert(): void
     {
         $finder = $this->initializeSampleTablesFinder();
 
@@ -35,10 +38,13 @@ INSERT INTO `wp_1_tests_sample_table`
     VALUES (123, '', '{$serialized}', 1, '1.23')
 SQL;
         global $wpdb;
-        $this->compareQueries($expectedQuery, $wpdb->last_query);
+        $this->assertSameQuery($expectedQuery, $wpdb->last_query);
     }
 
-    public function testInsertMany()
+    /**
+     * @test
+     */
+    public function testInsertMany(): void
     {
         $finder = $this->initializeSampleTablesFinder();
 
@@ -81,10 +87,13 @@ INSERT INTO `wp_1_tests_sample_table` (`post_id`, `text`, `integer`, `datetime`)
 SQL;
 
         global $wpdb;
-        $this->compareQueries($expectedQuery, $wpdb->last_query);
+        $this->assertSameQuery($expectedQuery, $wpdb->last_query);
     }
 
-    public function testUpdateWhere()
+    /**
+     * @test
+     */
+    public function testUpdateWhere(): void
     {
         $finder = $this->initializeSampleTablesFinder();
 
@@ -105,10 +114,13 @@ WHERE `wp_1_tests_sample_table`.`id` >= 1
 SQL;
 
         global $wpdb;
-        $this->compareQueries($expectedQuery, $wpdb->last_query);
+        $this->assertSameQuery($expectedQuery, $wpdb->last_query);
     }
 
-    public function testUpdate()
+    /**
+     * @test
+     */
+    public function testUpdate(): void
     {
         $finder = $this->initializeSampleTablesFinder();
 
@@ -128,10 +140,13 @@ WHERE `id` = 1 AND `double` = '1.123'
 SQL;
 
         global $wpdb;
-        $this->compareQueries($expectedQuery, $wpdb->last_query);
+        $this->assertSameQuery($expectedQuery, $wpdb->last_query);
     }
 
-    public function testDeleteWhere()
+    /**
+     * @test
+     */
+    public function testDeleteWhere(): void
     {
         $finder = $this->initializeSampleTablesFinder();
         $where = Where::new()->withCompare(Compare::columnValue(TableOne::POST_ID, 1, '>='));
@@ -144,10 +159,13 @@ DELETE FROM `wp_1_tests_sample_table` WHERE `wp_1_tests_sample_table`.`post_id` 
 SQL;
 
         global $wpdb;
-        $this->compareQueries($expectedQuery, $wpdb->last_query);
+        $this->assertSameQuery($expectedQuery, $wpdb->last_query);
     }
 
-    public function testDelete()
+    /**
+     * @test
+     */
+    public function testDelete(): void
     {
         $finder = $this->initializeSampleTablesFinder();
         $result = Write::on(TableOne::NAME, $finder)->delete([TableOne::POST_ID => 1]);
@@ -159,10 +177,13 @@ DELETE FROM `wp_1_tests_sample_table` WHERE `post_id` = 1
 SQL;
 
         global $wpdb;
-        $this->compareQueries($expectedQuery, $wpdb->last_query);
+        $this->assertSameQuery($expectedQuery, $wpdb->last_query);
     }
 
-    public function testDeleteOnPrimary()
+    /**
+     * @test
+     */
+    public function testDeleteOnPrimary(): void
     {
         $finder = $this->initializeSampleTablesFinder();
         $result = Write::on(TableOne::NAME, $finder)->deleteOnPrimary(1);
@@ -170,19 +191,6 @@ SQL;
 
         $expectedQuery = "DELETE FROM `wp_1_tests_sample_table` WHERE `id` = 1";
         global $wpdb;
-        $this->compareQueries($expectedQuery, $wpdb->last_query);
-    }
-
-    /**
-     * @param string $expectedRaw
-     * @param string $actualRaw
-     * @return void
-     */
-    private function compareQueries(string $expectedRaw, string $actualRaw): void
-    {
-        $expected = trim(preg_replace('/\s+/', ' ', $expectedRaw));
-        $actual = trim(preg_replace('/\s+/', ' ', $actualRaw));
-
-        static::assertSame($expected, $actual);
+        $this->assertSameQuery($expectedQuery, $wpdb->last_query);
     }
 }

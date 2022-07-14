@@ -6,10 +6,13 @@ namespace Inpsyde\Dbal;
 
 /**
  * @template T of Error|null
+ *
+ * @psalm-suppress MixedReturnTypeCoercion
+ * @psalm-suppress InvalidReturnType
+ * @psalm-suppress InvalidReturnStatement
  */
 final class Result
 {
-
     /**
      * @var mixed
      */
@@ -21,15 +24,11 @@ final class Result
     private $error;
 
     /**
-     * @param $value
-     * @return Result
-     *
-     * @psalm-suppress MissingParamType
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
+     * @param mixed $value
+     * @return Result<T>
      */
     public static function new($value): Result
     {
-        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
         if ($value instanceof Result) {
             return new static($value->value, $value->error);
         }
@@ -48,13 +47,9 @@ final class Result
     /**
      * @param mixed $value
      * @param T $error
-     *
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-     * @psalm-suppress MissingParamType
      */
     private function __construct($value, ?Error $error)
     {
-        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
         $this->value = $value;
         $this->error = $error;
     }
@@ -88,11 +83,11 @@ final class Result
     /**
      * @return mixed
      *
-     * phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration
+     * @psalm-assert Result<null> $this
+     * @psalm-assert null $this->error
      */
     public function extract()
     {
-        //phpcs:enable Inpsyde.CodeQuality.ReturnTypeDeclaration
         $this->assert();
 
         return $this->value;
@@ -100,6 +95,9 @@ final class Result
 
     /**
      * @return void
+     *
+     * @psalm-assert Result<null> $this
+     * @psalm-assert null $this->error
      */
     public function assert(): void
     {
@@ -109,18 +107,17 @@ final class Result
     }
 
     /**
-     * @return Error|null
-     * @psalm-return T
+     * @return T
      */
     public function error(): ?Error
     {
-        return $this->error ? $this->error : null;
+        return $this->error ?: null;
     }
 
     /**
      * @param callable|null $onSuccess
      * @param callable|null $onError
-     * @return Result
+     * @return Result<T>
      */
     public function bind(?callable $onSuccess = null, ?callable $onError = null): Result
     {
@@ -137,8 +134,8 @@ final class Result
     }
 
     /**
-     * @param Result $result
-     * @return Result
+     * @param Result<T> $result
+     * @return Result<T>
      */
     public function merge(Result $result): Result
     {
@@ -165,25 +162,16 @@ final class Result
             $error = $previous->merge($error);
         }
 
-        /** @var Result<Error> $instance */
-        $instance = static::new($error);
-
-        return $instance;
+        return static::new($error);
     }
 
     /**
      * @param callable $callback
      * @param mixed $returnIfError
-     * @return mixed|null
-     *
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-     * phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration
+     * @return mixed
      */
     public function extractWith(callable $callback, $returnIfError = null)
     {
-        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-        // phpcs:enable Inpsyde.CodeQuality.ReturnTypeDeclaration
-
         if (!$this->isErrored()) {
             return $callback($this->value);
         }

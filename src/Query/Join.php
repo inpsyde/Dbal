@@ -362,6 +362,7 @@ final class Join
     }
 
     /**
+     * @param ErrorCollector $collector
      * @return void
      */
     public function mergeErrors(ErrorCollector $collector): void
@@ -374,7 +375,7 @@ final class Join
      * @param Schema|null $targetSchema
      * @param string|null $columnNameOnSource
      * @param string|null $columnNameOnJoined
-     * @return array{0:string|null, 1:string|null}
+     * @return array{string|null, string|null}
      */
     private function resolveColumns(
         Schema $sourceSchema,
@@ -428,6 +429,8 @@ final class Join
     }
 
     /**
+     * @param SchemaFinder $finder
+     * @param Aliases $aliases
      * @return string
      */
     private function onClauseByColumns(SchemaFinder $finder, Aliases $aliases): string
@@ -443,8 +446,6 @@ final class Join
 
         $targetSchema = $this->targetSchema;
         $sourceRef = $sourceAlias ?? $finder->fullTableName($sourceSchema);
-
-        /** @var Schema $sourceSchema */
         $sourceColName = $this->resolveColumn($this->columnOnSource ?? '', $sourceSchema, $aliases);
 
         $targetColName = '';
@@ -467,6 +468,8 @@ final class Join
     }
 
     /**
+     * @param SchemaFinder $finder
+     * @param Aliases $aliases
      * @return string
      */
     private function onClauseByWhere(SchemaFinder $finder, Aliases $aliases): string

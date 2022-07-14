@@ -46,12 +46,12 @@ final class Compare
     private $operator;
 
     /**
-     * @var array{0:string|null, 1:string|null}
+     * @var array{string|null, string|null}
      */
     private $casts = [null, null];
 
     /**
-     * @var array{0:mixed|null, 1:bool}
+     * @var array{mixed, bool}
      */
     private $value = [null, false];
 
@@ -77,17 +77,12 @@ final class Compare
 
     /**
      * @param string $column
-     * @param $value
+     * @param mixed $value
      * @param string|null $operator
      * @return Compare
-     *
-     * @psalm-suppress MissingParamType
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
      */
     public static function columnValue(string $column, $value, ?string $operator = null): Compare
     {
-        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-
         $instance = new static($column, null, $operator);
 
         return $instance->checkValue($value, false);
@@ -95,17 +90,12 @@ final class Compare
 
     /**
      * @param string $column
-     * @param $value
+     * @param mixed $value
      * @param string|null $operator
      * @return Compare
-     *
-     * @psalm-suppress MissingParamType
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
      */
     public static function columnRawValue(string $column, $value, ?string $operator = null): Compare
     {
-        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-
         $instance = new static($column, null, $operator);
 
         return $instance->checkValue($value, true);
@@ -168,7 +158,7 @@ final class Compare
      * @param Schema $defaultSchema
      * @param SchemaFinder $finder
      * @param Aliases $aliases
-     * @return array{0:string|null, 1:mixed|null, 2:string|null, 3:string|null}
+     * @return array{string|null, mixed, string|null, string|null}
      */
     public function clauseParams(
         Schema $defaultSchema,
@@ -231,6 +221,7 @@ final class Compare
      * @param string $which
      * @param Aliases $aliases
      * @param Schema $defaultSchema
+     * @param SchemaFinder $finder
      * @return string|null
      */
     private function colName(
@@ -284,10 +275,7 @@ final class Compare
      * @param Schema $defaultSchema
      * @param SchemaFinder $finder
      * @param Aliases $aliases
-     * @return array{0:mixed|null, 1:string|null}
-     *
-     * @psalm-suppress MissingParamType
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
+     * @return array{mixed, string|null}
      */
     private function colValue(
         $rawValue,
@@ -295,8 +283,6 @@ final class Compare
         SchemaFinder $finder,
         Aliases $aliases
     ): array {
-
-        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
 
         [$colName, $schemaName] = Where::maybeSplitTableName($this->leftCol ?? '', $this->errors);
         if (!$this->errors->isEmpty()) {
@@ -363,21 +349,15 @@ final class Compare
      * @param mixed $value
      * @param bool $raw
      * @return Compare
-     *
-     * @psalm-suppress MissingParamType
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
      */
     private function checkValue($value, bool $raw): Compare
     {
-        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-
         if ($value === null) {
             $this->errors->withError("Can't use null values as compare argument.");
 
             return $this;
         }
 
-        /** @psalm-suppress PropertyTypeCoercion */
         $this->value = [$value, $raw];
 
         return $this;

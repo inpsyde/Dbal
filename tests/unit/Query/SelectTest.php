@@ -11,12 +11,13 @@ use Inpsyde\Dbal\Tests\TableOne;
 use Inpsyde\Dbal\Tests\TablePivot;
 use Inpsyde\Dbal\Tests\TableTwo;
 use Inpsyde\Dbal\Tests\UnitTestCase;
-use DateTime;
-use DateTimeImmutable;
 
 class SelectTest extends UnitTestCase
 {
-    public function testJoinViaPivot()
+    /**
+     * @test
+     */
+    public function testJoinViaPivot(): void
     {
         $finder = $this->initializeSampleTablesFinder();
 
@@ -36,10 +37,13 @@ INNER JOIN `wp_1_tests_sample_table_two`
 WHERE `one`.`enum` = 'yes'
     AND `wp_1_tests_sample_table_two`.`decimal` >= '10.123'
 QUERY;
-        $this->compareQueries($expected, $select->buildSqlNoEscape());
+        $this->assertSameQuery($expected, $select->buildSqlNoEscape());
     }
 
-    public function testCompletePaginatedSelect()
+    /**
+     * @test
+     */
+    public function testCompletePaginatedSelect(): void
     {
         $finder = $this->initializeSampleTablesFinder();
 
@@ -79,10 +83,13 @@ ORDER BY `m`.`id` ASC, `s`.`id` DESC, ABS(`s`.`decimal`) ASC
 LIMIT 50, 25
 QUERY;
 
-        $this->compareQueries($expected, $select->buildSqlNoEscape());
+        $this->assertSameQuery($expected, $select->buildSqlNoEscape());
     }
 
-    public function testWhereEncoding()
+    /**
+     * @test
+     */
+    public function testWhereEncoding(): void
     {
         $finder = $this->initializeSampleTablesFinder();
 
@@ -114,19 +121,6 @@ WHERE `wp_1_tests_sample_table`.`datetime` = '2012-12-20 20:12:20'
   AND `wp_1_tests_sample_table`.`serialized` = '{$serialized}'
 SQL;
         static::assertFalse($select->hasErrors());
-        $this->compareQueries($expectedSql, $actualSql);
-    }
-
-    /**
-     * @param string $expectedRaw
-     * @param string $actualRaw
-     * @return void
-     */
-    private function compareQueries(string $expectedRaw, string $actualRaw): void
-    {
-        $expected = trim(preg_replace('/\s+/', ' ', $expectedRaw));
-        $actual = trim(preg_replace('/\s+/', ' ', $actualRaw));
-
-        static::assertSame($expected, $actual);
+        $this->assertSameQuery($expectedSql, $actualSql);
     }
 }

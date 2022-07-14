@@ -17,19 +17,26 @@
     ],
     "minimum-stability": "dev",
     "prefer-stable": true,
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://repo.packagist.com/inpsyde/"
+        }
+    ],
     "require": {
         "php": ">=7.2",
         "ext-json": "*"
     },
     "require-dev": {
         "inpsyde/php-coding-standards": "^1",
-        "phpunit/phpunit": "^8",
-        "brain/monkey": "^2",
-        "roots/wordpress": "@stable",
-        "vimeo/psalm": "@stable",
+        "phpunit/phpunit": "^8.5.26",
+        "brain/monkey": "^2.6.1",
+        "roots/wordpress": "^5.9.3",
+        "vimeo/psalm": "^4.23.0",
+        "inpsyde/wp-stubs": "dev-main",
         "globalis/wp-cli-bin": "^2",
-        "symfony/process": "^5",
-        "symfony/dotenv": "^5"
+        "symfony/process": "^v5.4.8",
+        "symfony/dotenv": "^v5.4.5"
     },
     "autoload": {
         "psr-4": {
@@ -45,7 +52,7 @@
     },
     "scripts": {
         "cs": "@php ./vendor/squizlabs/php_codesniffer/bin/phpcs",
-        "psalm": "@php ./vendor/vimeo/psalm/psalm --show-info=false --no-progress --output-format=compact",
+        "psalm": "@php ./vendor/vimeo/psalm/psalm --no-cache --no-diff --find-unused-psalm-suppress --output-format=compact",
         "tests:unit": "@php ./vendor/phpunit/phpunit/phpunit --testsuite=unit",
         "tests:unit:no-cov": "@php ./vendor/phpunit/phpunit/phpunit --testsuite=unit --no-coverage",
         "tests:integration": "@php ./vendor/phpunit/phpunit/phpunit --testsuite=integration --no-coverage",
@@ -64,7 +71,11 @@
         ]
     },
     "config": {
-        "optimize-autoloader": true
+        "optimize-autoloader": true,
+        "allow-plugins": {
+            "roots/wordpress-core-installer": true,
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
     },
     "extra": {
         "wordpress-install-dir": "vendor/wordpress/wordpress"

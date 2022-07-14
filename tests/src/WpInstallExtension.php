@@ -62,7 +62,7 @@ final class WpInstallExtension implements BeforeFirstTestHook, AfterLastTestHook
             return;
         }
 
-        if ($filter && stripos($filter, 'integration') === false) {
+        if (!$suite && $filter && stripos($filter, 'integration') === false) {
             return;
         }
 
@@ -159,10 +159,10 @@ final class WpInstallExtension implements BeforeFirstTestHook, AfterLastTestHook
     private function runWpCliCommand(array $command): void
     {
         static $cliPath;
-        $cliPath or $cliPath = getenv('VENDOR_DIR') . '/bin';
+        $cliPath or $cliPath = str_replace('\\', '/', getenv('VENDOR_DIR') . '/bin');
 
         array_unshift($command, 'wp');
-        $command[] = "--path=" . ABSPATH;
+        $command[] = "--path=" . str_replace('\\', '/', ABSPATH);
         $command[] = "--quiet";
         $command[] = "--skip-plugins";
         $command[] = "--skip-themes";

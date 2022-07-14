@@ -45,7 +45,7 @@ class Dbal
             Cache::class => $cache,
         ];
 
-        $initializer = static function () use ($schemas, $schemaFinder) {
+        $initializer = static function () use ($schemas, $schemaFinder): void {
 
             do_action(self::ACTION_REGISTER_SCHEMA, $schemas, $schemaFinder);
 
@@ -149,7 +149,7 @@ class Dbal
 
     /**
      * @param int $flags
-     * @return \Inpsyde\Dbal\Transaction
+     * @return Transaction
      */
     public static function transaction(int $flags = Transaction::DEFAULT): Transaction
     {
