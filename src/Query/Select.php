@@ -1327,6 +1327,9 @@ class Select
      * @param string|null $alias
      * @param bool $raw
      * @return Select
+     *
+     * phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
+     * @TODO: consider refactoring
      */
     private function withColumn(string $column, ?string $alias = null, bool $raw = false): Select
     {
@@ -1360,8 +1363,11 @@ class Select
                 return $this;
             }
 
-            /** @psalm-suppress PossiblyNullReference */
-            if (!$raw && ($column !== '*' && !$schema->columns()->hasColumn($column))) {
+            if (
+                !$raw
+                && !$isRawAlias
+                && ($column !== '*' && !$schema->columns()->hasColumn($column))
+            ) {
                 return $this->pushError(
                     "Column '{$column}' not found in '{$schemaName}' table. "
                     . 'Use a "raw" column to make use of MySQL functions. '
