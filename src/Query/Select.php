@@ -54,7 +54,7 @@ class Select
     private $joins = [];
 
     /**
-     * @var array<string, array<string, array{string, bool}>>
+     * @var array<string, array<string, array{string, bool, string|null}>>
      */
     private $columns = [];
 
@@ -1390,7 +1390,7 @@ class Select
         /** @var string $columnsKey */
         $columnsKey = ($raw && !$table) ? self::RAW_COL_KEY : ($schemaAlias ?? $tableName);
         $schemaColumns = $this->columns[$columnsKey] ?? [];
-        $schemaColumns[$column] = [$column, $raw];
+        $schemaColumns[$column] = [$column, $raw, $alias];
         $this->columns[$columnsKey] = $schemaColumns;
 
         if ($alias) {
@@ -1642,7 +1642,7 @@ class Select
                 return '';
             }
 
-            $this->columns[$theMainAlias ?? $mainSchema->name()] = ['*' => ['*', true]];
+            $this->columns[$theMainAlias ?? $mainSchema->name()] = ['*' => ['*', true, null]];
         }
 
         ksort($this->columns);
@@ -1656,14 +1656,14 @@ class Select
     /**
      * @param string $sql
      * @param string $table
-     * @param array<string, array{string, bool}> $columns
+     * @param array<string, array{string, bool, string|null}> $columns
      * @return string
      */
     private function buildColumnsSqlForTable(string $sql, string $table, array $columns): string
     {
         $isRawAll = $table === self::RAW_COL_KEY;
         $hasAll = !empty($columns['*']);
-        foreach ($columns as [$colName, $isRaw]) {
+        foreach ($columns as [$colName, $isRaw, $alias]) {
             // If we're getting all columns, we don't need more.
             if ($colName !== '*' && $hasAll && !$isRaw) {
                 continue;
@@ -1707,6 +1707,7 @@ class Select
             }
 
             $sql .= ($isRaw && !$isRawSchema) ? $colRealName : "`{$tableRef}`.`{$colRealName}`";
+            $colAlias = $alias ?? $colAlias;
             $colAlias and $sql .= " AS `{$colAlias}`";
         }
 
