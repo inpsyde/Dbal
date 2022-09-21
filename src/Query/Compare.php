@@ -246,20 +246,22 @@ final class Compare
             return null;
         }
 
-        if ($colTableName && $table && ($colTableName !== $table)) {
+        [, $schema, $tableAlias] = $aliases->resolveSchema(
+            $table ?? $colTableName ?? $defaultSchema->name()
+        );
+
+        if (
+            $table
+            && ($colTableName || $tableAlias)
+            && !in_array($table, [$colTableName, $tableAlias], true)
+        ) {
             $this->errors->withError(
-                "Table '{$colTableName}' stored in column alias for {$column} "
-                . "does not match '{$table}' used in compare as part of '{$colName}'."
+                "Table '{$table}' is unknown alias."
             );
 
             return null;
         }
 
-        if (!$table) {
-            $table = $colTableName ?? $defaultSchema->name();
-        }
-
-        [, $schema, $tableAlias] = $aliases->resolveSchema($table);
         $aliases->mergeErrors($this->errors);
         if (!$schema) {
             return null;

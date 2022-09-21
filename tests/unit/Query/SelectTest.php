@@ -123,4 +123,62 @@ SQL;
         static::assertFalse($select->hasErrors());
         $this->assertSameQuery($expectedSql, $actualSql);
     }
+
+    public function testAliasesWithJoinWhere(): void
+    {
+        $finder = $this->initializeSampleTablesFinder();
+
+        $select = Select::from(TableOne::NAME, 'm', $finder)
+            ->innerJoinWhere(TableTwo::NAME, Where::new()->withCompare(
+                Compare::columns('m.' . TableOne::ID, 's.' . TableTwo::ID, Where::EQ)
+            ),
+                's')
+            ->andCol('m.' . TableOne::ID, 'Table One Id');
+
+
+        $expected = <<<QUERY
+SELECT `m`.`id` AS `Table One Id`
+    FROM `wp_1_tests_sample_table` AS `m`
+    INNER JOIN `wp_1_tests_sample_table_two` AS `s` ON `m`.`id` = `s`.`id`
+QUERY;
+
+        $this->assertSameQuery($expected, $select->buildSqlNoEscape());
+    }
+
+    public function testAliasesWithJoin(): void
+    {
+        $finder = $this->initializeSampleTablesFinder();
+
+        $select = Select::from(TableOne::NAME, 'm', $finder)
+            ->innerJoin(TableTwo::NAME, 'm.' . TableOne::ID, 's.' . TableTwo::ID,'s')
+            ->andCol('m.' . TableOne::ID, 'Table One Id');
+
+
+        $expected = <<<QUERY
+SELECT `m`.`id` AS `Table One Id`
+    FROM `wp_1_tests_sample_table` AS `m`
+    INNER JOIN `wp_1_tests_sample_table_two` AS `s` ON `m`.`id` = `s`.`id`
+QUERY;
+
+        $this->assertSameQuery($expected, $select->buildSqlNoEscape());
+    }
+
+    public function testAliasesForEqualColumns(): void
+    {
+        $finder = $this->initializeSampleTablesFinder();
+
+        $select = Select::from(TableOne::NAME, 'm', $finder)
+            ->innerJoin(TableTwo::NAME, 'm.' . TableOne::ID, 's.' . TableTwo::ID,'s')
+            ->andCol('m.id', 'Table One Id')
+            ->andCol('s.id', 'Table Two Id');
+
+
+        $expected = <<<QUERY
+SELECT `m`.`id` AS `Table One Id`, `s`.`id` AS `Table Two Id`
+    FROM `wp_1_tests_sample_table` AS `m`
+    INNER JOIN `wp_1_tests_sample_table_two` AS `s` ON `m`.`id` = `s`.`id`
+QUERY;
+
+        $this->assertSameQuery($expected, $select->buildSqlNoEscape());
+    }
 }

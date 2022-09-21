@@ -91,7 +91,10 @@ class Aliases
             return $this;
         }
 
-        if (!empty($this->aliasToName[$alias])) {
+        if (
+            !empty($this->aliasToName[$alias])
+            && $this->aliasToName[$alias] !== $realName
+        ) {
             $already = $this->aliasToName[$alias];
             $this->errors->withError(
                 "Schema aliases must be unique '{$alias}' already in use for '{$already}'."
