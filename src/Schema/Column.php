@@ -686,12 +686,16 @@ final class Column
     public static function parseRawDefinition(string $definition): ?Column
     {
         [$name, $type, $specs] = static::normalizeRawDefinition($definition);
-        if (!$name || !$type || !$specs) {
+        if (!$name || !$type) {
             return null;
         }
 
-        $realNumber = in_array($type, self::REAL_NUMBERS, true);
         $attributes = [];
+        if ($specs === null) {
+            return new static($name, $type, $attributes);
+        }
+
+        $realNumber = in_array($type, self::REAL_NUMBERS, true);
         $attributes[self::ATTR_NOT_NULL] = (bool)preg_match(self::DEF_NOT_NULL_REGXP, $specs);
 
         if (preg_match(self::DEF_DEFAULT_REGXP, $specs, $matches)) {
@@ -751,13 +755,13 @@ final class Column
         $name = empty($parts[0]) ? null : $parts[0];
         $type = empty($parts[1]) ? null : strtoupper(trim($parts[1]));
         $specs = empty($parts[2]) ? null : strtolower(trim($parts[2]));
-        if (!$name || !$type || !$specs) {
+        if (!$name || !$type) {
             return [null, null, null];
         }
 
         if (preg_match("~^([A-Z]+)\(([^\)]+)\)~", $type, $matches)) {
             $type = $matches[1];
-            $specs = '(' . trim($matches[2]) . ") {$specs}";
+            $specs = $specs ? '(' . trim($matches[2]) . ") {$specs}" : null;
         }
 
         // phpcs:disable WordPressVIPMinimum.Constants.ConstantString
