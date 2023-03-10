@@ -613,6 +613,17 @@ final class SelectBuilder
     }
 
     /**
+     * @param string $column
+     * @return static
+     */
+    public function thenGroupBy(string $column): SelectBuilder
+    {
+        $this->record[] = [__FUNCTION__, func_get_args()];
+
+        return $this;
+    }
+
+    /**
      * @param int $page
      * @param int $perPage
      * @return static
