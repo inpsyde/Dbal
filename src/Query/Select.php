@@ -74,7 +74,7 @@ class Select
     private $order = [];
 
     /**
-     * @var string[]
+     * @var list<string>
      */
     private $groupBy = [];
 
@@ -1228,7 +1228,7 @@ class Select
             self::COLUMNS => $this->buildColumnsSql(),
             self::FROM => $this->buildFromSql(),
             self::WHERE => $whereClause ? "WHERE {$whereClause}" : '',
-            self::GROUP_BY => $this->buildGroupBySql(),
+            self::GROUP_BY => $this->groupBy ? 'GROUP BY ' . implode(', ', $this->groupBy) : '',
             self::ORDER => $this->buildOrderSql(),
             self::LIMIT => $this->buildLimitSql(),
         ];
@@ -1780,23 +1780,6 @@ class Select
 
         if ($orderParts) {
             return 'ORDER BY ' . implode(', ', $orderParts);
-        }
-
-        return '';
-    }
-
-    /**
-     * @return string
-     */
-    private function buildGroupBySql(): string
-    {
-        $groupByParts = [];
-        foreach ($this->groupBy as $col) {
-            $groupByParts[] = $col;
-        }
-
-        if ($groupByParts) {
-            return 'GROUP BY ' . implode(', ', $groupByParts);
         }
 
         return '';
