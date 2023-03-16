@@ -74,9 +74,9 @@ class Select
     private $order = [];
 
     /**
-     * @var string|null
+     * @var list<string>
      */
-    private $groupBy;
+    private $groupBy = [];
 
     /**
      * @var array{bool|null, int|null, int}
@@ -936,6 +936,34 @@ class Select
             return $this;
         }
 
+        $this->groupBy = [];
+
+        return $this->withGroupBy($column);
+    }
+
+    /**
+     * @param string $column
+     * @return Select
+     */
+    public function thenGroupBy(string $column): Select
+    {
+        return $this->withGroupBy($column);
+    }
+
+    /**
+     * @param string $column
+     * @return Select
+     */
+    private function withGroupBy(string $column): Select
+    {
+        if (!$this->errors->isEmpty()) {
+            return $this;
+        }
+
+        if (!$column) {
+            return $this->pushError("Ordering column name can't be empty.");
+        }
+
         $column = $this->fullyQualifiedColName($column);
         if ($column === null) {
             return $this;
@@ -943,7 +971,7 @@ class Select
 
         $this->resetMemoized();
 
-        $this->groupBy = $column;
+        $this->groupBy[] = $column;
 
         return $this;
     }
@@ -1200,7 +1228,7 @@ class Select
             self::COLUMNS => $this->buildColumnsSql(),
             self::FROM => $this->buildFromSql(),
             self::WHERE => $whereClause ? "WHERE {$whereClause}" : '',
-            self::GROUP_BY => $this->groupBy ? "GROUP BY {$this->groupBy}" : '',
+            self::GROUP_BY => $this->groupBy ? 'GROUP BY ' . implode(', ', $this->groupBy) : '',
             self::ORDER => $this->buildOrderSql(),
             self::LIMIT => $this->buildLimitSql(),
         ];

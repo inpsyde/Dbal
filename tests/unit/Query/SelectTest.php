@@ -181,4 +181,24 @@ QUERY;
 
         $this->assertSameQuery($expected, $select->buildSqlNoEscape());
     }
+
+    public function testGroupBy(): void
+    {
+        $finder = $this->initializeSampleTablesFinder();
+
+        $select = Select::from(TableOne::NAME, 'm', $finder)
+            ->groupBy('m.integer')
+            ->thenGroupBy('m.double')
+            ->andCol('m.integer')
+            ->andCol('m.double');
+
+
+        $expected = <<<QUERY
+SELECT `m`.`integer`, `m`.`double`
+    FROM `wp_1_tests_sample_table` AS `m`
+    GROUP BY `m`.`integer`, `m`.`double`
+QUERY;
+
+        $this->assertSameQuery($expected, $select->buildSqlNoEscape());
+    }
 }
