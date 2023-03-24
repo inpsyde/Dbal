@@ -417,8 +417,8 @@ class ColumnValueEncoder
         $isDateOnly = $type === Column::DATE;
 
         if (is_int($value) || is_float($value)) {
-            $value = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
-            $value = $value->setTimestamp((int)$value);
+            $date = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+            $value = $date->setTimestamp((int)$value);
         }
 
         if ($value instanceof \DateTimeInterface) {
