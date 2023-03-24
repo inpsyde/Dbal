@@ -244,21 +244,27 @@ class TableInstaller
      */
     private function validateVersion(string $version): ?string
     {
-        if (!$version) {
+        $version = trim($version);
+        if ($version === '') {
             return null;
         }
 
-        $validated = '';
+        // This is to address a bug where versions starting with "0" where saved
+        // e.g. as "02.0" instead of "0.2.0".
+        if (preg_match('~^0[0-9](?:\.[0-9]+|$)~', $version)) {
+            $version = '0.' . (string)substr($version, 1);
+        }
+
+        $validated = [];
         $numbers = explode('.', $version);
         foreach ($numbers as $number) {
             if (!is_numeric($number)) {
                 return null;
             }
 
-            $validated and $validated .= '.';
-            $validated .= (string)abs((int)$number);
+            $validated[] = abs((int)$number);
         }
 
-        return $validated ?: null;
+        return ($validated === []) ? null : implode('.', $validated);
     }
 }
