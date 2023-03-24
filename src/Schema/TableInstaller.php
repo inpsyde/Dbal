@@ -265,6 +265,6 @@ class TableInstaller
             $validated[] = abs((int)$number);
         }
 
-        return ($validated === []) ? null : implode('.', $validated);
+        return implode('.', $validated);
     }
 }
