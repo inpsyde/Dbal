@@ -366,6 +366,7 @@ final class Column
 
     /**
      * @param string $name
+     * @param string|null $default
      * @return Column
      */
     public static function datetime(string $name, ?string $default = null): Column
@@ -380,6 +381,7 @@ final class Column
 
     /**
      * @param string $name
+     * @param string|null $default
      * @return Column
      */
     public static function timestamp(string $name, ?string $default = null): Column
@@ -639,7 +641,7 @@ final class Column
         if (count($choices) > 63) {
             /**
              * Theoretic limit is 65535, but for practical reasons and limit imposed by .frm file
-             * we decided to have same limit of SET columns.
+             * we decided to have the same limitation of SET columns.
              * @see https://dev.mysql.com/doc/refman/5.7/en/create-table-files.html#limits-frm-file
              */
 
@@ -684,12 +686,16 @@ final class Column
     public static function parseRawDefinition(string $definition): ?Column
     {
         [$name, $type, $specs] = static::normalizeRawDefinition($definition);
-        if (!$name || !$type || !$specs) {
+        if (!$name || !$type) {
             return null;
         }
 
-        $realNumber = in_array($type, self::REAL_NUMBERS, true);
         $attributes = [];
+        if ($specs === null) {
+            return new static($name, $type, $attributes);
+        }
+
+        $realNumber = in_array($type, self::REAL_NUMBERS, true);
         $attributes[self::ATTR_NOT_NULL] = (bool)preg_match(self::DEF_NOT_NULL_REGXP, $specs);
 
         if (preg_match(self::DEF_DEFAULT_REGXP, $specs, $matches)) {
@@ -736,7 +742,7 @@ final class Column
 
     /**
      * @param string $definition
-     * @return array{0:string|null, 1:string|null, 2:string|null}
+     * @return array{string|null, string|null, string|null}
      */
     private static function normalizeRawDefinition(string $definition): array
     {
@@ -749,13 +755,13 @@ final class Column
         $name = empty($parts[0]) ? null : $parts[0];
         $type = empty($parts[1]) ? null : strtoupper(trim($parts[1]));
         $specs = empty($parts[2]) ? null : strtolower(trim($parts[2]));
-        if (!$name || !$type || !$specs) {
+        if (!$name || !$type) {
             return [null, null, null];
         }
 
         if (preg_match("~^([A-Z]+)\(([^\)]+)\)~", $type, $matches)) {
             $type = $matches[1];
-            $specs = '(' . trim($matches[2]) . ") {$specs}";
+            $specs = $specs ? '(' . trim($matches[2]) . ") {$specs}" : null;
         }
 
         // phpcs:disable WordPressVIPMinimum.Constants.ConstantString
@@ -882,6 +888,7 @@ final class Column
     }
 
     /**
+     * @param \DateTimeZone|null $zone
      * @return Column
      */
     public function retrieveAsDateTime(?\DateTimeZone $zone = null): Column
@@ -899,6 +906,7 @@ final class Column
     }
 
     /**
+     * @param \DateTimeZone $zone
      * @return Column
      */
     public function useDefaultTimeZone(\DateTimeZone $zone): Column
@@ -970,7 +978,7 @@ final class Column
         }
 
         if ($collation) {
-            $collationParts = explode('_', (string)$collation, 2);
+            $collationParts = explode('_', $collation, 2);
             if (empty($collationParts[1])) {
                 $collation = null;
             }
@@ -1145,7 +1153,7 @@ final class Column
     }
 
     /**
-     * @return array{0:bool, 1:\DateTimeZone|null}
+     * @return array{bool, \DateTimeZone|null}
      */
     public function shouldRetrieveAsDatetime(): array
     {
@@ -1171,15 +1179,10 @@ final class Column
     }
 
     /**
-     * @return mixed|null
-     *
-     * @psalm-suppress MissingReturnType
-     * phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration
+     * @return mixed
      */
     public function default()
     {
-        // phpcs:enable Inpsyde.CodeQuality.ReturnTypeDeclaration
-
         return $this->attributes[self::ATTR_DEFAULT] ?? null;
     }
 
@@ -1296,6 +1299,7 @@ final class Column
         }
 
         $notNull = $this->attributes[self::ATTR_NOT_NULL] ?? false;
+        /** @var list<string> $choices */
         $choices = (array)($this->attributes[self::ATTR_CHOICES] ?? ['']);
 
         $def = "{$this->type}('" . implode("','", $choices) . "')";
@@ -1393,7 +1397,6 @@ final class Column
             return static::$characterSets;
         }
 
-        /** @psalm-suppress MixedMethodCall */
         $raw = Dbal::wpdb()->get_results("SHOW CHARACTER SET", ARRAY_A);
 
         /** @var array<string, string>|null $characterSets */

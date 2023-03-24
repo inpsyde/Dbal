@@ -33,6 +33,7 @@ class Cache
     private $finder;
 
     /**
+     * @param SchemaFinder $finder
      * @return Cache
      */
     public static function new(SchemaFinder $finder): Cache
@@ -63,14 +64,9 @@ class Cache
     /**
      * @param string $key
      * @return mixed
-     *
-     * @psalm-suppress MissingReturnType
-     * phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration
      */
     public function get(string $key)
     {
-        // phpcs:enable Inpsyde.CodeQuality.ReturnTypeDeclaration
-
         if (!$key) {
             return null;
         }
@@ -86,21 +82,24 @@ class Cache
      * @param string $key
      * @param mixed $value
      * @return void
-     *
-     * @psalm-suppress MissingParamType
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
      */
     public function set(string $key, $value): void
     {
-        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
+        if (is_resource($value)) {
+            return;
+        }
+
+        /** @var string|object|array $strValue */
+        $strValue = is_scalar($value) ? (string)$value : ($value ?? '');
 
         /*
          * When using external object cache, do not store values bigger than 1Mb, and use a static
          * array as cache instead.
          */
         if (
-            wp_using_ext_object_cache()
-            && ((strlen((string)maybe_serialize($value))) > 1024000)
+            ($value !== null)
+            && wp_using_ext_object_cache()
+            && ((strlen((string)maybe_serialize($strValue))) > 1024000)
         ) {
             self::$fallback[$key] = $value;
 

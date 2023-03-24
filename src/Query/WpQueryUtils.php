@@ -15,7 +15,12 @@ class WpQueryUtils
         $sql = '';
         $query = new \WP_Query();
 
-        /** @wp-hook posts_pre_query */
+        /**
+         * @wp-hook posts_pre_query
+         *
+         * @psalm-suppress MissingClosureParamType
+         * @psalm-suppress MissingClosureReturnType
+         */
         $filter = static function ($null, $currentQuery) use (&$sql, $query) {
             if ($currentQuery === $query) {
                 $sql = $query->request;
@@ -27,7 +32,6 @@ class WpQueryUtils
         };
 
         add_filter('posts_pre_query', $filter, PHP_INT_MAX, 2);
-        /** @psalm-suppress UndefinedDocblockClass */
         $query->query($args);
         remove_filter('posts_pre_query', $filter, PHP_INT_MAX);
 

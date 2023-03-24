@@ -8,7 +8,6 @@ use Inpsyde\Dbal\Dbal;
 
 class TableInstaller
 {
-
     public const ACTION_INSTALL = 'dbal.table-install';
     public const ACTION_UPDATE = 'dbal.table-update';
     public const ACTION_INSTALLED = 'dbal.table-installed';
@@ -123,7 +122,6 @@ class TableInstaller
         unset($versions[$baseName]);
 
         $deleted = true;
-        /** @psalm-suppress MixedArgument */
         if ($this->tableExists($wpdb, $name)) {
             $deleted = $wpdb->query("DROP TABLE {$name}") !== false;
         }
@@ -137,8 +135,6 @@ class TableInstaller
      * @param \wpdb $wpdb
      * @param string $tableName
      * @return bool
-     *
-     * @psalm-suppress PossiblyNullArgument
      */
     private function tableExists(\wpdb $wpdb, string $tableName): bool
     {
@@ -167,7 +163,6 @@ class TableInstaller
             ? $this->validateVersion($versions[$baseName])
             : null;
 
-        /** @psalm-suppress MixedArgument */
         $exists = $this->tableExists(Dbal::wpdb(), $fullName);
         if ($exists && ($savedVer === null)) {
             $savedVer = '0.0.0.0';
@@ -229,9 +224,9 @@ class TableInstaller
     /**
      * @param array $versions
      * @param bool $network
-     * @return array
+     * @return void
      */
-    private function persistVersions(array $versions, bool $network): array
+    private function persistVersions(array $versions, bool $network)
     {
         $option = $network ? self::OPTION_VERSIONS_NETWORK : self::OPTION_VERSIONS;
         $this->versions[$option] = $versions;
@@ -241,8 +236,6 @@ class TableInstaller
             : update_option($option, $versions, false);
 
         $this->versions[$option] = $versions;
-
-        return $versions;
     }
 
     /**
@@ -251,21 +244,27 @@ class TableInstaller
      */
     private function validateVersion(string $version): ?string
     {
-        if (!$version) {
+        $version = trim($version);
+        if ($version === '') {
             return null;
         }
 
-        $validated = '';
+        // This is to address a bug where versions starting with "0" where saved
+        // e.g. as "02.0" instead of "0.2.0".
+        if (preg_match('~^0[0-9](?:\.[0-9]+|$)~', $version)) {
+            $version = '0.' . (string)substr($version, 1);
+        }
+
+        $validated = [];
         $numbers = explode('.', $version);
         foreach ($numbers as $number) {
             if (!is_numeric($number)) {
                 return null;
             }
 
-            $validated and $validated .= '.';
-            $validated .= (string)abs((int)$number);
+            $validated[] = abs((int)$number);
         }
 
-        return $validated ?: null;
+        return implode('.', $validated);
     }
 }

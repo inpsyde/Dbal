@@ -12,11 +12,10 @@ use Inpsyde\Dbal\Tests\TableTwo;
 
 class AggregateTest extends QueriesTestCase
 {
-
     /**
      * @test
      */
-    public function testCount()
+    public function testCount(): void
     {
         $count = 5;
 

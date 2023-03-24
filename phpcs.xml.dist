@@ -28,4 +28,10 @@
             <property name="additionalAllowedNames" type="array" value="eq" />
         </properties>
     </rule>
+
+    <rule ref="Generic.Metrics.CyclomaticComplexity">
+        <properties>
+            <property name="complexity" type="integer" value="20" />
+        </properties>
+    </rule>
 </ruleset>

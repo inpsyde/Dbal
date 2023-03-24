@@ -9,7 +9,10 @@ use Inpsyde\Dbal\Tests\UnitTestCase;
 
 class PaginationTest extends UnitTestCase
 {
-    public function testBasic()
+    /**
+     * @test
+     */
+    public function testBasic(): void
     {
         $pagination = Pagination::new(10, 1, 3);
 
@@ -30,7 +33,10 @@ class PaginationTest extends UnitTestCase
         static::assertSame(3, $expectedPage);
     }
 
-    public function testByTotalRows()
+    /**
+     * @test
+     */
+    public function testByTotalRows(): void
     {
         $pagination = Pagination::byTotalRows(100, 33, 1);
 
@@ -43,7 +49,10 @@ class PaginationTest extends UnitTestCase
         static::assertNull($last->forNextPage());
     }
 
-    public function testByTotalRowsEmpty()
+    /**
+     * @test
+     */
+    public function testByTotalRowsEmpty(): void
     {
         $pagination = Pagination::byTotalRows(0, 33, 1);
 
@@ -54,7 +63,10 @@ class PaginationTest extends UnitTestCase
         static::assertNull($pagination->forNextPage());
     }
 
-    public function testByTotalRowsLessThanPerPage()
+    /**
+     * @test
+     */
+    public function testByTotalRowsLessThanPerPage(): void
     {
         $pagination = Pagination::byTotalRows(10, 33, 1);
 
@@ -65,7 +77,10 @@ class PaginationTest extends UnitTestCase
         static::assertNull($pagination->forNextPage());
     }
 
-    public function testMotPaginated()
+    /**
+     * @test
+     */
+    public function testMotPaginated(): void
     {
         $pagination = Pagination::notPaginated();
 

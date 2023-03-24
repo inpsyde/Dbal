@@ -54,7 +54,7 @@ class Select
     private $joins = [];
 
     /**
-     * @var array<string, array<string, array{0:string, 1:bool}>>
+     * @var array<string, array<string, array{string, bool, string|null}>>
      */
     private $columns = [];
 
@@ -69,17 +69,17 @@ class Select
     private $where;
 
     /**
-     * @var array<array{0:string, 1:string|null, 2:bool}>
+     * @var array<array{string, string|null, bool}>
      */
     private $order = [];
 
     /**
-     * @var string|null
+     * @var list<string>
      */
-    private $groupBy;
+    private $groupBy = [];
 
     /**
-     * @var array{0:bool|null, 1:int|null, 2:int}
+     * @var array{bool|null, int|null, int}
      */
     private $limit = [null, null, 0];
 
@@ -94,7 +94,7 @@ class Select
     private $errors;
 
     /**
-     * @var array{0:int, 1:array<int, array>}|null
+     * @var array{int, array<int, array>}|null
      */
     private $executed;
 
@@ -368,6 +368,7 @@ class Select
      * @param string $sourceTable
      * @param string|null $columnNameOnSource
      * @param string|null $columnNameOnJoined
+     * @param string|null $alias
      * @return Select
      */
     public function innerJoinWith(
@@ -583,14 +584,9 @@ class Select
      * @param mixed $value
      * @param string|null $operator
      * @return Select
-     *
-     * @psalm-suppress MissingParamType
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
      */
     public function where(string $column, $value, ?string $operator = null): Select
     {
-        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-
         if (!$this->errors->isEmpty()) {
             return $this;
         }
@@ -607,14 +603,9 @@ class Select
      * @param mixed $value
      * @param string|null $operator
      * @return Select
-     *
-     * @psalm-suppress MissingParamType
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
      */
     public function andWhere(string $column, $value, ?string $operator = null): Select
     {
-        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-
         if (!$this->errors->isEmpty()) {
             return $this;
         }
@@ -634,14 +625,9 @@ class Select
      * @param mixed $value
      * @param string|null $operator
      * @return Select
-     *
-     * @psalm-suppress MissingParamType
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
      */
     public function orWhere(string $column, $value, ?string $operator = null): Select
     {
-        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-
         if (!$this->errors->isEmpty()) {
             return $this;
         }
@@ -950,6 +936,34 @@ class Select
             return $this;
         }
 
+        $this->groupBy = [];
+
+        return $this->withGroupBy($column);
+    }
+
+    /**
+     * @param string $column
+     * @return Select
+     */
+    public function thenGroupBy(string $column): Select
+    {
+        return $this->withGroupBy($column);
+    }
+
+    /**
+     * @param string $column
+     * @return Select
+     */
+    private function withGroupBy(string $column): Select
+    {
+        if (!$this->errors->isEmpty()) {
+            return $this;
+        }
+
+        if (!$column) {
+            return $this->pushError("Ordering column name can't be empty.");
+        }
+
         $column = $this->fullyQualifiedColName($column);
         if ($column === null) {
             return $this;
@@ -957,7 +971,7 @@ class Select
 
         $this->resetMemoized();
 
-        $this->groupBy = $column;
+        $this->groupBy[] = $column;
 
         return $this;
     }
@@ -1048,7 +1062,6 @@ class Select
             $this->limit = $backup;
         }
 
-        /** @var array|null $row */
         $row = $rows ? reset($rows) : null;
         if (!$row) {
             return ResultSet::empty();
@@ -1198,7 +1211,6 @@ class Select
 
         /** @var Schema $schema */
         $schema = $this->schema;
-        /** @var SchemaFinder $finder */
         $finder = $this->finder;
 
         $whereClause = '';
@@ -1216,7 +1228,7 @@ class Select
             self::COLUMNS => $this->buildColumnsSql(),
             self::FROM => $this->buildFromSql(),
             self::WHERE => $whereClause ? "WHERE {$whereClause}" : '',
-            self::GROUP_BY => $this->groupBy ? "GROUP BY {$this->groupBy}" : '',
+            self::GROUP_BY => $this->groupBy ? 'GROUP BY ' . implode(', ', $this->groupBy) : '',
             self::ORDER => $this->buildOrderSql(),
             self::LIMIT => $this->buildLimitSql(),
         ];
@@ -1271,10 +1283,9 @@ class Select
      * @param string|null $columnOnSource
      * @param string|null $columnOnJoined
      * @param string|null $alias
+     * @param Where|null $where
+     * @param string|null $raw
      * @return Select
-     *
-     * phpcs:disable Generic.Metrics.CyclomaticComplexity.TooHigh
-     * phpcs:disable Inpsyde.CodeQuality.FunctionLength
      */
     private function withJoin(
         string $type,
@@ -1287,70 +1298,28 @@ class Select
         ?string $raw = null
     ): Select {
 
-        // phpcs:enable Generic.Metrics.CyclomaticComplexity.TooHigh
-        // phpcs:enable Inpsyde.CodeQuality.FunctionLength
-
-        if (!$this->errors->isEmpty()) {
+        $schemas = $this->determineJoinSchema($sourceTable, $targetTable, $alias, $raw);
+        if ($schemas === null) {
             return $this;
         }
 
-        $isRaw = $raw !== null;
-
-        /** @psalm-suppress PossiblyNullArgument */
-        $target = $isRaw ? null : $this->finder->findSchema($targetTable);
-        if (!$target && !$isRaw) {
-            return $this->pushError("Could not find table '{$targetTable}' to join.");
-        }
-
-        if ($isRaw) {
-            if ($raw === '') {
-                return $this->pushError("Raw JOIN expression can't be empty.");
-            }
-
-            if (!$alias) {
-                return $this->pushError("Alias is required for raw JOINs.");
-            }
-        }
-
-        $sourceIsMain = $sourceTable === null;
-        $source = $sourceIsMain ? $this->schema : null;
-
-        if (!$sourceIsMain) {
-            [, $source] = $this->aliases->resolveSchema($sourceTable ?? '');
-            $this->aliases->mergeErrors($this->errors);
-            if (!$this->errors->isEmpty() || !$source) {
-                return $this;
-            }
-        }
-
-        if (!$source) {
-            return $this;
-        }
-
-        // If source table is not the main, we need to be sure source table is already joined
-        if (!$sourceIsMain && !$this->hasJoinFor($source->name())) {
-            return $this->pushError(
-                "Table '{$sourceTable}' is not in joined table list, "
-                . "can't use as source for another join."
-            );
-        }
-
+        [$source, $target] = $schemas;
         $join = null;
 
-        if ($isRaw) {
-            /** @psalm-suppress PossiblyNullArgument */
+        if ($raw !== null) {
+            /** @var string $alias */
             $join = $type === Join::LEFT
                 ? Join::leftRaw($source, $raw, $alias, $columnOnSource, $columnOnJoined)
                 : Join::innerRaw($source, $raw, $alias, $columnOnSource, $columnOnJoined);
         } elseif ($where) {
-            /** @psalm-suppress PossiblyNullArgument */
+            /** @var Schema $target */
             $join = $type === Join::LEFT
                 ? Join::leftWhere($source, $target, $where, $alias)
                 : Join::innerWhere($source, $target, $where, $alias);
         }
 
         if (!$join) {
-            /** @psalm-suppress PossiblyNullArgument */
+            /** @var Schema $target */
             $join = $type === Join::LEFT
                 ? Join::left($source, $target, $columnOnSource, $columnOnJoined, $alias)
                 : Join::inner($source, $target, $columnOnSource, $columnOnJoined, $alias);
@@ -1365,14 +1334,14 @@ class Select
 
         if ($alias) {
             /** @psalm-suppress PossiblyNullReference */
-            $isRaw
+            ($raw !== null)
                 ? $this->aliases->forRawSchema($alias)
                 : $this->aliases->forSchema($target->name(), $alias);
             $this->aliases->mergeErrors($this->errors);
         }
 
         if ($this->errors->isEmpty()) {
-            /** @psalm-suppress PossiblyNullReference */
+            /** @var Schema $target */
             $joinName = $alias ?? $target->name();
             $this->joins[$joinName] = $join;
         }
@@ -1386,6 +1355,9 @@ class Select
      * @param string|null $alias
      * @param bool $raw
      * @return Select
+     *
+     * phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
+     * @TODO: consider refactoring
      */
     private function withColumn(string $column, ?string $alias = null, bool $raw = false): Select
     {
@@ -1409,18 +1381,21 @@ class Select
             $tableName = $table === null ? $mainSchema->name() : $table;
             $isRawAlias = $this->aliases->isRawSchemaAlias($tableName);
 
-            /** @var Schema|null $schema */
             [$schemaName, $schema, $schemaAlias] = $isRawAlias
                 ? [$tableName, null, $tableName]
                 : $this->aliases->resolveSchema($tableName);
 
             $this->aliases->mergeErrors($this->errors);
+            /** @psalm-suppress ParadoxicalCondition */
             if (!$this->errors->isEmpty() || (!$schema && !$isRawAlias)) {
                 return $this;
             }
 
-            /** @psalm-suppress PossiblyNullReference */
-            if (!$raw && ($column !== '*' && !$schema->columns()->hasColumn($column))) {
+            if (
+                !$raw
+                && !$isRawAlias
+                && ($column !== '*' && !$schema->columns()->hasColumn($column))
+            ) {
                 return $this->pushError(
                     "Column '{$column}' not found in '{$schemaName}' table. "
                     . 'Use a "raw" column to make use of MySQL functions. '
@@ -1443,7 +1418,7 @@ class Select
         /** @var string $columnsKey */
         $columnsKey = ($raw && !$table) ? self::RAW_COL_KEY : ($schemaAlias ?? $tableName);
         $schemaColumns = $this->columns[$columnsKey] ?? [];
-        $schemaColumns[$column] = [$column, $raw];
+        $schemaColumns[$column] = [$column, $raw, $alias];
         $this->columns[$columnsKey] = $schemaColumns;
 
         if ($alias) {
@@ -1526,7 +1501,7 @@ class Select
         }
 
         $schemas = [];
-        foreach ($this->columns as $tableNameOrAlias => $data) {
+        foreach (array_keys($this->columns) as $tableNameOrAlias) {
             if (
                 $tableNameOrAlias === self::RAW_COL_KEY
                 || $this->aliases->isRawSchemaAlias($tableNameOrAlias)
@@ -1534,7 +1509,6 @@ class Select
                 continue;
             }
 
-            /** @var Schema|null $schema */
             [, $schema] = $this->aliases->resolveSchema($tableNameOrAlias);
             $this->aliases->mergeErrors($this->errors);
             if (!$schema || !$this->errors->isEmpty()) {
@@ -1542,7 +1516,6 @@ class Select
             }
 
             $schemas[] = $schema;
-            continue;
         }
 
         if (!$schemas) {
@@ -1557,7 +1530,76 @@ class Select
     }
 
     /**
-     * @return array{0:int, 1:array<int, array>}
+     * @param string|null $sourceTable
+     * @param string $targetTable
+     * @param string|null $alias
+     * @param string|null $raw
+     * @return array{Schema, Schema|null}|null
+     */
+    private function determineJoinSchema(
+        ?string $sourceTable,
+        ?string $targetTable,
+        ?string $alias,
+        ?string $raw
+    ): ?array {
+
+        if (!$this->errors->isEmpty()) {
+            return null;
+        }
+
+        $isRaw = $raw !== null;
+
+        $target = ($isRaw || !$targetTable) ? null : $this->finder->findSchema($targetTable);
+        if (!$target && !$isRaw) {
+            $this->pushError("Could not find table '{$targetTable}' to join.");
+
+            return null;
+        }
+
+        if ($isRaw) {
+            if ($raw === '') {
+                $this->pushError("Raw JOIN expression can't be empty.");
+
+                return null;
+            }
+
+            if (!$alias) {
+                $this->pushError("Alias is required for raw JOINs.");
+
+                return null;
+            }
+        }
+
+        $sourceIsMain = $sourceTable === null;
+        $source = $sourceIsMain ? $this->schema : null;
+
+        if (!$sourceIsMain) {
+            [, $source] = $this->aliases->resolveSchema($sourceTable ?? '');
+            $this->aliases->mergeErrors($this->errors);
+            if (!$this->errors->isEmpty() || !$source) {
+                return null;
+            }
+        }
+
+        if (!$source) {
+            return null;
+        }
+
+        // If source table is not the main, we need to be sure source table is already joined
+        if (!$sourceIsMain && !$this->hasJoinFor($source->name())) {
+            $this->pushError(
+                "Table '{$sourceTable}' is not in joined table list, "
+                . "can't use as source for another join."
+            );
+
+            return null;
+        }
+
+        return [$source, $target];
+    }
+
+    /**
+     * @return array{int, array<int, array>}
      */
     private function execute(): array
     {
@@ -1628,12 +1670,10 @@ class Select
                 return '';
             }
 
-            $this->columns[$theMainAlias ?? $mainSchema->name()] = ['*' => ['*', true]];
+            $this->columns[$theMainAlias ?? $mainSchema->name()] = ['*' => ['*', true, null]];
         }
 
         ksort($this->columns);
-
-        /** @var string $tableName */
         foreach ($this->columns as $tableName => $columnsData) {
             $sql = $this->buildColumnsSqlForTable($sql, $tableName, $columnsData);
         }
@@ -1644,14 +1684,14 @@ class Select
     /**
      * @param string $sql
      * @param string $table
-     * @param array<string, array{0:string, 1:bool}> $columns
+     * @param array<string, array{string, bool, string|null}> $columns
      * @return string
      */
     private function buildColumnsSqlForTable(string $sql, string $table, array $columns): string
     {
         $isRawAll = $table === self::RAW_COL_KEY;
         $hasAll = !empty($columns['*']);
-        foreach ($columns as [$colName, $isRaw]) {
+        foreach ($columns as [$colName, $isRaw, $alias]) {
             // If we're getting all columns, we don't need more.
             if ($colName !== '*' && $hasAll && !$isRaw) {
                 continue;
@@ -1695,6 +1735,7 @@ class Select
             }
 
             $sql .= ($isRaw && !$isRawSchema) ? $colRealName : "`{$tableRef}`.`{$colRealName}`";
+            $colAlias = $alias ?? $colAlias;
             $colAlias and $sql .= " AS `{$colAlias}`";
         }
 
@@ -1720,7 +1761,6 @@ class Select
         $fullMainName = $this->finder->fullTableName($mainSchema);
         $sql .= $mainAlias ? "`{$fullMainName}` AS `{$mainAlias}`" : "`{$fullMainName}`";
 
-        /** @var Join $join */
         foreach ($this->joins as $join) {
             $sql .= ' ' . $join->clause($this->finder, $this->aliases);
         }
@@ -1777,6 +1817,7 @@ class Select
 
         [$realColumn, , , $colTable] = $this->aliases->resolveColumn($column);
         $this->aliases->mergeErrors($this->errors);
+        /** @psalm-suppress ParadoxicalCondition */
         if (!$this->errors->isEmpty() || !$realColumn) {
             return null;
         }
@@ -1787,6 +1828,7 @@ class Select
 
         [$tableRealName, $schema, $tableAlias] = $this->aliases->resolveSchema($tableName);
         $this->aliases->mergeErrors($this->errors);
+        /** @psalm-suppress ParadoxicalCondition */
         if (!$this->errors->isEmpty()) {
             return null;
         }
@@ -1804,7 +1846,7 @@ class Select
 
     /**
      * @param string $sql
-     * @return array{0:string, 1:int|null, 2: array<int, array>|null}
+     * @return array{string, int|null, array<int, array>|null}
      */
     private function cacheFor(string $sql): array
     {
@@ -1816,7 +1858,6 @@ class Select
         $mainSchema = $this->schema;
         $tables = [$mainSchema->name()];
 
-        /** @var Join $join */
         foreach ($this->joins as $join) {
             $schema = $join->targetSchema();
             if ($schema) {

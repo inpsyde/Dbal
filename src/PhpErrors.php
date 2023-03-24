@@ -6,6 +6,12 @@ namespace Inpsyde\Dbal;
 
 final class PhpErrors
 {
+    private const PHP_8_FATAL_ERROR_CODES = E_ERROR
+        | E_CORE_ERROR
+        | E_COMPILE_ERROR
+        | E_USER_ERROR
+        | E_RECOVERABLE_ERROR
+        | E_PARSE;
 
     /**
      * @var callable|null
@@ -18,23 +24,41 @@ final class PhpErrors
     private $restored = false;
 
     /**
-     * @return \Inpsyde\Dbal\PhpErrors
+     * @return PhpErrors
      */
     public static function convertToExceptions(): PhpErrors
     {
         // phpcs:disable WordPress.PHP
         $previousErrorHandler = set_error_handler(
             static function (int $code, string $message, string $file = '', int $line = 0): bool {
-                if (error_reporting() !== 0) {
+                if (!static::areErrorsSuppressed($code)) {
                     throw new \ErrorException($message, $code, E_ERROR, $file, $line);
                 }
 
-                return false;
+                return true;
             }
         );
-        // phpcs:enable WordPress.PHP
 
         return new static($previousErrorHandler);
+    }
+
+    /**
+     * @param int $code
+     * @return bool
+     */
+    private static function areErrorsSuppressed(int $code): bool
+    {
+        $errorReporting = error_reporting();
+
+        if (PHP_MAJOR_VERSION < 8) {
+            return $errorReporting === 0;
+        }
+
+        if ($errorReporting !== self::PHP_8_FATAL_ERROR_CODES) {
+            return false;
+        }
+
+        return ($code & self::PHP_8_FATAL_ERROR_CODES) !== $code;
     }
 
     /**

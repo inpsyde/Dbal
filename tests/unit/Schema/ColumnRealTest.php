@@ -9,7 +9,10 @@ use Inpsyde\Dbal\Tests\UnitTestCase;
 
 class ColumnRealTest extends UnitTestCase
 {
-    public function testDecimal()
+    /**
+     * @test
+     */
+    public function testDecimal(): void
     {
         $col = Column::decimal('Foo', 10, 0, 0.0)->makeUnsigned();
 
@@ -28,7 +31,10 @@ class ColumnRealTest extends UnitTestCase
         static::assertFalse($col->isBoolean());
     }
 
-    public function testFloat()
+    /**
+     * @test
+     */
+    public function testFloat(): void
     {
         $col = Column::float('Bar')->makeNotNull()->makeAutoIncrement();
 
@@ -47,7 +53,10 @@ class ColumnRealTest extends UnitTestCase
         static::assertFalse($col->isBoolean());
     }
 
-    public function testDouble()
+    /**
+     * @test
+     */
+    public function testDouble(): void
     {
         $col = Column::double('Baz', 30, 0, 5.5)->makeNotNull()->makeUnsigned();
 
@@ -66,97 +75,145 @@ class ColumnRealTest extends UnitTestCase
         static::assertFalse($col->isBoolean());
     }
 
-    public function testFloatUpscaleToDoubleWhenNeeded()
+    /**
+     * @test
+     */
+    public function testFloatUpscaleToDoubleWhenNeeded(): void
     {
         $col = Column::float('Foo', 45);
         static::assertSame(Column::DOUBLE, $col->type());
     }
 
-    public function testDoubleDownscaleToFloatWhenPossible()
+    /**
+     * @test
+     */
+    public function testDoubleDownscaleToFloatWhenPossible(): void
     {
         $col = Column::double('Foo', 10);
         static::assertSame(Column::FLOAT, $col->type());
     }
 
-    public function testDecimalFailsWithNegativePrecision()
+    /**
+     * @test
+     */
+    public function testDecimalFailsWithNegativePrecision(): void
     {
         $this->expectExceptionMessageMatches('/precision/i');
         Column::decimal('Foo', -1);
     }
 
-    public function testDecimalFailsWithTooHighPrecision()
+    /**
+     * @test
+     */
+    public function testDecimalFailsWithTooHighPrecision(): void
     {
         $this->expectExceptionMessageMatches('/precision/i');
         Column::decimal('Foo', 99);
     }
 
-    public function testDecimalFailsWithNegativeScale()
+    /**
+     * @test
+     */
+    public function testDecimalFailsWithNegativeScale(): void
     {
         $this->expectExceptionMessageMatches('/scale/i');
         Column::decimal('Foo', 10, -1);
     }
 
-    public function testDecimalFailsWithTooHighScale()
+    /**
+     * @test
+     */
+    public function testDecimalFailsWithTooHighScale(): void
     {
         $this->expectExceptionMessageMatches('/scale/i');
         Column::decimal('Foo', 10, 99);
     }
 
-    public function testFloatFailsWithNegativePrecision()
+    /**
+     * @test
+     */
+    public function testFloatFailsWithNegativePrecision(): void
     {
         $this->expectExceptionMessageMatches('/precision/i');
         Column::float('Foo', -1);
     }
 
-    public function testFloatFailsWithTooHighPrecision()
+    /**
+     * @test
+     */
+    public function testFloatFailsWithTooHighPrecision(): void
     {
         $this->expectExceptionMessageMatches('/precision/i');
         Column::float('Foo', 99);
     }
 
-    public function testFloatFailsWithNegativeScale()
+    /**
+     * @test
+     */
+    public function testFloatFailsWithNegativeScale(): void
     {
         $this->expectExceptionMessageMatches('/scale/i');
         Column::float('Foo', 10, -1);
     }
 
-    public function testFloatFailsWithTooHighScale()
+    /**
+     * @test
+     */
+    public function testFloatFailsWithTooHighScale(): void
     {
         $this->expectExceptionMessageMatches('/scale/i');
         Column::float('Foo', 10, 99);
     }
 
-    public function testDoubleFailsWithNegativePrecision()
+    /**
+     * @test
+     */
+    public function testDoubleFailsWithNegativePrecision(): void
     {
         $this->expectExceptionMessageMatches('/precision/i');
         Column::double('Foo', -1);
     }
 
-    public function testDoubleFailsWithTooHighPrecision()
+    /**
+     * @test
+     */
+    public function testDoubleFailsWithTooHighPrecision(): void
     {
         $this->expectExceptionMessageMatches('/precision/i');
         Column::double('Foo', 99);
     }
 
-    public function testDoubleFailsWithNegativeScale()
+    /**
+     * @test
+     */
+    public function testDoubleFailsWithNegativeScale(): void
     {
         $this->expectExceptionMessageMatches('/scale/i');
         Column::double('Foo', 10, -1);
     }
 
-    public function testDoubleFailsWithTooHighScale()
+    /**
+     * @test
+     */
+    public function testDoubleFailsWithTooHighScale(): void
     {
         $this->expectExceptionMessageMatches('/scale/i');
         Column::double('Foo', 10, 99);
     }
 
-    public function testFloatFailsIfScaleIsGivenWithoutPrecision()
+    /**
+     * @test
+     */
+    public function testFloatFailsIfScaleIsGivenWithoutPrecision(): void
     {
         $this->expectExceptionMessageMatches('/scale(?:.+?)precision/i');
         Column::float('Foo', null, 20);
     }
 
-    public function testDoubleFailsIfScaleIsGivenWithoutPrecision()
+    /**
+     * @test
+     */
+    public function testDoubleFailsIfScaleIsGivenWithoutPrecision(): void
     {
         $this->expectExceptionMessageMatches('/scale(?:.+?)precision/i');
         Column::double('Foo', null, 0);

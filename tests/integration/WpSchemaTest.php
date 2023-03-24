@@ -10,7 +10,10 @@ use Inpsyde\Dbal\Tests\IntegrationTestCase;
 
 class WpSchemaTest extends IntegrationTestCase
 {
-    public function testSchemaRetrieval()
+    /**
+     * @test
+     */
+    public function testSchemaRetrieval(): void
     {
         $postColumns = Dbal::wpSchema()->postsColumns();
 

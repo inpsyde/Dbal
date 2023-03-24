@@ -2,8 +2,10 @@
 
 _Database abstraction layer for WordPress, on top of wpdb and dbDelta._
 
-![PHP integration tests](https://github.com/inpsyde/Dbal/workflows/PHP%20integration%20tests/badge.svg)
-![Quality Assurance](https://github.com/inpsyde/Dbal/workflows/Quality%20Assurance/badge.svg?branch=master)
+[![Code Style](https://github.com/inpsyde/Dbal/actions/workflows/code-style.yml/badge.svg)](https://github.com/inpsyde/Dbal/actions/workflows/code-style.yml)
+[![Static Analysis](https://github.com/inpsyde/Dbal/actions/workflows/static-analysis.yml/badge.svg)](https://github.com/inpsyde/Dbal/actions/workflows/static-analysis.yml)
+[![Unit Tests](https://github.com/inpsyde/Dbal/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/inpsyde/Dbal/actions/workflows/unit-tests.yml)
+[![Integration Tests](https://github.com/inpsyde/Dbal/actions/workflows/integration-tests.yml/badge.svg)](https://github.com/inpsyde/Dbal/actions/workflows/integration-tests.yml)
 
 ## License
 Copyright (c) 2020 Inpsyde GmbH

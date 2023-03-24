@@ -205,12 +205,12 @@ final class WpSchemas
         }
 
         $sql = $this->loadWpSchema();
-        $definitionStartParts = explode("CREATE TABLE {$table} (", $sql, 2) ?: ['', ''];
+        $definitionStartParts = explode("CREATE TABLE {$table} (", $sql, 2);
         if (empty($definitionStartParts[1])) {
             return null;
         }
 
-        $rawSchemaParts = explode("PRIMARY KEY", $definitionStartParts[1], 2) ?: [''];
+        $rawSchemaParts = explode("PRIMARY KEY", $definitionStartParts[1], 2);
         if (empty($rawSchemaParts[1])) {
             return null;
         }
@@ -249,7 +249,7 @@ final class WpSchemas
             // phpcs:disable Inpsyde.CodeQuality.VariablesName.SnakeCaseVar
 
             /**
-             * Requiring `schema.php` changes two globals as side-effect, so we first backup and
+             * Requiring `schema.php` changes two globals as side effect, so we first back up and
              * then restore those, to make the whole operation transparent.
              *
              * @psalm-suppress InvalidGlobal

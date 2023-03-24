@@ -11,12 +11,13 @@ use Inpsyde\Dbal\Tests\TableOne;
 use Inpsyde\Dbal\Tests\TablePivot;
 use Inpsyde\Dbal\Tests\TableTwo;
 use Inpsyde\Dbal\Tests\UnitTestCase;
-use DateTime;
-use DateTimeImmutable;
 
 class SelectTest extends UnitTestCase
 {
-    public function testJoinViaPivot()
+    /**
+     * @test
+     */
+    public function testJoinViaPivot(): void
     {
         $finder = $this->initializeSampleTablesFinder();
 
@@ -36,10 +37,13 @@ INNER JOIN `wp_1_tests_sample_table_two`
 WHERE `one`.`enum` = 'yes'
     AND `wp_1_tests_sample_table_two`.`decimal` >= '10.123'
 QUERY;
-        $this->compareQueries($expected, $select->buildSqlNoEscape());
+        $this->assertSameQuery($expected, $select->buildSqlNoEscape());
     }
 
-    public function testCompletePaginatedSelect()
+    /**
+     * @test
+     */
+    public function testCompletePaginatedSelect(): void
     {
         $finder = $this->initializeSampleTablesFinder();
 
@@ -79,10 +83,13 @@ ORDER BY `m`.`id` ASC, `s`.`id` DESC, ABS(`s`.`decimal`) ASC
 LIMIT 50, 25
 QUERY;
 
-        $this->compareQueries($expected, $select->buildSqlNoEscape());
+        $this->assertSameQuery($expected, $select->buildSqlNoEscape());
     }
 
-    public function testWhereEncoding()
+    /**
+     * @test
+     */
+    public function testWhereEncoding(): void
     {
         $finder = $this->initializeSampleTablesFinder();
 
@@ -114,19 +121,84 @@ WHERE `wp_1_tests_sample_table`.`datetime` = '2012-12-20 20:12:20'
   AND `wp_1_tests_sample_table`.`serialized` = '{$serialized}'
 SQL;
         static::assertFalse($select->hasErrors());
-        $this->compareQueries($expectedSql, $actualSql);
+        $this->assertSameQuery($expectedSql, $actualSql);
     }
 
-    /**
-     * @param string $expectedRaw
-     * @param string $actualRaw
-     * @return void
-     */
-    private function compareQueries(string $expectedRaw, string $actualRaw): void
+    public function testAliasesWithJoinWhere(): void
     {
-        $expected = trim(preg_replace('/\s+/', ' ', $expectedRaw));
-        $actual = trim(preg_replace('/\s+/', ' ', $actualRaw));
+        $finder = $this->initializeSampleTablesFinder();
 
-        static::assertSame($expected, $actual);
+        $select = Select::from(TableOne::NAME, 'm', $finder)
+            ->innerJoinWhere(TableTwo::NAME, Where::new()->withCompare(
+                Compare::columns('m.' . TableOne::ID, 's.' . TableTwo::ID, Where::EQ)
+            ),
+                's')
+            ->andCol('m.' . TableOne::ID, 'Table One Id');
+
+
+        $expected = <<<QUERY
+SELECT `m`.`id` AS `Table One Id`
+    FROM `wp_1_tests_sample_table` AS `m`
+    INNER JOIN `wp_1_tests_sample_table_two` AS `s` ON `m`.`id` = `s`.`id`
+QUERY;
+
+        $this->assertSameQuery($expected, $select->buildSqlNoEscape());
+    }
+
+    public function testAliasesWithJoin(): void
+    {
+        $finder = $this->initializeSampleTablesFinder();
+
+        $select = Select::from(TableOne::NAME, 'm', $finder)
+            ->innerJoin(TableTwo::NAME, 'm.' . TableOne::ID, 's.' . TableTwo::ID,'s')
+            ->andCol('m.' . TableOne::ID, 'Table One Id');
+
+
+        $expected = <<<QUERY
+SELECT `m`.`id` AS `Table One Id`
+    FROM `wp_1_tests_sample_table` AS `m`
+    INNER JOIN `wp_1_tests_sample_table_two` AS `s` ON `m`.`id` = `s`.`id`
+QUERY;
+
+        $this->assertSameQuery($expected, $select->buildSqlNoEscape());
+    }
+
+    public function testAliasesForEqualColumns(): void
+    {
+        $finder = $this->initializeSampleTablesFinder();
+
+        $select = Select::from(TableOne::NAME, 'm', $finder)
+            ->innerJoin(TableTwo::NAME, 'm.' . TableOne::ID, 's.' . TableTwo::ID,'s')
+            ->andCol('m.id', 'Table One Id')
+            ->andCol('s.id', 'Table Two Id');
+
+
+        $expected = <<<QUERY
+SELECT `m`.`id` AS `Table One Id`, `s`.`id` AS `Table Two Id`
+    FROM `wp_1_tests_sample_table` AS `m`
+    INNER JOIN `wp_1_tests_sample_table_two` AS `s` ON `m`.`id` = `s`.`id`
+QUERY;
+
+        $this->assertSameQuery($expected, $select->buildSqlNoEscape());
+    }
+
+    public function testGroupBy(): void
+    {
+        $finder = $this->initializeSampleTablesFinder();
+
+        $select = Select::from(TableOne::NAME, 'm', $finder)
+            ->groupBy('m.integer')
+            ->thenGroupBy('m.double')
+            ->andCol('m.integer')
+            ->andCol('m.double');
+
+
+        $expected = <<<QUERY
+SELECT `m`.`integer`, `m`.`double`
+    FROM `wp_1_tests_sample_table` AS `m`
+    GROUP BY `m`.`integer`, `m`.`double`
+QUERY;
+
+        $this->assertSameQuery($expected, $select->buildSqlNoEscape());
     }
 }

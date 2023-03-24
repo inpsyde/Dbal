@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\Dbal\Schema;
 
-/**
- * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
- * phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration
- */
 class ColumnValueEncoder
 {
     private const CORE_MAYBE_SERIALIZED = [
@@ -38,6 +34,7 @@ class ColumnValueEncoder
 
     /**
      * @param Column $column
+     * @param WpSchema $schema
      * @return ColumnValueEncoder
      */
     public static function forCore(Column $column, WpSchema $schema): ColumnValueEncoder
@@ -69,15 +66,12 @@ class ColumnValueEncoder
     }
 
     /**
-     * @param $value
-     * @return mixed|null
-     *
-     * @psalm-suppress MissingReturnType
-     * @psalm-suppress MissingParamType
+     * @param mixed $value
+     * @return mixed
      */
     public function decode($value)
     {
-        if ($value === null || !is_scalar($value)) {
+        if (!is_scalar($value)) {
             return $this->column->isNullable() ? null : $this->defaultValue();
         }
 
@@ -120,11 +114,8 @@ class ColumnValueEncoder
     }
 
     /**
-     * @param $value
-     * @return mixed|null
-     *
-     * @psalm-suppress MissingReturnType
-     * @psalm-suppress MissingParamType
+     * @param mixed $value
+     * @return mixed
      */
     public function encode($value)
     {
@@ -173,8 +164,6 @@ class ColumnValueEncoder
     /**
      * @param mixed $value
      * @return array
-     *
-     * @psalm-suppress MissingParamType
      */
     private function castJson($value): array
     {
@@ -189,8 +178,6 @@ class ColumnValueEncoder
     /**
      * @param mixed $value
      * @return string|null
-     *
-     * @psalm-suppress MissingParamType
      */
     private function castEnum($value): ?string
     {
@@ -213,7 +200,7 @@ class ColumnValueEncoder
     }
 
     /**
-     * @param int|float|string|bool $value
+     * @param mixed $value
      * @return bool|null
      */
     private function castBoolean($value): ?bool
@@ -223,15 +210,12 @@ class ColumnValueEncoder
             return $this->column->isNullable() ? null : (bool)$this->defaultValue();
         }
 
-        return (bool)$filtered;
+        return $filtered;
     }
 
     /**
-     * @param int|float|string|bool $value
-     * @return mixed|null
-     *
-     * @psalm-suppress MissingReturnType
-     * @psalm-suppress MissingParamType
+     * @param mixed $value
+     * @return mixed
      */
     private function castNumeric($value)
     {
@@ -250,15 +234,14 @@ class ColumnValueEncoder
      * @param string $value
      * @return \DateTimeInterface|string|null
      *
-     * @psalm-suppress MissingReturnType
+     * phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration
      */
     private function castDateTime(string $value)
     {
+        // phpcs:enable Inpsyde.CodeQuality.ReturnTypeDeclaration
         [$asObject, $targetZone] = $this->column->shouldRetrieveAsDatetime();
 
         $isTimestamp = $this->column->type() === Column::TIMESTAMP;
-
-        /** @var \DateTimeZone $zone */
         $zone = $isTimestamp ? new \DateTimeZone('UTC') : ($targetZone ?? wp_timezone());
 
         $date = \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $value, $zone);
@@ -309,13 +292,9 @@ class ColumnValueEncoder
 
     /**
      * @return mixed|null
-     *
-     * @psalm-suppress MissingReturnType
-     * phpcs:disable Generic.Metrics.CyclomaticComplexity
      */
     private function defaultValue()
     {
-        // phpcs:enable Generic.Metrics.CyclomaticComplexity
         if ($this->column->hasDefault()) {
             return $this->column->default();
         }
@@ -323,7 +302,7 @@ class ColumnValueEncoder
         $type = $this->column->type();
 
         if (in_array($type, [Column::TIMESTAMP, Column::DATETIME], true)) {
-            return $this->column->retrieveAsDateTime() ? null : '0000-00-00 00:00:00';
+            return $this->column->shouldRetrieveAsDatetime()[0] ? null : '0000-00-00 00:00:00';
         }
 
         $type = $this->column->type();
@@ -353,8 +332,6 @@ class ColumnValueEncoder
     /**
      * @param mixed $value
      * @return string|null
-     *
-     * @psalm-suppress MissingParamType
      */
     private function encodeForCore($value): ?string
     {
@@ -376,8 +353,6 @@ class ColumnValueEncoder
     /**
      * @param mixed $value
      * @return string|null
-     *
-     * @psalm-suppress MissingParamType
      */
     private function encodeSerialized($value): ?string
     {
@@ -393,10 +368,8 @@ class ColumnValueEncoder
     }
 
     /**
-     * @param $value
+     * @param mixed $value
      * @return string|null
-     *
-     * @psalm-suppress MissingParamType
      */
     private function encodeJson($value): ?string
     {
@@ -410,14 +383,10 @@ class ColumnValueEncoder
         }
 
         if (is_string($value)) {
+            /** @psalm-suppress UnusedFunctionCall */
             json_decode($value);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                return $value;
-            }
 
-            $encoded = json_encode($value, $flags);
-
-            return json_last_error() === JSON_ERROR_NONE ? (string)$encoded : $default;
+            return json_last_error() === JSON_ERROR_NONE ? $value : $default;
         }
 
         if (is_int($value)) {
@@ -436,10 +405,8 @@ class ColumnValueEncoder
     }
 
     /**
-     * @param $value
+     * @param mixed $value
      * @return string|null
-     *
-     * @psalm-suppress MissingParamType
      */
     private function encodeDatetime($value): ?string
     {
@@ -450,8 +417,8 @@ class ColumnValueEncoder
         $isDateOnly = $type === Column::DATE;
 
         if (is_int($value) || is_float($value)) {
-            $value = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
-            $value = $value->setTimestamp((int)$value);
+            $date = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+            $value = $date->setTimestamp((int)$value);
         }
 
         if ($value instanceof \DateTimeInterface) {
@@ -465,7 +432,6 @@ class ColumnValueEncoder
                 return $default;
             }
 
-            /** @var \DateTimeZone|null $zone */
             [, $zone] = $this->column->shouldRetrieveAsDatetime();
             $zone and $value = $value->setTimezone($zone);
 
@@ -491,10 +457,8 @@ class ColumnValueEncoder
     }
 
     /**
-     * @param $value
+     * @param mixed $value
      * @return string|null
-     *
-     * @psalm-suppress MissingParamType
      */
     private function encodeStringValue($value): ?string
     {

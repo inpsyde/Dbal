@@ -46,6 +46,13 @@ class Where
         self::NOT_LIKE => self::NOT_LIKE,
     ];
 
+    private const SIZE_COMP_OPERATORS = [
+        self::GREATER => self::GREATER,
+        self::GREATER_EQ => self::GREATER_EQ,
+        self::LESS => self::LESS,
+        self::LESS_EQ => self::LESS_EQ,
+    ];
+
     /**
      * @var array<array>
      */
@@ -58,7 +65,8 @@ class Where
 
     /**
      * @param string $column
-     * @return array{0:string, 1:string|null}
+     * @param ErrorCollector $collector
+     * @return array{string, string|null}
      */
     public static function maybeSplitTableName(string $column, ErrorCollector $collector): array
     {
@@ -96,17 +104,12 @@ class Where
 
     /**
      * @param string $column
-     * @param $value
+     * @param mixed $value
      * @param string $operator
      * @return Where
-     *
-     * @psalm-suppress MissingParamType
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
      */
     public function with(string $column, $value, ?string $operator = null): Where
     {
-        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-
         if (!$this->errors->isEmpty()) {
             return $this;
         }
@@ -153,16 +156,12 @@ class Where
 
     /**
      * @param string $column
-     * @param $value
+     * @param mixed $value
      * @param string|null $operator
      * @return Where
-     *
-     * @psalm-suppress MissingParamType
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
      */
     public function and(string $column, $value, ?string $operator = null): Where
     {
-        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
         if (!$this->errors->isEmpty()) {
             return $this;
         }
@@ -211,16 +210,12 @@ class Where
 
     /**
      * @param string $column
-     * @param $value
+     * @param mixed $value
      * @param string|null $operator
      * @return Where
-     *
-     * @psalm-suppress MissingParamType
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
      */
     public function or(string $column, $value, ?string $operator = null): Where
     {
-        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
         if (!$this->errors->isEmpty()) {
             return $this;
         }
@@ -389,7 +384,7 @@ class Where
             return '';
         }
 
-        return $this->buildClause('', [], $defaultSchema, $finder, $aliases);
+        return $this->buildClause([], $defaultSchema, $finder, $aliases);
     }
 
     /**
@@ -402,7 +397,6 @@ class Where
     }
 
     /**
-     * @param string $clause
      * @param array<string, Columns> $columns
      * @param Schema $defaultSchema
      * @param SchemaFinder $finder
@@ -410,13 +404,13 @@ class Where
      * @return string
      */
     private function buildClause(
-        string $clause,
         array $columns,
         Schema $defaultSchema,
         SchemaFinder $finder,
         Aliases $aliases
     ): string {
 
+        $clause = '';
         $args = [$defaultSchema, $finder, $aliases];
 
         /**
@@ -434,22 +428,16 @@ class Where
             }
 
             if ($value instanceof Compare) {
-                /** @psalm-suppress PossiblyInvalidArgument */
                 $clause = $this->buildCompareClause($clause, $type, $value, ...$args);
                 continue;
             }
 
             if ($value instanceof Where) {
-                /** @psalm-suppress PossiblyInvalidArgument */
                 $clause = $this->buildInnerClause($clause, $type, $value, $columns, ...$args);
                 continue;
             }
 
-            /**
-             * @var string $col
-             * @psalm-suppress PossiblyInvalidArgument
-             * @psalm-suppress InvalidArgument
-             */
+            /** @var string $col */
             $info = $this->columnAndSchemaInfo($col, ...$args);
 
             if (!$info) {
@@ -458,11 +446,6 @@ class Where
                 return '';
             }
 
-            /**
-             * @var string $column
-             * @var Schema $schema
-             * @var string $colName
-             */
             [$column, $schema, $colName] = $info;
 
             if ($raw) {
@@ -481,7 +464,6 @@ class Where
                 $columns[$schemaName] = $schema->columns();
             }
 
-            /** @var Columns $schemaColumns */
             $schemaColumns = $columns[$schemaName];
             $valCol = $schemaColumns->findColumn($colName);
 
@@ -506,7 +488,7 @@ class Where
      * @param Schema $defaultSchema
      * @param SchemaFinder $finder
      * @param Aliases $aliases
-     * @return array{0:string, 1:Schema, 2:string}|null
+     * @return array{string, Schema, string}|null
      */
     private function columnAndSchemaInfo(
         string $rawColumn,
@@ -529,6 +511,7 @@ class Where
         $tableName = $table ?? $defaultSchema->name();
         [$tableRealName, $schema, $tableAlias] = $aliases->resolveSchema($tableName);
         $aliases->mergeErrors($this->errors);
+        /** @psalm-suppress ParadoxicalCondition */
         if (!$this->errors->isEmpty() || !$schema) {
             return null;
         }
@@ -601,9 +584,6 @@ class Where
      * @param string|null $operator
      * @param Column|null $valueColumnObject
      * @return string
-     *
-     * @psalm-suppress MissingParamType
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
      */
     private function buildParsedClause(
         string $clause,
@@ -615,20 +595,19 @@ class Where
         ?Column $valueColumnObject = null
     ): string {
 
-        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-
         $wpdb = Dbal::wpdb();
 
         if (!$format) {
             $format = '%s';
         }
 
-        $multiValue = $columnValue
-            && is_array($columnValue)
+        $multiValue = is_array($columnValue)
             && in_array($operator, [self::IN, self::NOT_IN], true);
 
         if (!$multiValue) {
-            $operator = $operator ?? self::EQ;
+            if ($operator === null) {
+                $operator = ($columnValue === null) ? self::IS : self::EQ;
+            }
             $clause and $clause .= " {$type} ";
             $columnClause = "{$column} {$operator} {$format}";
             $columnValue = $this->encodeValue($columnValue, $valueColumnObject);
@@ -636,31 +615,16 @@ class Where
             return $clause . (string)$wpdb->prepare($columnClause, $columnValue);
         }
 
-        if ($multiValue) {
-            $parsedValue = [];
-            foreach ($columnValue as $columnSingleValue) {
-                $parsedValue[] = $this->encodeValue($columnSingleValue, $valueColumnObject);
-            }
-
-            $inFormat = rtrim(str_repeat("{$format},", count($parsedValue)), ',');
-            $clause and $clause .= " {$type} ";
-            $columnClause = "{$column} {$operator} ({$inFormat}) ";
-
-            return $clause . (string)$wpdb->prepare($columnClause, ...$parsedValue);
+        $parsedValue = [];
+        foreach ($columnValue as $columnSingleValue) {
+            $parsedValue[] = $this->encodeValue($columnSingleValue, $valueColumnObject);
         }
 
-        if ($operator === null) {
-            $operator = 'NULL';
-        }
+        $inFormat = rtrim(str_repeat("{$format},", count($parsedValue)), ',');
+        $clause and $clause .= " {$type} ";
+        $columnClause = "{$column} {$operator} ({$inFormat}) ";
 
-        $type = gettype($columnValue);
-
-        $this->errors->withError(
-            "Error building WHERE clause for {$column}: operator {$operator} is not compatible "
-            . "with given column value of type {$type}."
-        );
-
-        return $clause;
+        return $clause . (string)$wpdb->prepare($columnClause, ...$parsedValue);
     }
 
     /**
@@ -750,7 +714,7 @@ class Where
         Aliases $aliases
     ): string {
 
-        $inner = $value->buildClause('', $columns, $defaultSchema, $finder, $aliases);
+        $inner = $value->buildClause($columns, $defaultSchema, $finder, $aliases);
         $clause .= $clause ? " {$type} ({$inner})" : $inner;
 
         return $clause;
@@ -759,59 +723,54 @@ class Where
     /**
      * @param string $operator
      * @param mixed|null $value
-     * @return string
-     *
-     * @psalm-suppress MissingParamType
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
+     * @return void
      */
-    private function checkOperator(?string $operator, $value): string
+    private function checkOperator(?string $operator, $value): void
     {
-        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-
         if ($operator === null) {
-            $operator = self::EQ;
-            if ($value === null || is_array($value)) {
-                $operator = $value === null ? self::IS : self::IN;
-            }
-
-            return $operator;
+            // null means default operator, which will be fine.
+            return;
         }
 
         $operator = strtoupper($operator);
 
+        if (!in_array($operator, self::OPERATORS, true)) {
+            $this->errors->withError("Invalid operator \"{$operator}\".");
+
+            return;
+        }
+
         if ($value === null) {
-            if ($operator !== self::IS && $operator !== self::IS_NOT) {
+            if (!in_array($operator, [self::IS, self::IS_NOT], true)) {
                 $this->errors->withError('Only "IS" or "IS NOT" operator is allowed for null.');
             }
 
-            return $operator;
+            return;
         }
 
-        if ($operator === self::IS || $operator === self::IS_NOT) {
+        if (in_array($operator, [self::IS, self::IS_NOT], true)) {
             $this->errors->withError('"IS" and "IS NOT" operators are allowed only for null.');
+
+            return;
         }
 
-        if ($operator === self::IN || $operator === self::NOT_IN) {
-            if (!is_array($value)) {
-                $this->errors->withError(
-                    '"IN" and "NOT IN" operators are allowed only for arrays.'
-                );
+        if (is_array($value)) {
+            if (in_array($operator, self::SIZE_COMP_OPERATORS, true)) {
+                $this->errors->withError('Size comparison operators are not allowed for arrays.');
             }
 
-            return $operator;
+            return;
         }
 
-        if (!in_array($operator, self::OPERATORS, true)) {
-            $this->errors->withError("Invalid operator \"{$operator}\".");
+        if (in_array($operator, [self::IN, self::NOT_IN], true)) {
+            $this->errors->withError('"IN" and "NOT IN" operators are allowed only for arrays.');
         }
-
-        return $operator;
     }
 
     /**
      * @param string|null $operator
      * @param string|null $column
-     * @return array{0:string|null, 1:string|null}
+     * @return array{string|null, string|null}
      */
     private function checkRawParams(?string $operator, ?string $column): array
     {
@@ -829,19 +788,11 @@ class Where
 
     /**
      * @param mixed $value
-     * @param \Inpsyde\Dbal\Schema\Column|null $column
-     * @return bool|float|int|string
-     *
-     * @psalm-suppress MissingParamType
-     * @psalm-suppress MissingReturnType
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-     * phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration
+     * @param Column|null $column
+     * @return mixed
      */
     private function encodeValue($value, ?Column $column)
     {
-        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-        // phpcs:enable Inpsyde.CodeQuality.ReturnTypeDeclaration
-
         if ($column) {
             $value = ColumnValueEncoder::for($column)->encode($value);
         }

@@ -11,7 +11,10 @@ use Inpsyde\Dbal\Tests\UnitTestCase;
 
 class ResultTest extends UnitTestCase
 {
-    public function testResultFromThrowable()
+    /**
+     * @test
+     */
+    public function testResultFromThrowable(): void
     {
         $result = Result::new(new \Exception('Meh'));
 
@@ -21,7 +24,10 @@ class ResultTest extends UnitTestCase
         $result->extract();
     }
 
-    public function testResultFromErrorCollectorWithErrors()
+    /**
+     * @test
+     */
+    public function testResultFromErrorCollectorWithErrors(): void
     {
         $errors = new ErrorCollector();
         $errors->withError('Meh');
@@ -33,7 +39,10 @@ class ResultTest extends UnitTestCase
         $result->extract();
     }
 
-    public function testResultFromEmptyErrorCollector()
+    /**
+     * @test
+     */
+    public function testResultFromEmptyErrorCollector(): void
     {
         $result = Result::new(new ErrorCollector());
 
@@ -41,7 +50,10 @@ class ResultTest extends UnitTestCase
         static::assertNull($result->extract());
     }
 
-    public function testResultFromResultSuccess()
+    /**
+     * @test
+     */
+    public function testResultFromResultSuccess(): void
     {
         $result = Result::new(Result::new(true));
 
@@ -49,7 +61,10 @@ class ResultTest extends UnitTestCase
         static::assertTrue($result->extract());
     }
 
-    public function testResultFromResultErrored()
+    /**
+     * @test
+     */
+    public function testResultFromResultErrored(): void
     {
         $result = Result::new(Result::new(new \Exception('Meh')));
 
@@ -59,7 +74,10 @@ class ResultTest extends UnitTestCase
         $result->extract();
     }
 
-    public function testResultFromValue()
+    /**
+     * @test
+     */
+    public function testResultFromValue(): void
     {
         $result = Result::new(123);
 
@@ -67,7 +85,10 @@ class ResultTest extends UnitTestCase
         static::assertSame(123, $result->extract());
     }
 
-    public function testBindSuccess()
+    /**
+     * @test
+     */
+    public function testBindSuccess(): void
     {
         $result = Result::new(123)->bind(
             function (int $value): int {
@@ -76,7 +97,7 @@ class ResultTest extends UnitTestCase
                 return 456;
             },
             function (): void {
-                static::assertTrue(false);
+                static::fail();
             }
         );
 
@@ -86,11 +107,14 @@ class ResultTest extends UnitTestCase
         static::assertSame(456, $result->extract());
     }
 
-    public function testBindError()
+    /**
+     * @test
+     */
+    public function testBindError(): void
     {
         $result = Result::new(new \Exception('Meh'))->bind(
             static function (): void {
-                static::assertTrue(false);
+                static::fail();
             },
             static function (): \Exception {
                 return new \Exception('Meh meh!');
@@ -103,7 +127,10 @@ class ResultTest extends UnitTestCase
         $result->assert();
     }
 
-    public function testPushErrorToCollectorViaBind()
+    /**
+     * @test
+     */
+    public function testPushErrorToCollectorViaBind(): void
     {
         $errorCollector = new ErrorCollector();
 
@@ -133,7 +160,10 @@ class ResultTest extends UnitTestCase
         static::assertSame('Failed!', $errorCollector->error()->getMessage());
     }
 
-    public function testPushErrorToCollectorViaMerge()
+    /**
+     * @test
+     */
+    public function testPushErrorToCollectorViaMerge(): void
     {
         $errorCollector = new ErrorCollector();
 
@@ -165,7 +195,10 @@ class ResultTest extends UnitTestCase
         static::assertTrue($secondFunctionRun);
     }
 
-    public function testBindErrorMerge()
+    /**
+     * @test
+     */
+    public function testBindErrorMerge(): void
     {
         $result = Result::new(new \Exception('Meh'))->bind(
             null,
@@ -181,14 +214,20 @@ class ResultTest extends UnitTestCase
         static::assertSame('Meh', $result->error()->getPrevious()->getMessage());
     }
 
-    public function testMergeAllSuccessPropagateResult()
+    /**
+     * @test
+     */
+    public function testMergeAllSuccessPropagateResult(): void
     {
         $value = Result::new(1)->merge(Result::new(2))->merge(Result::new(3))->extract();
 
         static::assertSame(3, $value);
     }
 
-    public function testMergeOneErrorPropagatesIt()
+    /**
+     * @test
+     */
+    public function testMergeOneErrorPropagatesIt(): void
     {
         $erroneous = Result::new(new \Exception('Meh'));
         $result = Result::new(1)->merge($erroneous)->merge(Result::new(3))->merge(Result::new(4));
@@ -197,7 +236,10 @@ class ResultTest extends UnitTestCase
         static::assertSame('Meh', $result->error()->getMessage());
     }
 
-    public function testMergeMoreErrorsPropagatesAndMergeThem()
+    /**
+     * @test
+     */
+    public function testMergeMoreErrorsPropagatesAndMergeThem(): void
     {
         $result = Result::new(1)
             ->merge(Result::new(new \Exception('First!')))
@@ -213,7 +255,10 @@ class ResultTest extends UnitTestCase
         static::assertSame('First!', $result->error()->getPrevious()->getPrevious()->getMessage());
     }
 
-    public function testExtractWith()
+    /**
+     * @test
+     */
+    public function testExtractWith(): void
     {
         $id = Result::new((object)['id' => '2'])->extractWith(function (\stdClass $data): int {
             return (int)($data->id ?? 0);

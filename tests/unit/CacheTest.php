@@ -15,6 +15,9 @@ class CacheTest extends UnitTestCase
 {
     private $cache = [];
 
+    /**
+     * @return void
+     */
     protected function setUp(): void
     {
         parent::setUp();
@@ -45,7 +48,10 @@ class CacheTest extends UnitTestCase
         Monkey\Functions\when('wp_generate_uuid4')->justReturn(random_bytes(8));
     }
 
-    public function testBaseSetAndGet()
+    /**
+     * @test
+     */
+    public function testBaseSetAndGet(): void
     {
         $cache = Cache::new($this->initializeSampleTablesFinder());
 
@@ -62,7 +68,10 @@ class CacheTest extends UnitTestCase
         static::assertNull($cache->get('foo'));
     }
 
-    public function testKeyForTables()
+    /**
+     * @test
+     */
+    public function testKeyForTables(): void
     {
         $ta1 = (new TableOne())->name();
         $ta2 = (new TableTwo())->name();
@@ -88,7 +97,7 @@ class CacheTest extends UnitTestCase
 
         $cache = Cache::new($this->initializeSampleTablesFinder());
 
-        foreach ($toTest as $i => $tables) {
+        foreach ($toTest as $tables) {
             $rand = $tables[array_rand($tables, 1)];
 
             $key1 = $cache->buildCacheKeyForTables(...$tables);
@@ -117,7 +126,10 @@ class CacheTest extends UnitTestCase
         }
     }
 
-    public function testValueInvalidationByTableUpdate()
+    /**
+     * @test
+     */
+    public function testValueInvalidationByTableUpdate(): void
     {
         $ta1 = (new TableOne())->name();
         $ta2 = (new TableTwo())->name();

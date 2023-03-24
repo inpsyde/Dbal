@@ -9,8 +9,10 @@ use Inpsyde\Dbal\Tests\UnitTestCase;
 
 class ErrorTest extends UnitTestCase
 {
-
-    public function testSerialize()
+    /**
+     * @test
+     */
+    public function testSerialize(): void
     {
         $first = new \Error('First');
         $second = new \InvalidArgumentException('Second', 0, $first);

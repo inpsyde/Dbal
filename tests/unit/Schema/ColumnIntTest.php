@@ -9,7 +9,10 @@ use Inpsyde\Dbal\Tests\UnitTestCase;
 
 class ColumnIntTest extends UnitTestCase
 {
-    public function testTinyInt()
+    /**
+     * @test
+     */
+    public function testTinyInt(): void
     {
         $col = Column::tinyInt('Foo', 0)->makeUnsigned()->makeAutoIncrement();
 
@@ -27,7 +30,10 @@ class ColumnIntTest extends UnitTestCase
         static::assertTrue($col->isUnsigned());
     }
 
-    public function testSmallInt()
+    /**
+     * @test
+     */
+    public function testSmallInt(): void
     {
         $col = Column::smallInt('small')->makeZeroFill(4)->makeNotNull();
 
@@ -45,7 +51,10 @@ class ColumnIntTest extends UnitTestCase
         static::assertTrue($col->isUnsigned());
     }
 
-    public function testMediumInt()
+    /**
+     * @test
+     */
+    public function testMediumInt(): void
     {
         $col = Column::mediumInt('medium');
 
@@ -63,7 +72,10 @@ class ColumnIntTest extends UnitTestCase
         static::assertFalse($col->isUnsigned());
     }
 
-    public function testInt()
+    /**
+     * @test
+     */
+    public function testInt(): void
     {
         $col = Column::int('Integer')->makeAutoIncrement();
 
@@ -81,7 +93,10 @@ class ColumnIntTest extends UnitTestCase
         static::assertFalse($col->isUnsigned());
     }
 
-    public function testBigInt()
+    /**
+     * @test
+     */
+    public function testBigInt(): void
     {
         $col = Column::bigInt('Big')->makeNotNull();
 
@@ -99,7 +114,10 @@ class ColumnIntTest extends UnitTestCase
         static::assertFalse($col->isUnsigned());
     }
 
-    public function testBit()
+    /**
+     * @test
+     */
+    public function testBit(): void
     {
         $col = Column::bit('bit', 8)->makeNotNull();
 
@@ -119,7 +137,10 @@ class ColumnIntTest extends UnitTestCase
         static::assertFalse($col->isBoolean());
     }
 
-    public function testBool()
+    /**
+     * @test
+     */
+    public function testBool(): void
     {
         $col = Column::bool('yer_or_no', false)->makeNotNull();
 
@@ -139,7 +160,10 @@ class ColumnIntTest extends UnitTestCase
         static::assertTrue($col->isBoolean());
     }
 
-    public function testEntityId()
+    /**
+     * @test
+     */
+    public function testEntityId(): void
     {
         $col = Column::entityId('ID');
 
@@ -157,31 +181,46 @@ class ColumnIntTest extends UnitTestCase
         static::assertTrue($col->isUnsigned());
     }
 
-    public function testCollationNotSupported()
+    /**
+     * @test
+     */
+    public function testCollationNotSupported(): void
     {
         $this->expectExceptionMessageMatches('/not support/i');
         Column::smallInt('x')->useCharsetCollation('ut8mb4');
     }
 
-    public function testSerializedNotSupported()
+    /**
+     * @test
+     */
+    public function testSerializedNotSupported(): void
     {
         $this->expectExceptionMessageMatches('/serialized/i');
         Column::mediumInt('y')->storeSerialized();
     }
 
-    public function testRetrieveAsDateTimeNotSupported()
+    /**
+     * @test
+     */
+    public function testRetrieveAsDateTimeNotSupported(): void
     {
         $this->expectExceptionMessageMatches('/DateTime/i');
         Column::int('y')->retrieveAsDateTime();
     }
 
-    public function testCurrentTimestampAsDefault()
+    /**
+     * @test
+     */
+    public function testCurrentTimestampAsDefault(): void
     {
         $this->expectExceptionMessageMatches('/timestamp/i');
         Column::bigInt('y')->useCurrentTimestampAsDefault();
     }
 
-    public function testBitDefaultCantExceedItsSize()
+    /**
+     * @test
+     */
+    public function testBitDefaultCantExceedItsSize(): void
     {
         $this->expectExceptionMessageMatches('/exceed/i');
         Column::bit('bb', 8, 256); // 8 bits can store numbers from 0 to 255

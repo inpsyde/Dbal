@@ -73,15 +73,11 @@ class UnitTestCase extends TestCase
     }
 
     /**
-     * @param string $result
+     * @param mixed $result
      * @return void
-     *
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
      */
     protected function infixNextWpdbQueryResult($result): void
     {
-        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-
         global $wpdb;
         /** @var DummyWpdb $wpdb */
 
@@ -89,15 +85,12 @@ class UnitTestCase extends TestCase
     }
 
     /**
-     * @param string $result
+     * @param int $num
+     * @param mixed $result
      * @return void
-     *
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
      */
     protected function infixNumWpdbQueryResult(int $num, $result): void
     {
-        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-
         global $wpdb;
         /** @var DummyWpdb $wpdb */
 
@@ -125,5 +118,18 @@ class UnitTestCase extends TestCase
         $schemas->registerForInstall(new TableOne(), new TableTwo(), new TablePivot());
 
         return SchemaFinder::new(WpSchemas::new(), $schemas);
+    }
+
+    /**
+     * @param string $expectedRaw
+     * @param string $actualRaw
+     * @return void
+     */
+    protected function assertSameQuery(string $expectedRaw, string $actualRaw): void
+    {
+        $expected = trim(preg_replace('/\s+/', ' ', $expectedRaw));
+        $actual = trim(preg_replace('/\s+/', ' ', $actualRaw));
+
+        static::assertSame($expected, $actual);
     }
 }

@@ -15,7 +15,10 @@ use Inpsyde\Dbal\Tests\UnitTestCase;
 
 class JoinTest extends UnitTestCase
 {
-    public function testClauseIsEmptyWhenHasResolvingErrors()
+    /**
+     * @test
+     */
+    public function testClauseIsEmptyWhenHasResolvingErrors(): void
     {
         $errors = new ErrorCollector();
         $join = Join::left(new TableOne(), new TableTwo(), 'foo', 'bar');
@@ -32,7 +35,10 @@ class JoinTest extends UnitTestCase
         $errors->assert();
     }
 
-    public function testInnerJoinWithExplicitColumnsAndNoAlias()
+    /**
+     * @test
+     */
+    public function testInnerJoinWithExplicitColumnsAndNoAlias(): void
     {
         $join = Join::inner(new TableOne(), new TableTwo(), TableOne::INTEGER, TableTwo::ID);
 
@@ -46,7 +52,10 @@ class JoinTest extends UnitTestCase
         static::assertSame($expected, $clause);
     }
 
-    public function testInnerJoinWithExplicitColumnsAndTargetAlias()
+    /**
+     * @test
+     */
+    public function testInnerJoinWithExplicitColumnsAndTargetAlias(): void
     {
         $join = Join::inner(new TableOne(), new TableTwo(), TableOne::INTEGER, TableTwo::ID, 'x');
 
@@ -60,7 +69,10 @@ class JoinTest extends UnitTestCase
         static::assertSame($expected, $clause);
     }
 
-    public function testInnerJoinWithExplicitColumnsAndBothSchemaAliased()
+    /**
+     * @test
+     */
+    public function testInnerJoinWithExplicitColumnsAndBothSchemaAliased(): void
     {
         $join = Join::inner(new TableOne(), new TableTwo(), TableOne::INTEGER, TableTwo::ID, 'x');
 
@@ -75,7 +87,10 @@ class JoinTest extends UnitTestCase
         static::assertSame($expected, $clause);
     }
 
-    public function testLeftJoinWithTargetColumnImplicitAndSourceSchemaAliased()
+    /**
+     * @test
+     */
+    public function testLeftJoinWithTargetColumnImplicitAndSourceSchemaAliased(): void
     {
         $join = Join::left(new TableOne(), new TableTwo(), TableOne::INTEGER);
 
@@ -90,7 +105,10 @@ class JoinTest extends UnitTestCase
         static::assertSame($expected, $clause);
     }
 
-    public function testLeftJoinWhereWithBothSchemaAliased()
+    /**
+     * @test
+     */
+    public function testLeftJoinWhereWithBothSchemaAliased(): void
     {
         $compare = Compare::columns('st.' . TableOne::DATETIME, 'nd.' . TableTwo::VARCHAR, '>=');
 
@@ -110,7 +128,10 @@ class JoinTest extends UnitTestCase
         static::assertSame($expected, $clause);
     }
 
-    public function testInnerJoinWhereWithTargetSchemaAliased()
+    /**
+     * @test
+     */
+    public function testInnerJoinWhereWithTargetSchemaAliased(): void
     {
         $compare = Compare::columns(TableOne::INTEGER, 'nd.' . TableTwo::ID, '>=');
         $where = Where::new()->withCompare($compare);
@@ -129,7 +150,10 @@ class JoinTest extends UnitTestCase
         static::assertSame($expected, $clause);
     }
 
-    public function testInnerJoinRawWithAutoColumns()
+    /**
+     * @test
+     */
+    public function testInnerJoinRawWithAutoColumns(): void
     {
         $raw = "SELECT ID as id FROM wp_posts WHERE ID > 0";
 
@@ -144,7 +168,10 @@ class JoinTest extends UnitTestCase
         static::assertSame($expected, $actual);
     }
 
-    public function testLeftJoinRawWithCustomColumns()
+    /**
+     * @test
+     */
+    public function testLeftJoinRawWithCustomColumns(): void
     {
         $raw = "SELECT ID FROM wp_posts WHERE ID > 0";
 
@@ -159,7 +186,10 @@ class JoinTest extends UnitTestCase
         static::assertSame($expected, $actual);
     }
 
-    public function testLeftJoinRawOneCustomAndOneAutoColumn()
+    /**
+     * @test
+     */
+    public function testLeftJoinRawOneCustomAndOneAutoColumn(): void
     {
         $raw = "SELECT ID as integer FROM wp_posts WHERE ID > 0";
 
