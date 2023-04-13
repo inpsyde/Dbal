@@ -14,7 +14,7 @@ class AliasSameAsRawColumnTest extends QueriesTestCase
     /**
      * @test
      */
-    public function testSelectAliasAndWhereIsFailing(): void
+    public function testSelectAliasSameAsColumn(): void
     {
         $result = Dbal::select(TableOne::NAME)
            ->rawCol('DISTINCT(' . TableOne::TEXT . ')', TableOne::TEXT)
@@ -29,7 +29,7 @@ class AliasSameAsRawColumnTest extends QueriesTestCase
     /**
      * @test
      */
-    public function testSelectAliasAndWhere(): void
+    public function testSelectAliasDifferentThanColumn(): void
     {
         $result = Dbal::select(TableOne::NAME)
             ->rawCol('DISTINCT(' . TableOne::TEXT . ')', 'textDistinct')
