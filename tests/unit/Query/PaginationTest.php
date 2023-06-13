@@ -19,6 +19,7 @@ class PaginationTest extends UnitTestCase
         static::assertSame(10, $pagination->perPage());
         static::assertSame(1, $pagination->page());
         static::assertSame(3, $pagination->totalPages());
+        static::assertNull($pagination->totalRows());
         static::assertTrue($pagination->hasMorePages());
 
         $expectedPage = 1;
@@ -47,6 +48,7 @@ class PaginationTest extends UnitTestCase
         $last = $pagination->forNextPage()->forNextPage()->forNextPage();
         static::assertSame(4, $last->page());
         static::assertNull($last->forNextPage());
+        static::assertSame(100, $pagination->totalRows());
     }
 
     /**
@@ -61,6 +63,7 @@ class PaginationTest extends UnitTestCase
         static::assertSame(1, $pagination->page());
         static::assertFalse($pagination->hasMorePages());
         static::assertNull($pagination->forNextPage());
+        static::assertSame(0, $pagination->totalRows());
     }
 
     /**
