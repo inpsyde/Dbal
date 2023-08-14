@@ -243,7 +243,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
     /**
      * @return \Traversable
      */
-    public function getIterator()
+    public function getIterator(): \Traversable
     {
         if ($this->isValid()) {
             return $this->yieldResults();
