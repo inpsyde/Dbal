@@ -22,6 +22,11 @@ final class Pagination
     private $totalPages;
 
     /**
+     * @var ?int
+     */
+    private $totalRows = null;
+
+    /**
      * @param int $perPage
      * @param int $page
      * @param int $totalPages
@@ -40,7 +45,10 @@ final class Pagination
      */
     public static function byTotalRows(int $totalRows, int $perPage, int $page): Pagination
     {
-        return static::new($perPage, $page, (int)ceil($totalRows / $perPage));
+        $instance = static::new($perPage, $page, (int)ceil($totalRows / $perPage));
+        $instance->totalRows = $totalRows;
+
+        return $instance;
     }
 
     /**
@@ -89,6 +97,14 @@ final class Pagination
     public function totalPages(): int
     {
         return $this->totalPages;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function totalRows(): ?int
+    {
+        return $this->totalRows;
     }
 
     /**

@@ -206,7 +206,7 @@ final class Columns implements \IteratorAggregate, \Countable
     /**
      * @return \Traversable<Column>
      */
-    public function getIterator()
+    public function getIterator(): \Traversable
     {
         return new \ArrayIterator(array_values($this->columns));
     }

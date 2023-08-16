@@ -58,7 +58,7 @@ class Schemas implements \Countable, \IteratorAggregate
     /**
      * @return \Traversable<Schema>
      */
-    public function getIterator()
+    public function getIterator(): \Traversable
     {
         return new \ArrayIterator($this->schemas);
     }
