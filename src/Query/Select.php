@@ -9,6 +9,7 @@ use Inpsyde\Dbal\Dbal;
 use Inpsyde\Dbal\Error;
 use Inpsyde\Dbal\ErrorCollector;
 use Inpsyde\Dbal\PhpErrors;
+use Inpsyde\Dbal\Result;
 use Inpsyde\Dbal\Schema\SchemaFinder;
 use Inpsyde\Dbal\Schema\Schemas;
 use Inpsyde\Dbal\Schema\Schema;
@@ -87,6 +88,11 @@ class Select
      * @var bool
      */
     private $unfiltered = false;
+
+    /**
+     * @var bool|null
+     */
+    private $deleteOk = null;
 
     /**
      * @var ErrorCollector
@@ -1114,6 +1120,45 @@ class Select
     }
 
     /**
+     * @return Result
+     */
+    public function delete(): Result
+    {
+        $this->checkDeleteCompliance();
+        if (!$this->errors->isEmpty()) {
+            return Result::new($this->errors);
+        }
+
+        $wpdb = Dbal::wpdb();
+
+        $phpErrors = PhpErrors::convertToExceptions();
+        $suppressErrors = $wpdb->suppress_errors(true);
+
+        try {
+            $sql = $this->buildSqlForDelete();
+            if (!$sql) {
+                $this->pushError('Could not build SQL for delete query');
+
+                return Result::new($this->errors);
+            }
+
+            $rows = $wpdb->query($sql);
+            if (is_numeric($rows)) {
+                return Result::new((int)$rows);
+            }
+
+            $this->pushError('Failed deleting rows');
+
+            return Result::new($this->errors);
+        } catch (\Throwable $throwable) {
+            return Result::new($throwable);
+        } finally {
+            $phpErrors->restoreHandler();
+            $wpdb->suppress_errors($suppressErrors);
+        }
+    }
+
+    /**
      * @return string
      */
     public function buildSqlNoEscape(): string
@@ -1198,6 +1243,29 @@ class Select
         $this->sql = implode(' ', array_filter($parts));
 
         return $this->sql;
+    }
+
+    /**
+     * @return string
+     */
+    public function buildSqlForDelete(): string
+    {
+        $this->checkDeleteCompliance();
+        if (!$this->errors->isEmpty()) {
+            return '';
+        }
+
+        $parts = $this->buildQueryParts();
+        if (!$parts) {
+            return '';
+        }
+
+        $parts = array_diff_key(
+            $parts,
+            [self::SELECT => '', self::COLUMNS => '', self::GROUP_BY => '']
+        );
+
+        return 'DELETE ' . implode(' ', array_filter($parts));
     }
 
     /**
@@ -1798,6 +1866,36 @@ class Select
         $offset = $hardLimit ? $pageOrOffset : (($pageOrOffset - 1) * $perPage);
 
         return sprintf('LIMIT %d, %d', $offset, $perPage);
+    }
+
+    /**
+     * @return void
+     */
+    private function checkDeleteCompliance(): void
+    {
+        if ($this->deleteOk === false) {
+            return;
+        }
+
+        $ok = true;
+        if ($this->aliases->hasSchemaAliases() || $this->aliases->hasColumnAliases()) {
+            // MySQL allows for alias in DELETE, but the syntax is different from SELECT queries
+            // and supporting two alias syntax will add enough complexity. Maybe later.
+            $this->errors->withError('Can\'t make use of alias in a DELETE query.');
+            $ok = false;
+        }
+
+        if ($this->columns) {
+            $this->errors->withError('Can\'t make use of columns selection in a DELETE query.');
+            $ok = false;
+        }
+
+        if ($this->groupBy) {
+            $this->errors->withError('Can\'t make use of GROUP BY in a DELETE query.');
+            $ok = false;
+        }
+
+        $this->deleteOk = $ok;
     }
 
     /**
