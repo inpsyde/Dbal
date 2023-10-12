@@ -15,10 +15,16 @@ use Inpsyde\Dbal\Schema\Index;
 use Inpsyde\Dbal\Schema\Schema;
 use Inpsyde\Dbal\Schema\SchemaFinder;
 
+/**
+ * @psalm-suppress DeprecatedConstant
+ */
 class Write
 {
+    use PrimaryAware;
+
     private const CREATE = 'create';
     private const UPDATE = 'update';
+    /** @deprecated */
     private const DELETE = 'delete';
 
     /**
@@ -220,17 +226,15 @@ class Write
             return Result::new($this->errors);
         }
 
-        try {
-            $primary = $this->findPrimary();
-        } catch (\Error $error) {
-            return Result::new($error);
-        }
-
-        return $this->update($data, [$primary->name() => $primaryValue]);
+        return $this->findPrimary($this->schema, $this->finder)
+            ->bind(
+                function (Index $index) use ($data, $primaryValue): Result {
+                    return $this->update($data, [$index->name() => $primaryValue]);
+                }
+            );
     }
 
     /**
-     * @param Schema $schema
      * @param array $data
      * @param Where $where
      * @return Result
@@ -279,6 +283,8 @@ class Write
     }
 
     /**
+     * @deprecated
+     *
      * @param array $whereData
      * @return Result
      */
@@ -311,6 +317,8 @@ class Write
     /**
      * @param Where $where
      * @return Result
+     *
+     * @deprecated
      */
     public function deleteWhere(Where $where): Result
     {
@@ -332,6 +340,8 @@ class Write
     }
 
     /**
+     * @deprecated
+     *
      * @param mixed $primaryValue
      * @return Result
      */
@@ -341,13 +351,13 @@ class Write
             return Result::new($this->errors);
         }
 
-        try {
-            $primary = $this->findPrimary();
-        } catch (\Error $error) {
-            return Result::new($error);
-        }
-
-        return $this->delete([$primary->name() => $primaryValue]);
+        return $this->findPrimary($this->schema, $this->finder)
+            ->bind(
+                function (Index $index) use ($primaryValue): Result {
+                    /** @psalm-suppress DeprecatedMethod */
+                    return $this->delete([$index->name() => $primaryValue]);
+                }
+            );
     }
 
     /**
@@ -539,23 +549,5 @@ class Write
             $phpErrors->restoreHandler();
             $wpdb->suppress_errors($suppressErrors);
         }
-    }
-
-    /**
-     * @return Index
-     */
-    private function findPrimary(): Index
-    {
-        /** @var Schema $schema */
-        $schema = $this->schema;
-        $indexes = $schema->indexes();
-        $primary = $indexes ? $indexes->primary() : null;
-        if (!$primary) {
-            $name = $this->finder->fullTableName($schema);
-
-            throw new \Error("Table {$name} doesn't have a primary column.");
-        }
-
-        return $primary;
     }
 }

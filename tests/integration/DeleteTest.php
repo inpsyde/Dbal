@@ -27,10 +27,10 @@ class DeleteTest extends QueriesTestCase
             )
             ->assert();
 
-        Dbal::select(TableOne::NAME)
+        Dbal::delete(TableOne::NAME)
             ->where(TableOne::POST_ID, 1, Where::GREATER)
             ->andWhere(TableOne::TEXT, ['One', 'Four'], Where::NOT_IN)
-            ->delete()
+            ->exec()
             ->assert();
 
         $ids = Dbal::select(TableOne::NAME, 't')
@@ -41,5 +41,31 @@ class DeleteTest extends QueriesTestCase
             ->toColumnArray(TableOne::POST_ID);
 
         static::assertSame([1, 4], $ids);
+    }
+
+    /**
+     * @test
+     */
+    public function testDeleteOnPrimary(): void
+    {
+        Dbal::writeOn(TableOne::NAME)
+            ->insertMany(
+                [TableOne::POST_ID => 1, TableOne::TEXT => 'One'],
+                [TableOne::POST_ID => 2, TableOne::TEXT => 'Two'],
+                [TableOne::POST_ID => 3, TableOne::TEXT => 'Three'],
+                [TableOne::POST_ID => 4, TableOne::TEXT => 'Four']
+            )
+            ->assert();
+
+        Dbal::delete(TableOne::NAME)->delOnPrimary([1, 4])->assert();
+
+        $ids = Dbal::select(TableOne::NAME, 't')
+            ->cols(TableOne::POST_ID)
+            ->orderBy(TableOne::POST_ID)
+            ->limit(100)
+            ->all()
+            ->toColumnArray(TableOne::POST_ID);
+
+        static::assertSame([2, 3], $ids);
     }
 }

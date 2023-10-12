@@ -137,7 +137,6 @@ class Dbal
 
     /**
      * @param string $tableName
-     * @param string|null $alias
      * @return Query\Write
      */
     public static function writeOn(string $tableName): Query\Write
@@ -145,6 +144,17 @@ class Dbal
         self::initialize();
 
         return Query\Write::on($tableName, static::schemaFinder(), static::cache());
+    }
+
+    /**
+     * @param string $tableName
+     * @return Query\Delete
+     */
+    public static function delete(string $tableName): Query\Delete
+    {
+        self::initialize();
+
+        return Query\Delete::from($tableName, static::schemaFinder());
     }
 
     /**

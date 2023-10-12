@@ -204,7 +204,6 @@ QUERY;
             ->andCol('m.integer')
             ->andCol('m.double');
 
-
         $expected = <<<QUERY
 SELECT `m`.`integer`, `m`.`double`
     FROM `wp_1_tests_sample_table` AS `m`
@@ -212,24 +211,5 @@ SELECT `m`.`integer`, `m`.`double`
 QUERY;
 
         $this->assertSameQuery($expected, $select->buildSqlNoEscape());
-    }
-
-    /**
-     * @test
-     */
-    public function testDelete(): void
-    {
-        $finder = $this->initializeSampleTablesFinder();
-
-        $select = Select::from(TableOne::NAME, null, $finder)
-            ->where(TableOne::POST_ID, 4, Where::GREATER)
-            ->andWhere(TableOne::TEXT, ['foo', 'bar'], Where::IN);
-
-        $expected = <<<QUERY
-DELETE FROM `wp_1_tests_sample_table`
-    WHERE `wp_1_tests_sample_table`.`post_id` > 4
-    AND `wp_1_tests_sample_table`.`text` IN ('foo','bar')
-QUERY;
-        $this->assertSameQuery($expected, $select->buildSqlForDelete());
     }
 }
