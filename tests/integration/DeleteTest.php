@@ -27,7 +27,7 @@ class DeleteTest extends QueriesTestCase
             )
             ->assert();
 
-        Dbal::delete(TableOne::NAME)
+        Dbal::deleteFrom(TableOne::NAME)
             ->where(TableOne::POST_ID, 1, Where::GREATER)
             ->andWhere(TableOne::TEXT, ['One', 'Four'], Where::NOT_IN)
             ->exec()
@@ -57,7 +57,7 @@ class DeleteTest extends QueriesTestCase
             )
             ->assert();
 
-        Dbal::delete(TableOne::NAME)->delOnPrimary([1, 4])->assert();
+        Dbal::deleteFrom(TableOne::NAME)->delOnPrimary([1, 4])->assert();
 
         $ids = Dbal::select(TableOne::NAME, 't')
             ->cols(TableOne::POST_ID)

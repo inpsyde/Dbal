@@ -150,7 +150,7 @@ class Dbal
      * @param string $tableName
      * @return Query\Delete
      */
-    public static function delete(string $tableName): Query\Delete
+    public static function deleteFrom(string $tableName): Query\Delete
     {
         self::initialize();
 
