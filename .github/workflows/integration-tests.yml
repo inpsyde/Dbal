@@ -8,12 +8,14 @@ on:
             - '**/docker/**'
             - '**.php'
             - 'phpunit*'
+            - 'composer.*'
     push:
         paths:
             - '**/integration-tests*'
             - '**/docker/**'
             - '**.php'
             - 'phpunit*'
+            - 'composer.*'
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
