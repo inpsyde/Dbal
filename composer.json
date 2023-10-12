@@ -20,6 +20,13 @@
     "repositories": [
         {
             "type": "composer",
+            "url": "https://raw.githubusercontent.com/inpsyde/wp-stubs/main",
+            "only": [
+                "inpsyde/wp-stubs-versions"
+            ]
+        },
+        {
+            "type": "composer",
             "url": "https://repo.packagist.com/inpsyde/"
         }
     ],
