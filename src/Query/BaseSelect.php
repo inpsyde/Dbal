@@ -1152,6 +1152,10 @@ abstract class BaseSelect
 
         $offset = $hardLimit ? $pageOrOffset : (($pageOrOffset - 1) * $perPage);
 
+        if ($offset === 0) {
+            return sprintf('LIMIT %d', $perPage);
+        }
+
         return sprintf('LIMIT %d, %d', $offset, $perPage);
     }
 

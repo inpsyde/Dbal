@@ -154,7 +154,7 @@ class Dbal
     {
         self::initialize();
 
-        return Query\Delete::from($tableName, static::schemaFinder());
+        return Query\Delete::from($tableName, static::schemaFinder(), static::cache());
     }
 
     /**
