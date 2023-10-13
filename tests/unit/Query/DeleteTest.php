@@ -33,4 +33,25 @@ DELETE FROM `wp_1_tests_sample_table`
 QUERY;
         $this->assertSameQuery($expected, $delete->buildSql());
     }
+
+    /**
+     * @test
+     */
+    public function testDeleteWithJoin(): void
+    {
+        $finder = $this->initializeSampleTablesFinder();
+
+        $delete = Delete::from(TableOne::NAME, $finder)
+            ->innerJoin(TableTwo::NAME, TableOne::POST_ID, TableTwo::ID)
+            ->where(TableOne::POST_ID, 4, Where::GREATER);
+
+        $expected = <<<QUERY
+DELETE `wp_1_tests_sample_table`, `wp_1_tests_sample_table_two`
+    FROM `wp_1_tests_sample_table`
+    INNER JOIN `wp_1_tests_sample_table_two`
+       ON `wp_1_tests_sample_table`.`post_id` = `wp_1_tests_sample_table_two`.`id`
+    WHERE `wp_1_tests_sample_table`.`post_id` > 4
+QUERY;
+        $this->assertSameQuery($expected, $delete->buildSql());
+    }
 }

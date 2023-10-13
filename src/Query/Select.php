@@ -364,7 +364,7 @@ class Select extends BaseSelect
         $current = $this->limit;
         $return = parent::limit($limit, $offset);
         if ($current !== $this->limit) {
-            $this->resetMemoized();
+            $return->resetMemoized();
         }
 
         return $return;
@@ -608,7 +608,25 @@ class Select extends BaseSelect
         );
 
         if ($current !== $return->joins) {
-            $this->resetMemoized();
+            $return->resetMemoized();
+        }
+
+        return $return;
+    }
+
+    /**
+     * @param string $column
+     * @param bool $raw
+     * @param string|null $dir
+     * @return static
+     */
+    protected function withOrder(string $column, bool $raw, ?string $dir): BaseSelect
+    {
+        $current = $this->order;
+        $return = parent::withOrder($column, $raw, $dir);
+
+        if ($current !== $return->order) {
+            $return->resetMemoized();
         }
 
         return $return;

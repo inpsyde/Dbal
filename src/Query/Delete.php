@@ -26,6 +26,7 @@ use Inpsyde\Dbal\Dbal;
 use Inpsyde\Dbal\PhpErrors;
 use Inpsyde\Dbal\Result;
 use Inpsyde\Dbal\Schema\Index;
+use Inpsyde\Dbal\Schema\Schema;
 use Inpsyde\Dbal\Schema\SchemaFinder;
 
 class Delete extends BaseSelect
@@ -124,8 +125,65 @@ class Delete extends BaseSelect
             return null;
         }
 
-        $parts = array_merge([self::DELETE => 'DELETE'], $base);
+        $delete = 'DELETE';
+
+        $allJoined = [];
+        foreach ($this->joins as $joined) {
+            $joinedSchema = $joined->targetSchema();
+            if (!$joinedSchema) {
+                return null;
+            }
+            $allJoined[] = $this->finder->fullTableName($joinedSchema);
+        }
+        if ($allJoined) {
+            /** @var Schema $mainSchema */
+            $mainSchema = $this->schema;
+            array_unshift($allJoined, $this->finder->fullTableName($mainSchema));
+            $delete .= sprintf(' `%s`', implode('`, `', $allJoined));
+        }
+
+        $parts = array_merge([self::DELETE => $delete], $base);
 
         return $this->filterQueryParts($parts, self::FILTER_QUERY_PART);
+    }
+
+    /**
+     * @param string $type
+     * @param string|null $targetTable
+     * @param string|null $sourceTable
+     * @param string|null $columnOnSource
+     * @param string|null $columnOnJoined
+     * @param string|null $alias
+     * @param Where|null $where
+     * @param string|null $raw
+     * @return static
+     */
+    protected function withJoin(
+        string $type,
+        ?string $targetTable,
+        ?string $sourceTable,
+        ?string $columnOnSource = null,
+        ?string $columnOnJoined = null,
+        ?string $alias = null,
+        ?Where $where = null,
+        ?string $raw = null
+    ): BaseSelect {
+
+        if ($alias) {
+            $this->pushError('Aliases are not allowed in DELETE queries');
+
+            return $this;
+        }
+
+        return parent::withJoin(
+            $type,
+            $targetTable,
+            $sourceTable,
+            $columnOnSource,
+            $columnOnJoined,
+            null,
+            $where,
+            $raw
+        );
     }
 }
