@@ -117,7 +117,7 @@ final class WpInstallExtension implements BeforeFirstTestHook, AfterLastTestHook
     {
         $testsEnv = getenv('TESTS_DIR') . '/.env';
         if (file_exists($testsEnv) && !getenv('WORDPRESS_DB_NAME')) {
-            (new Dotenv(true))->load($testsEnv);
+            (new Dotenv())->load($testsEnv);
         }
 
         $dbHost = getenv('WORDPRESS_DB_HOST');
@@ -176,7 +176,7 @@ final class WpInstallExtension implements BeforeFirstTestHook, AfterLastTestHook
             'WORDPRESS_DB_PASSWORD' => $dbPwd,
         ];
 
-        $process = new Process($command, $cliPath, $env);
+        $process = new Process($command, (string)$cliPath, $env);
         $process->run();
         if (!$process->isSuccessful()) {
             throw new \Exception($process->getErrorOutput());

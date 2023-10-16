@@ -8,12 +8,14 @@ on:
             - '**/docker/**'
             - '**.php'
             - 'phpunit*'
+            - 'composer.*'
     push:
         paths:
             - '**/integration-tests*'
             - '**/docker/**'
             - '**.php'
             - 'phpunit*'
+            - 'composer.*'
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
@@ -25,13 +27,19 @@ jobs:
         if: ${{ !contains(github.event.head_commit.message, 'integration-tests skip') }}
         strategy:
             matrix:
-                php-version: [ '7.2', '7.3', '7.4', '8.0', '8.1' ]
+                php-version: [ '7.2', '7.3', '7.4', '8.0', '8.1', '8.2' ]
                 wp-version: [ '5.9', '6.0', '6.1', '6.2', '6.3' ]
                 exclude:
                     - php-version: '8.0'
                       wp-version: '5.9'
                     - php-version: '8.1'
                       wp-version: '5.9'
+                    - php-version: '8.1'
+                      wp-version: '6.0'
+                    - php-version: '8.2'
+                      wp-version: '5.9'
+                    - php-version: '8.2'
+                      wp-version: '6.0'
         steps:
             -   name: Checkout
                 uses: actions/checkout@v3
@@ -45,7 +53,7 @@ jobs:
             -   name: Adjust Composer Dependencies
                 run: |
                     composer config --unset repositories.0
-                    composer remove inpsyde/php-coding-standards inpsyde/wp-stubs vimeo/psalm roots/wordpress --dev --no-update
+                    composer remove inpsyde/php-coding-standards inpsyde/wp-stubs-versions vimeo/psalm roots/wordpress --dev --no-update
                     composer require "roots/wordpress:${{ matrix.wp-version }}.*" --no-update
 
             -   name: Install Composer Dependencies

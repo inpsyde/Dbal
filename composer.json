@@ -20,7 +20,10 @@
     "repositories": [
         {
             "type": "composer",
-            "url": "https://repo.packagist.com/inpsyde/"
+            "url": "https://raw.githubusercontent.com/inpsyde/wp-stubs/main",
+            "only": [
+                "inpsyde/wp-stubs-versions"
+            ]
         }
     ],
     "require": {
@@ -31,10 +34,10 @@
         "inpsyde/php-coding-standards": "^1",
         "phpunit/phpunit": "^8.5.26",
         "brain/monkey": "^2.6.1",
-        "roots/wordpress": "^5.9.3",
+        "roots/wordpress": ">=6.3.1",
         "vimeo/psalm": "^4.23.0",
-        "inpsyde/wp-stubs": "dev-main",
-        "globalis/wp-cli-bin": "^2",
+        "inpsyde/wp-stubs-versions": "dev-latest",
+        "globalis/wp-cli-bin": "^2.8.1",
         "symfony/process": "^v5.4.8",
         "symfony/dotenv": "^v5.4.5"
     },
