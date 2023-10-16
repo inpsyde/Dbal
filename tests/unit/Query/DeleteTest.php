@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace Inpsyde\Dbal\Tests\Unit\Query;
 
-use Inpsyde\Dbal\Query\Compare;
 use Inpsyde\Dbal\Query\Delete;
-use Inpsyde\Dbal\Query\Select;
 use Inpsyde\Dbal\Query\Where;
 use Inpsyde\Dbal\Tests\TableOne;
 use Inpsyde\Dbal\Tests\TablePivot;
@@ -50,6 +48,62 @@ DELETE `wp_1_tests_sample_table`, `wp_1_tests_sample_table_two`
     FROM `wp_1_tests_sample_table`
     INNER JOIN `wp_1_tests_sample_table_two`
        ON `wp_1_tests_sample_table`.`post_id` = `wp_1_tests_sample_table_two`.`id`
+    WHERE `wp_1_tests_sample_table`.`post_id` > 4
+QUERY;
+        $this->assertSameQuery($expected, $delete->buildSql());
+    }
+
+    /**
+     * @test
+     */
+    public function testDeleteWithJoinOnlyMain(): void
+    {
+        $finder = $this->initializeSampleTablesFinder();
+
+        $delete = Delete::from(TableOne::NAME, $finder)
+            ->innerJoin(TableTwo::NAME, TableOne::POST_ID, TableTwo::ID)
+            ->deleteOnly(TableOne::NAME)
+            ->where(TableOne::POST_ID, 4, Where::GREATER);
+
+        $expected = <<<QUERY
+DELETE `wp_1_tests_sample_table`
+    FROM `wp_1_tests_sample_table`
+    INNER JOIN `wp_1_tests_sample_table_two`
+       ON `wp_1_tests_sample_table`.`post_id` = `wp_1_tests_sample_table_two`.`id`
+    WHERE `wp_1_tests_sample_table`.`post_id` > 4
+QUERY;
+        $this->assertSameQuery($expected, $delete->buildSql());
+    }
+
+    /**
+     * @test
+     */
+    public function testDeleteWithMultipleJoinDeletingFromAllButOne(): void
+    {
+        $finder = $this->initializeSampleTablesFinder();
+
+        $delete = Delete::from(TableOne::NAME, $finder)
+            ->innerJoin(
+                TableTwo::NAME,
+                TableOne::NAME . '.' . TableOne::POST_ID,
+                TableTwo::NAME . '.' . TableTwo::ID
+            )
+            ->innerJoinWith(
+                TablePivot::NAME,
+                TableTwo::NAME,
+                TableTwo::NAME . '.' . TablePivot::ID,
+                TablePivot::NAME . '.' . TablePivot::ID
+            )
+            ->deleteOnly(TableTwo::NAME, TablePivot::NAME)
+            ->where(TableOne::POST_ID, 4, Where::GREATER);
+
+        $expected = <<<QUERY
+DELETE `wp_1_tests_sample_table_two`, `wp_1_tests_sample_table_pivot`
+    FROM `wp_1_tests_sample_table`
+    INNER JOIN `wp_1_tests_sample_table_two`
+       ON `wp_1_tests_sample_table`.`post_id` = `wp_1_tests_sample_table_two`.`id`
+    INNER JOIN `wp_1_tests_sample_table_pivot`
+       ON `wp_1_tests_sample_table_two`.`id` = `wp_1_tests_sample_table_pivot`.`id`
     WHERE `wp_1_tests_sample_table`.`post_id` > 4
 QUERY;
         $this->assertSameQuery($expected, $delete->buildSql());

@@ -41,6 +41,11 @@ class Delete extends BaseSelect
     private $cache;
 
     /**
+     * @var list<Schema>
+     */
+    private $tablesOnly = [];
+
+    /**
      * @param string $tableName
      * @param SchemaFinder|null $finder
      * @param Cache|null $cache
@@ -68,6 +73,59 @@ class Delete extends BaseSelect
 
         parent::__construct($tableName, $finder);
         $this->cache = $cache;
+    }
+
+    /**
+     * @param string $tableName
+     * @param string ...$tableNames
+     * @return static
+     */
+    public function deleteOnly(string $tableName, string ...$tableNames): Delete
+    {
+        if (!$this->errors->isEmpty()) {
+            return $this;
+        }
+
+        array_unshift($tableNames, $tableName);
+        $only = [];
+        foreach ($tableNames as $tableName) {
+            $schema = $this->finder->findSchema($tableName);
+            if (!$schema) {
+                $this->pushError("Could not find a defined schema for '{$tableName}'.");
+                continue;
+            }
+            $only[] = $schema;
+        }
+
+        if (!$this->errors->isEmpty()) {
+            return $this;
+        }
+
+        $this->tablesOnly = $only;
+
+        return $this;
+    }
+
+    /**
+     * @param int $limit
+     * @param int $offset
+     * @return static
+     */
+    public function limit(int $limit, int $offset = 0): BaseSelect
+    {
+        if ($this->joins || ($offset !== 0)) {
+            if ($this->joins) {
+                $this->pushError('JOIN and LIMIT clauses can not be mixed in DELETE queries.');
+            }
+
+            if ($offset !== 0) {
+                $this->pushError('LIMIT clause in DELETE queries can not use offset.');
+            }
+
+            return $this;
+        }
+
+        return parent::limit($limit, $offset);
     }
 
     /**
@@ -147,28 +205,6 @@ class Delete extends BaseSelect
     }
 
     /**
-     * @param int $limit
-     * @param int $offset
-     * @return static
-     */
-    public function limit(int $limit, int $offset = 0): BaseSelect
-    {
-        if ($this->joins || ($offset !== 0)) {
-            if ($this->joins) {
-                $this->pushError('JOIN and LIMIT clauses can not be mixed in DELETE queries.');
-            }
-
-            if ($offset !== 0) {
-                $this->pushError('LIMIT clause in DELETE queries can not use offset.');
-            }
-
-            return $this;
-        }
-
-        return parent::limit($limit, $offset);
-    }
-
-    /**
      * @return array<string, string>|null
      */
     protected function buildQueryParts(): ?array
@@ -185,7 +221,7 @@ class Delete extends BaseSelect
 
         $delete = 'DELETE';
 
-        if (count($allSchemas) > 1) {
+        if (count($allSchemas) > 1 || ($this->tablesOnly !== [])) {
             $delete .= sprintf(' `%s`', implode('`, `', $allSchemas));
         }
 
@@ -256,7 +292,21 @@ class Delete extends BaseSelect
             $allSchemas[] = $this->finder->fullTableName($joinedSchema);
         }
 
-        return $allSchemas;
+        if ($this->tablesOnly === []) {
+            return $allSchemas;
+        }
+
+        $allowed = [];
+        foreach ($this->tablesOnly as $table) {
+            $tableName = $this->finder->fullTableName($table);
+            if (!in_array($tableName, $allSchemas, true)) {
+                return null;
+            }
+
+            $allowed[] = $tableName;
+        }
+
+        return $allowed;
     }
 
     /**
