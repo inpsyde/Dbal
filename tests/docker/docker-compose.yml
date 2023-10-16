@@ -1,12 +1,13 @@
 version: '3.9'
 services:
-    php80:
-        profiles: ["php80"]
+    php82:
+        profiles: ["php82"]
         build:
-            context: ./php80
-        container_name: dbal-php-80
+            context: ./php82
+        container_name: dbal-php-82
         depends_on:
-            - mysql
+            mysql:
+                condition: service_healthy
         environment:
             WORDPRESS_DB_HOST: dbal-mysql
             WORDPRESS_DB_NAME: wordpress
@@ -16,13 +17,48 @@ services:
             -   type: bind
                 source: ../../
                 target: /app
+    php81:
+        profiles: ["php81"]
+        build:
+            context: ./php81
+        container_name: dbal-php-81
+        depends_on:
+            mysql:
+                condition: service_healthy
+        environment:
+            WORDPRESS_DB_HOST: dbal-mysql
+            WORDPRESS_DB_NAME: wordpress
+            WORDPRESS_DB_USER: wordpress
+            WORDPRESS_DB_PASSWORD: wordpress
+        volumes:
+            -   type: bind
+                source: ../../
+                target: /app
+    php80:
+        profiles: [ "php80" ]
+        build:
+            context: ./php80
+        container_name: dbal-php-80
+        depends_on:
+            mysql:
+                condition: service_healthy
+        environment:
+            WORDPRESS_DB_HOST: dbal-mysql
+            WORDPRESS_DB_NAME: wordpress
+            WORDPRESS_DB_USER: wordpress
+            WORDPRESS_DB_PASSWORD: wordpress
+        volumes:
+            - type: bind
+              source: ../../
+              target: /app
     php74:
         profiles: ["php74"]
         build:
             context: ./php74
         container_name: dbal-php-74
         depends_on:
-            - mysql
+            mysql:
+                condition: service_healthy
         environment:
             WORDPRESS_DB_HOST: dbal-mysql
             WORDPRESS_DB_NAME: wordpress
@@ -38,7 +74,8 @@ services:
             context: ./php73
         container_name: dbal-php-73
         depends_on:
-            - mysql
+            mysql:
+                condition: service_healthy
         environment:
             WORDPRESS_DB_HOST: dbal-mysql
             WORDPRESS_DB_NAME: wordpress
@@ -54,7 +91,8 @@ services:
             context: ./php72
         container_name: dbal-php-72
         depends_on:
-            - mysql
+            mysql:
+                condition: service_healthy
         environment:
             WORDPRESS_DB_HOST: dbal-mysql
             WORDPRESS_DB_NAME: wordpress
@@ -72,3 +110,7 @@ services:
             MYSQL_DATABASE: wordpress
             MYSQL_USER: wordpress
             MYSQL_PASSWORD: wordpress
+        healthcheck:
+            test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-u', 'root', '-p$$MYSQL_ROOT_PASSWORD' ]
+            timeout: 5s
+            retries: 10

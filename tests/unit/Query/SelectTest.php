@@ -124,6 +124,9 @@ SQL;
         $this->assertSameQuery($expectedSql, $actualSql);
     }
 
+    /**
+     * @test
+     */
     public function testAliasesWithJoinWhere(): void
     {
         $finder = $this->initializeSampleTablesFinder();
@@ -145,6 +148,9 @@ QUERY;
         $this->assertSameQuery($expected, $select->buildSqlNoEscape());
     }
 
+    /**
+     * @test
+     */
     public function testAliasesWithJoin(): void
     {
         $finder = $this->initializeSampleTablesFinder();
@@ -163,6 +169,9 @@ QUERY;
         $this->assertSameQuery($expected, $select->buildSqlNoEscape());
     }
 
+    /**
+     * @test
+     */
     public function testAliasesForEqualColumns(): void
     {
         $finder = $this->initializeSampleTablesFinder();
@@ -182,6 +191,9 @@ QUERY;
         $this->assertSameQuery($expected, $select->buildSqlNoEscape());
     }
 
+    /**
+     * @test
+     */
     public function testGroupBy(): void
     {
         $finder = $this->initializeSampleTablesFinder();
@@ -191,7 +203,6 @@ QUERY;
             ->thenGroupBy('m.double')
             ->andCol('m.integer')
             ->andCol('m.double');
-
 
         $expected = <<<QUERY
 SELECT `m`.`integer`, `m`.`double`

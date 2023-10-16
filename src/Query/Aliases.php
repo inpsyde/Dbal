@@ -203,6 +203,22 @@ class Aliases
     }
 
     /**
+     * @return bool
+     */
+    public function hasSchemaAliases(): bool
+    {
+        return $this->aliasToName !== [];
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasColumnAliases(): bool
+    {
+        return $this->columnAliasToNames !== [];
+    }
+
+    /**
      * @param string $table
      * @param string $name
      * @return array{string|null, string|null, string|null, string|null}

@@ -7,36 +7,21 @@ namespace Inpsyde\Dbal\Query;
 use Inpsyde\Dbal\Cache;
 use Inpsyde\Dbal\Dbal;
 use Inpsyde\Dbal\Error;
-use Inpsyde\Dbal\ErrorCollector;
 use Inpsyde\Dbal\PhpErrors;
 use Inpsyde\Dbal\Schema\SchemaFinder;
 use Inpsyde\Dbal\Schema\Schemas;
 use Inpsyde\Dbal\Schema\Schema;
 
-/**
- * phpcs:disable Inpsyde.CodeQuality.PropertyPerClassLimit
- */
-class Select
+class Select extends BaseSelect
 {
     public const SELECT = 'select';
     public const COLUMNS = 'columns';
-    public const FROM = 'from';
-    public const WHERE = 'where';
     public const GROUP_BY = 'groupBy';
     public const ORDER = 'order';
-    public const LIMIT = 'limit';
-
-    public const ASC = 'ASC';
-    public const DESC = 'DESC';
 
     public const FILTER_QUERY_PART = 'dbal.select-query-part';
 
     private const RAW_COL_KEY = '生 ';
-
-    /**
-     * @var Schema|null
-     */
-    private $schema;
 
     /**
      * @var Cache|null
@@ -44,54 +29,14 @@ class Select
     private $cache;
 
     /**
-     * @var SchemaFinder
-     */
-    private $finder;
-
-    /**
-     * @var array<string, Join>
-     */
-    private $joins = [];
-
-    /**
      * @var array<string, array<string, array{string, bool, string|null}>>
      */
     private $columns = [];
 
     /**
-     * @var Aliases
-     */
-    private $aliases;
-
-    /**
-     * @var Where|null
-     */
-    private $where;
-
-    /**
-     * @var array<array{string, string|null, bool}>
-     */
-    private $order = [];
-
-    /**
      * @var list<string>
      */
     private $groupBy = [];
-
-    /**
-     * @var array{bool|null, int|null, int}
-     */
-    private $limit = [null, null, 0];
-
-    /**
-     * @var bool
-     */
-    private $unfiltered = false;
-
-    /**
-     * @var ErrorCollector
-     */
-    private $errors;
 
     /**
      * @var array{int, array<int, array>}|null
@@ -143,18 +88,9 @@ class Select
         ?Cache $cache = null
     ) {
 
-        $this->finder = $finder ?: Dbal::schemaFinder();
-        $this->schema = $this->finder->findSchema($tableName);
+        parent::__construct($tableName, $finder);
         $this->cache = $cache;
 
-        $this->errors = new ErrorCollector();
-        if (!$this->schema) {
-            $tableName
-                ? $this->errors->withError("Table '{$tableName}' not found.")
-                : $this->errors->withError("SELECT table name can't be empty.");
-        }
-
-        $this->aliases = Aliases::new($this->finder);
         if ($alias && $this->schema) {
             $this->aliases = $this->aliases->forSchema($this->schema->name(), $alias);
             $this->aliases->mergeErrors($this->errors);
@@ -162,343 +98,20 @@ class Select
     }
 
     /**
-     * @return Select
+     * @return static
      */
-    public function unfiltered(): Select
+    public function unfiltered(): BaseSelect
     {
-        $this->unfiltered = true;
+        parent::unfiltered();
         $this->resetMemoized();
 
         return $this;
     }
 
     /**
-     * @param string $joinTable
-     * @param string|null $columnNameOnMain
-     * @param string|null $columnNameOnJoined
-     * @param string|null $alias
-     * @return Select
-     */
-    public function leftJoin(
-        string $joinTable,
-        string $columnNameOnMain = null,
-        ?string $columnNameOnJoined = null,
-        ?string $alias = null
-    ): Select {
-
-        return $this->withJoin(
-            Join::LEFT,
-            $joinTable,
-            null,
-            $columnNameOnMain,
-            $columnNameOnJoined,
-            $alias
-        );
-    }
-
-    /**
-     * @param string $joinTable
-     * @param Where $where
-     * @param string|null $alias
-     * @return Select
-     */
-    public function leftJoinWhere(string $joinTable, Where $where, ?string $alias = null): Select
-    {
-        return $this->withJoin(
-            Join::LEFT,
-            $joinTable,
-            null,
-            null,
-            null,
-            $alias,
-            $where
-        );
-    }
-
-    /**
-     * @param string $joinTable
-     * @param string $sourceTable
-     * @param string|null $columnNameOnSource
-     * @param string|null $columnNameOnJoined
-     * @param string|null $alias
-     * @return Select
-     */
-    public function leftJoinWith(
-        string $joinTable,
-        string $sourceTable,
-        ?string $columnNameOnSource = null,
-        ?string $columnNameOnJoined = null,
-        ?string $alias = null
-    ): Select {
-
-        return $this->withJoin(
-            Join::LEFT,
-            $joinTable,
-            $sourceTable,
-            $columnNameOnSource,
-            $columnNameOnJoined,
-            $alias
-        );
-    }
-
-    /**
-     * @param string $joinTable
-     * @param string $sourceTable
-     * @param Where $where
-     * @param string|null $alias
-     * @return Select
-     */
-    public function leftJoinWhereWith(
-        string $joinTable,
-        string $sourceTable,
-        Where $where,
-        ?string $alias = null
-    ): Select {
-
-        return $this->withJoin(
-            Join::LEFT,
-            $joinTable,
-            $sourceTable,
-            null,
-            null,
-            $alias,
-            $where
-        );
-    }
-
-    /**
-     * @param string $expression
-     * @param string $alias
-     * @param string|null $columnOnMain
-     * @param string|null $columnOnExpression
-     * @return Select
-     */
-    public function leftJoinRaw(
-        string $expression,
-        string $alias,
-        ?string $columnOnMain = null,
-        ?string $columnOnExpression = null
-    ): Select {
-
-        return $this->withJoin(
-            Join::LEFT,
-            null,
-            null,
-            $columnOnMain,
-            $columnOnExpression,
-            $alias,
-            null,
-            $expression
-        );
-    }
-
-    /**
-     * @param string $expression
-     * @param string $alias
-     * @param string $sourceTable
-     * @param string|null $columnOnMain
-     * @param string|null $columnOnExpression
-     * @return Select
-     */
-    public function leftJoinRawWith(
-        string $expression,
-        string $alias,
-        string $sourceTable,
-        ?string $columnOnMain = null,
-        ?string $columnOnExpression = null
-    ): Select {
-
-        return $this->withJoin(
-            Join::LEFT,
-            null,
-            $sourceTable,
-            $columnOnMain,
-            $columnOnExpression,
-            $alias,
-            null,
-            $expression
-        );
-    }
-
-    /**
-     * @param string $joinTable
-     * @param string|null $columnNameOnMain
-     * @param string|null $columnNameOnJoined
-     * @param string|null $alias
-     * @return Select
-     */
-    public function innerJoin(
-        string $joinTable,
-        ?string $columnNameOnMain = null,
-        ?string $columnNameOnJoined = null,
-        ?string $alias = null
-    ): Select {
-
-        return $this->withJoin(
-            Join::INNER,
-            $joinTable,
-            null,
-            $columnNameOnMain,
-            $columnNameOnJoined,
-            $alias
-        );
-    }
-
-    /**
-     * @param string $joinTable
-     * @param Where $where
-     * @param string|null $alias
-     * @return Select
-     */
-    public function innerJoinWhere(string $joinTable, Where $where, ?string $alias = null): Select
-    {
-        return $this->withJoin(
-            Join::INNER,
-            $joinTable,
-            null,
-            null,
-            null,
-            $alias,
-            $where
-        );
-    }
-
-    /**
-     * @param string $joinTable
-     * @param string $sourceTable
-     * @param string|null $columnNameOnSource
-     * @param string|null $columnNameOnJoined
-     * @param string|null $alias
-     * @return Select
-     */
-    public function innerJoinWith(
-        string $joinTable,
-        string $sourceTable,
-        ?string $columnNameOnSource = null,
-        ?string $columnNameOnJoined = null,
-        ?string $alias = null
-    ): Select {
-
-        return $this->withJoin(
-            Join::INNER,
-            $joinTable,
-            $sourceTable,
-            $columnNameOnSource,
-            $columnNameOnJoined,
-            $alias
-        );
-    }
-
-    /**
-     * @param string $joinTable
-     * @param string $sourceTable
-     * @param Where $where
-     * @param string|null $alias
-     * @return Select
-     */
-    public function innerJoinWhereWith(
-        string $joinTable,
-        string $sourceTable,
-        Where $where,
-        ?string $alias = null
-    ): Select {
-
-        return $this->withJoin(
-            Join::INNER,
-            $joinTable,
-            $sourceTable,
-            null,
-            null,
-            $alias,
-            $where
-        );
-    }
-
-    /**
-     * @param string $expression
-     * @param string $alias
-     * @param string|null $columnOnMain
-     * @param string|null $columnOnExpression
-     * @return Select
-     */
-    public function innerJoinRaw(
-        string $expression,
-        string $alias,
-        ?string $columnOnMain = null,
-        ?string $columnOnExpression = null
-    ): Select {
-
-        return $this->withJoin(
-            Join::INNER,
-            null,
-            null,
-            $columnOnMain,
-            $columnOnExpression,
-            $alias,
-            null,
-            $expression
-        );
-    }
-
-    /**
-     * @param string $expression
-     * @param string $alias
-     * @param string $sourceTable
-     * @param string|null $columnOnMain
-     * @param string|null $columnOnExpression
-     * @return Select
-     */
-    public function innerJoinRawWith(
-        string $expression,
-        string $alias,
-        string $sourceTable,
-        ?string $columnOnMain = null,
-        ?string $columnOnExpression = null
-    ): Select {
-
-        return $this->withJoin(
-            Join::INNER,
-            null,
-            $sourceTable,
-            $columnOnMain,
-            $columnOnExpression,
-            $alias,
-            null,
-            $expression
-        );
-    }
-
-    /**
-     * @param string $joinTable
-     * @param string $pivotTable
-     * @param string $pivotColumnForMain
-     * @param string $pivotColumnForJoined
-     * @param string|null $columnOnMain
-     * @param string|null $columnOnJoined
-     * @return Select
-     */
-    public function joinViaPivot(
-        string $joinTable,
-        string $pivotTable,
-        string $pivotColumnForMain,
-        string $pivotColumnForJoined,
-        ?string $columnOnMain = null,
-        ?string $columnOnJoined = null
-    ): Select {
-
-        if (!$this->errors->isEmpty()) {
-            return $this;
-        }
-
-        return $this
-            ->innerJoin($pivotTable, $columnOnMain, $pivotColumnForMain)
-            ->innerJoinWith($joinTable, $pivotTable, $pivotColumnForJoined, $columnOnJoined);
-    }
-
-    /**
      * @param string $column
      * @param string ...$columns
-     * @return Select
+     * @return static
      */
     public function cols(string $column, string ...$columns): Select
     {
@@ -517,7 +130,7 @@ class Select
 
     /**
      * @param string ...$tables
-     * @return Select
+     * @return static
      */
     public function allCols(string ...$tables): Select
     {
@@ -546,7 +159,7 @@ class Select
     /**
      * @param string $column
      * @param string|null $alias
-     * @return Select
+     * @return static
      */
     public function andCol(string $column, ?string $alias = null): Select
     {
@@ -556,7 +169,7 @@ class Select
     /**
      * @param string $column
      * @param string $alias
-     * @return Select
+     * @return static
      */
     public function rawCol(string $column, string $alias): Select
     {
@@ -572,7 +185,7 @@ class Select
     /**
      * @param string $column
      * @param string $alias
-     * @return Select
+     * @return static
      */
     public function andRawCol(string $column, string $alias): Select
     {
@@ -583,352 +196,183 @@ class Select
      * @param string $column
      * @param mixed $value
      * @param string|null $operator
-     * @return Select
+     * @return static
      */
-    public function where(string $column, $value, ?string $operator = null): Select
+    public function where(string $column, $value, ?string $operator = null): BaseSelect
     {
-        if (!$this->errors->isEmpty()) {
-            return $this;
-        }
+        $this->errors->isEmpty() and $this->resetMemoized();
 
-        $this->resetMemoized();
-        $this->where = Where::new()->with($column, $value, $operator);
-        $this->where->pushErrorTo($this->errors);
-
-        return $this;
+        return parent::where($column, $value, $operator);
     }
 
     /**
      * @param string $column
      * @param mixed $value
      * @param string|null $operator
-     * @return Select
+     * @return static
      */
-    public function andWhere(string $column, $value, ?string $operator = null): Select
+    public function andWhere(string $column, $value, ?string $operator = null): BaseSelect
     {
-        if (!$this->errors->isEmpty()) {
-            return $this;
-        }
+        $this->errors->isEmpty() and $this->resetMemoized();
 
-        $this->resetMemoized();
-        if (!$this->where) {
-            $this->where = Where::new();
-        }
-        $this->where->and($column, $value, $operator);
-        $this->where->pushErrorTo($this->errors);
-
-        return $this;
+        return parent::andWhere($column, $value, $operator);
     }
 
     /**
      * @param string $column
      * @param mixed $value
      * @param string|null $operator
-     * @return Select
+     * @return static
      */
-    public function orWhere(string $column, $value, ?string $operator = null): Select
+    public function orWhere(string $column, $value, ?string $operator = null): BaseSelect
     {
-        if (!$this->errors->isEmpty()) {
-            return $this;
-        }
+        $this->errors->isEmpty() and $this->resetMemoized();
 
-        $this->resetMemoized();
-        if (!$this->where) {
-            $this->where = Where::new();
-        }
-        $this->where->or($column, $value, $operator);
-        $this->where->pushErrorTo($this->errors);
-
-        return $this;
+        return parent::orWhere($column, $value, $operator);
     }
 
     /**
      * @param string $clause
      * @param string|null $column
      * @param string|null $operator
-     * @return Select
+     * @return static
      */
     public function whereRaw(
         string $clause,
         ?string $column = null,
         ?string $operator = null
-    ): Select {
+    ): BaseSelect {
 
-        if (!$this->errors->isEmpty()) {
-            return $this;
-        }
+        $this->errors->isEmpty() and $this->resetMemoized();
 
-        $this->resetMemoized();
-        $this->where = Where::new()->withRaw($clause, $column, $operator);
-        $this->where->pushErrorTo($this->errors);
-
-        return $this;
+        return parent::whereRaw($clause, $column, $operator);
     }
 
     /**
      * @param string $clause
      * @param string|null $column
      * @param string|null $operator
-     * @param string|null $table
-     * @return Select
+     * @return static
      */
     public function andWhereRaw(
         string $clause,
         ?string $column = null,
         ?string $operator = null
-    ): Select {
+    ): BaseSelect {
 
-        if (!$this->errors->isEmpty()) {
-            return $this;
-        }
+        $this->errors->isEmpty() and $this->resetMemoized();
 
-        $this->resetMemoized();
-        if (!$this->where) {
-            $this->where = Where::new();
-        }
-
-        $this->where = $this->where->andRaw($clause, $column, $operator);
-        $this->where->pushErrorTo($this->errors);
-
-        return $this;
+        return parent::andWhereRaw($clause, $column, $operator);
     }
 
     /**
      * @param string $clause
      * @param string|null $column
      * @param string|null $operator
-     * @return Select
+     * @return static
      */
     public function orWhereRaw(
         string $clause,
         ?string $column = null,
         ?string $operator = null
-    ): Select {
+    ): BaseSelect {
 
-        if (!$this->errors->isEmpty()) {
-            return $this;
-        }
+        $this->errors->isEmpty() and $this->resetMemoized();
 
-        $this->resetMemoized();
-        if (!$this->where) {
-            $this->where = Where::new();
-        }
-        $this->where = $this->where->orRaw($clause, $column, $operator);
-        $this->where->pushErrorTo($this->errors);
-
-        return $this;
+        return parent::orWhereRaw($clause, $column, $operator);
     }
 
     /**
      * @param Where $where
      * @param Where ...$wheres
-     * @return Select
+     * @return static
      */
-    public function whereUsing(Where $where, Where ...$wheres): Select
+    public function whereUsing(Where $where, Where ...$wheres): BaseSelect
     {
-        if (!$this->errors->isEmpty()) {
-            return $this;
-        }
+        $this->errors->isEmpty() and $this->resetMemoized();
 
-        $this->resetMemoized();
-        $this->where = Where::new()->andWhere($where, ...$wheres);
-
-        return $this;
+        return parent::whereUsing($where, ...$wheres);
     }
 
     /**
      * @param Where $where
      * @param Where ...$wheres
-     * @return Select
+     * @return static
      */
-    public function andWhereUsing(Where $where, Where ...$wheres): Select
+    public function andWhereUsing(Where $where, Where ...$wheres): BaseSelect
     {
-        if (!$this->errors->isEmpty()) {
-            return $this;
-        }
+        $this->errors->isEmpty() and $this->resetMemoized();
 
-        $this->resetMemoized();
-        if (!$this->where) {
-            $this->where = Where::new();
-        }
-        $this->where->andWhere($where, ...$wheres);
-
-        return $this;
+        return parent::andWhereUsing($where, ...$wheres);
     }
 
     /**
      * @param Where $where
      * @param Where ...$wheres
-     * @return Select
+     * @return static
      */
-    public function orWhereUsing(Where $where, Where ...$wheres): Select
+    public function orWhereUsing(Where $where, Where ...$wheres): BaseSelect
     {
-        if (!$this->errors->isEmpty()) {
-            return $this;
-        }
+        $this->errors->isEmpty() and $this->resetMemoized();
 
-        $this->resetMemoized();
-        if (!$this->where) {
-            $this->where = Where::new();
-        }
-        $this->where->orWhere($where, ...$wheres);
-
-        return $this;
+        return parent::orWhereUsing($where, ...$wheres);
     }
 
     /**
      * @param Compare $compare
      * @param Compare ...$compares
-     * @return Select
+     * @return static
      */
-    public function whereCompare(Compare $compare, Compare ...$compares): Select
+    public function whereCompare(Compare $compare, Compare ...$compares): BaseSelect
     {
-        if (!$this->errors->isEmpty()) {
-            return $this;
-        }
+        $this->errors->isEmpty() and $this->resetMemoized();
 
-        $this->resetMemoized();
-        $this->where = Where::new()->andCompare($compare, ...$compares);
-
-        return $this;
+        return parent::whereCompare($compare, ...$compares);
     }
 
     /**
      * @param Compare $compare
      * @param Compare ...$compares
-     * @return Select
+     * @return static
      */
-    public function andWhereCompare(Compare $compare, Compare ...$compares): Select
+    public function andWhereCompare(Compare $compare, Compare ...$compares): BaseSelect
     {
-        if (!$this->errors->isEmpty()) {
-            return $this;
-        }
+        $this->errors->isEmpty() and $this->resetMemoized();
 
-        $this->resetMemoized();
-        if (!$this->where) {
-            $this->where = Where::new();
-        }
-        $this->where->andCompare($compare, ...$compares);
-
-        return $this;
+        return parent::andWhereCompare($compare, ...$compares);
     }
 
     /**
      * @param Compare $compare
      * @param Compare ...$compares
-     * @return Select
+     * @return static
      */
-    public function orWhereCompare(Compare $compare, Compare ...$compares): Select
+    public function orWhereCompare(Compare $compare, Compare ...$compares): BaseSelect
     {
-        if (!$this->errors->isEmpty()) {
-            return $this;
-        }
+        $this->errors->isEmpty() and $this->resetMemoized();
 
-        $this->resetMemoized();
-        if (!$this->where) {
-            $this->where = Where::new();
-        }
-        $this->where->orCompare($compare, ...$compares);
-
-        return $this;
-    }
-
-    /**
-     * @param string $column
-     * @param string $dir
-     * @return Select
-     */
-    public function orderBy(string $column, string $dir = self::ASC): Select
-    {
-        if (!$this->errors->isEmpty()) {
-            return $this;
-        }
-
-        $this->order = [];
-
-        return $this->withOrder($column, false, $dir);
-    }
-
-    /**
-     * @param string $clause
-     * @param string|null $dir
-     * @return Select
-     */
-    public function orderByRaw(string $clause, ?string $dir = self::ASC): Select
-    {
-        if (!$this->errors->isEmpty()) {
-            return $this;
-        }
-
-        $this->order = [];
-
-        return $this->withOrder($clause, true, $dir);
-    }
-
-    /**
-     * @param string $column
-     * @param string $dir
-     * @return Select
-     */
-    public function orderByRand(): Select
-    {
-        if (!$this->errors->isEmpty()) {
-            return $this;
-        }
-
-        $this->order = [];
-
-        return $this->withOrder('RAND()', true, null);
-    }
-
-    /**
-     * @param string $clause
-     * @param string $dir
-     * @return Select
-     */
-    public function thenOrderBy(string $clause, string $dir = self::ASC): Select
-    {
-        return $this->withOrder($clause, false, $dir);
-    }
-
-    /**
-     * @param string $clause
-     * @param string|null $dir
-     * @return Select
-     */
-    public function thenOrderByRaw(string $clause, ?string $dir = self::ASC): Select
-    {
-        return $this->withOrder($clause, true, $dir);
+        return parent::orWhereCompare($compare, ...$compares);
     }
 
     /**
      * @param int $limit
      * @param int $offset
-     * @return Select
+     * @return static
      */
-    public function limit(int $limit, int $offset = 0): Select
+    public function limit(int $limit, int $offset = 0): BaseSelect
     {
-        if (!$this->errors->isEmpty()) {
-            return $this;
+        $current = $this->limit;
+        $return = parent::limit($limit, $offset);
+        if ($current !== $this->limit) {
+            $return->resetMemoized();
         }
 
-        if ($limit < 1) {
-            return $this->pushError('Limit must be greater than 1.');
-        }
-
-        if ($offset < 0) {
-            return $this->pushError('Offset bust be greater than 0.');
-        }
-
-        $this->limit = [true, $limit, $offset];
-        $this->resetMemoized();
-
-        return $this;
+        return $return;
     }
 
     /**
      * @param string $column
-     * @return Select
+     * @return static
      */
     public function groupBy(string $column): Select
     {
@@ -943,7 +387,7 @@ class Select
 
     /**
      * @param string $column
-     * @return Select
+     * @return static
      */
     public function thenGroupBy(string $column): Select
     {
@@ -951,35 +395,9 @@ class Select
     }
 
     /**
-     * @param string $column
-     * @return Select
-     */
-    private function withGroupBy(string $column): Select
-    {
-        if (!$this->errors->isEmpty()) {
-            return $this;
-        }
-
-        if (!$column) {
-            return $this->pushError("Ordering column name can't be empty.");
-        }
-
-        $column = $this->fullyQualifiedColName($column);
-        if ($column === null) {
-            return $this;
-        }
-
-        $this->resetMemoized();
-
-        $this->groupBy[] = $column;
-
-        return $this;
-    }
-
-    /**
      * @param int $page
      * @param int $perPage
-     * @return Select
+     * @return static
      */
     public function paginated(int $page = 1, int $perPage = 100): Select
     {
@@ -1001,9 +419,7 @@ class Select
     }
 
     /**
-     * @param int $page
-     * @param int $perPage
-     * @return Select
+     * @return static
      */
     public function unPaginated(): Select
     {
@@ -1019,7 +435,7 @@ class Select
 
     /**
      * @param Pagination $pagination
-     * @return Select
+     * @return static
      */
     public function paginatedWith(Pagination $pagination): Select
     {
@@ -1116,164 +532,45 @@ class Select
     /**
      * @return string
      */
-    public function buildSqlNoEscape(): string
-    {
-        $sql = $this->buildSql();
-        if (!$sql) {
-            return '';
-        }
-
-        $wpdb = Dbal::wpdb();
-
-        return $wpdb->remove_placeholder_escape($sql);
-    }
-
-    /**
-     * @return array<string, string>|null
-     */
-    public function buildQueryPartsNoEscape(): ?array
-    {
-        $parts = $this->buildQueryParts();
-        if (!$parts) {
-            return $parts;
-        }
-
-        $wpdb = Dbal::wpdb();
-
-        $clean = [];
-        foreach ($parts as $key => $part) {
-            $clean[$key] = $wpdb->remove_placeholder_escape($part);
-        }
-
-        return $clean;
-    }
-
-    /**
-     * @return bool
-     */
-    public function hasErrors(): bool
-    {
-        return !$this->errors->isEmpty();
-    }
-
-    /**
-     * @return string
-     */
-    public function error(): string
-    {
-        $error = $this->errors->error();
-        if (!$error) {
-            return '';
-        }
-
-        return $error->serialize();
-    }
-
-    /**
-     * @return void
-     */
-    public function assertValid(): void
-    {
-        $error = $this->errors->error();
-        if ($error) {
-            throw $error;
-        }
-    }
-
-    /**
-     * @return string
-     */
     public function buildSql(): string
     {
-        $valid = $this->errors->isEmpty();
-        if (!$valid || $this->sql) {
-            return $valid ? $this->sql : '';
+        if (!$this->sql) {
+            $sql = parent::buildSql();
+            ($sql !== '') and $this->sql = $sql;
         }
 
-        $parts = $this->buildQueryParts();
-        if (!$parts) {
-            return '';
-        }
-
-        $this->sql = implode(' ', array_filter($parts));
-
-        return $this->sql;
+        return $this->sql ?? '';
     }
 
     /**
      * @return array<string, string>|null
      */
-    public function buildQueryParts(): ?array
+    protected function buildQueryParts(): ?array
     {
-        if (!$this->errors->isEmpty()) {
+        $base = $this->buildBaseQueryParts();
+        if ($base === null) {
             return null;
         }
 
-        /** @var Schema $schema */
-        $schema = $this->schema;
-        $finder = $this->finder;
+        $parts = array_merge(
+            [
+                self::SELECT => $this->limit[0] === false ? 'SELECT SQL_CALC_FOUND_ROWS' : 'SELECT',
+                self::COLUMNS => $this->buildColumnsSql(),
+            ],
+            $base
+        );
 
-        $whereClause = '';
-
-        if ($this->where) {
-            $whereClause = $this->where->clause($schema, $finder, $this->aliases);
-            $this->where->pushErrorTo($this->errors);
-            if (!$this->errors->isEmpty()) {
-                return null;
+        if ($this->groupBy) {
+            $groupBy = 'GROUP BY ' . implode(', ', $this->groupBy);
+            $newParts = [];
+            foreach ($parts as $key => $val) {
+                $newParts[$key] = $val;
+                ($key === self::WHERE) and $newParts[self::GROUP_BY] = $groupBy;
             }
+            $parts = $newParts;
         }
 
-        $parts = [
-            self::SELECT => $this->limit[0] === false ? 'SELECT SQL_CALC_FOUND_ROWS' : 'SELECT',
-            self::COLUMNS => $this->buildColumnsSql(),
-            self::FROM => $this->buildFromSql(),
-            self::WHERE => $whereClause ? "WHERE {$whereClause}" : '',
-            self::GROUP_BY => $this->groupBy ? 'GROUP BY ' . implode(', ', $this->groupBy) : '',
-            self::ORDER => $this->buildOrderSql(),
-            self::LIMIT => $this->buildLimitSql(),
-        ];
-
-        if (!$this->errors->isEmpty()) {
-            return null;
-        }
-
-        if ($this->unfiltered || !has_filter(self::FILTER_QUERY_PART)) {
-            return $parts;
-        }
-
-        foreach ($parts as $name => $value) {
-            $filtered = apply_filters(self::FILTER_QUERY_PART, $value, $name, $parts);
-            if (($filtered !== $value) && ($filtered === null || is_string($filtered))) {
-                $parts[$name] = $filtered ?? '';
-            }
-        }
-
-        return $parts;
-    }
-
-    /**
-     * @param string $joinTableName
-     * @return bool
-     */
-    private function hasJoinFor(string $joinTableName): bool
-    {
-        [$name, , , $tableAliases] = $this->aliases->resolveSchema($joinTableName);
-        $this->aliases->mergeErrors($this->errors);
-        if (!$name || !$this->errors->isEmpty()) {
-            return false;
-        }
-
-        if (!empty($this->joins[$name])) {
-            return true;
-        }
-
-        foreach ($tableAliases as $tableAlias) {
-            if (!empty($this->joins[$tableAlias])) {
-                return true;
-            }
-        }
-
-        return false;
+        return $this->filterQueryParts($parts, self::FILTER_QUERY_PART);
     }
 
     /**
@@ -1285,9 +582,9 @@ class Select
      * @param string|null $alias
      * @param Where|null $where
      * @param string|null $raw
-     * @return Select
+     * @return static
      */
-    private function withJoin(
+    protected function withJoin(
         string $type,
         ?string $targetTable,
         ?string $sourceTable,
@@ -1296,65 +593,76 @@ class Select
         ?string $alias = null,
         ?Where $where = null,
         ?string $raw = null
-    ): Select {
+    ): BaseSelect {
 
-        $schemas = $this->determineJoinSchema($sourceTable, $targetTable, $alias, $raw);
-        if ($schemas === null) {
+        $current = $this->joins;
+        $return = parent::withJoin(
+            $type,
+            $targetTable,
+            $sourceTable,
+            $columnOnSource,
+            $columnOnJoined,
+            $alias,
+            $where,
+            $raw
+        );
+
+        if ($current !== $return->joins) {
+            $return->resetMemoized();
+        }
+
+        return $return;
+    }
+
+    /**
+     * @param string $column
+     * @param bool $raw
+     * @param string|null $dir
+     * @return static
+     */
+    protected function withOrder(string $column, bool $raw, ?string $dir): BaseSelect
+    {
+        $current = $this->order;
+        $return = parent::withOrder($column, $raw, $dir);
+
+        if ($current !== $return->order) {
+            $return->resetMemoized();
+        }
+
+        return $return;
+    }
+
+    /**
+     * @param string $column
+     * @return static
+     */
+    private function withGroupBy(string $column): Select
+    {
+        if (!$this->errors->isEmpty()) {
             return $this;
         }
 
-        [$source, $target] = $schemas;
-        $join = null;
-
-        if ($raw !== null) {
-            /** @var string $alias */
-            $join = $type === Join::LEFT
-                ? Join::leftRaw($source, $raw, $alias, $columnOnSource, $columnOnJoined)
-                : Join::innerRaw($source, $raw, $alias, $columnOnSource, $columnOnJoined);
-        } elseif ($where) {
-            /** @var Schema $target */
-            $join = $type === Join::LEFT
-                ? Join::leftWhere($source, $target, $where, $alias)
-                : Join::innerWhere($source, $target, $where, $alias);
+        if (!$column) {
+            return $this->pushError("Ordering column name can't be empty.");
         }
 
-        if (!$join) {
-            /** @var Schema $target */
-            $join = $type === Join::LEFT
-                ? Join::left($source, $target, $columnOnSource, $columnOnJoined, $alias)
-                : Join::inner($source, $target, $columnOnSource, $columnOnJoined, $alias);
-        }
-
-        $join->mergeErrors($this->errors);
-        if (!$this->errors->isEmpty()) {
+        $column = $this->fullyQualifiedColName($column);
+        if ($column === null) {
             return $this;
         }
 
         $this->resetMemoized();
 
-        if ($alias) {
-            /** @psalm-suppress PossiblyNullReference */
-            ($raw !== null)
-                ? $this->aliases->forRawSchema($alias)
-                : $this->aliases->forSchema($target->name(), $alias);
-            $this->aliases->mergeErrors($this->errors);
-        }
-
-        if ($this->errors->isEmpty()) {
-            /** @var Schema $target */
-            $joinName = $alias ?? $target->name();
-            $this->joins[$joinName] = $join;
-        }
+        $this->groupBy[] = $column;
 
         return $this;
     }
 
     /**
      * @param string $column
-     * @param string|null $table
      * @param string|null $alias
      * @param bool $raw
-     * @return Select
+     * @return static
      *
      * phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
      * @TODO: consider refactoring
@@ -1433,51 +741,6 @@ class Select
     }
 
     /**
-     * @param string $column
-     * @param bool $raw
-     * @param string|null $dir
-     * @return Select
-     */
-    private function withOrder(string $column, bool $raw, ?string $dir): Select
-    {
-        if (!$this->errors->isEmpty()) {
-            return $this;
-        }
-
-        if (!$column) {
-            return $this->pushError("Ordering column name can't be empty.");
-        }
-
-        $dir = ($dir === null) ? null : strtoupper($dir);
-        if (!in_array($dir, [null, self::ASC, self::DESC], true)) {
-            return $this->pushError("Invalid ORDER direction '{$dir}'.");
-        }
-
-        $firstClause = $this->order[0][0] ?? '';
-        if ($firstClause && (stripos($firstClause, 'RAND()') !== false)) {
-            return $this->pushError("Can't order by '{$column}' when already ordering randomly.");
-        }
-
-        if ($raw) {
-            $this->resetMemoized();
-            $this->order[] = [$column, $dir, true];
-
-            return $this;
-        }
-
-        $column = $this->fullyQualifiedColName($column);
-        if ($column === null) {
-            return $this;
-        }
-
-        $this->resetMemoized();
-
-        $this->order[] = [$column, $dir, false];
-
-        return $this;
-    }
-
-    /**
      * @return ResultsParser
      */
     private function createResultsParser(): ResultsParser
@@ -1527,75 +790,6 @@ class Select
         $this->allColSchemas = Schemas::new(...$schemas);
 
         return $this->allColSchemas;
-    }
-
-    /**
-     * @param string|null $sourceTable
-     * @param string $targetTable
-     * @param string|null $alias
-     * @param string|null $raw
-     * @return array{Schema, Schema|null}|null
-     */
-    private function determineJoinSchema(
-        ?string $sourceTable,
-        ?string $targetTable,
-        ?string $alias,
-        ?string $raw
-    ): ?array {
-
-        if (!$this->errors->isEmpty()) {
-            return null;
-        }
-
-        $isRaw = $raw !== null;
-
-        $target = ($isRaw || !$targetTable) ? null : $this->finder->findSchema($targetTable);
-        if (!$target && !$isRaw) {
-            $this->pushError("Could not find table '{$targetTable}' to join.");
-
-            return null;
-        }
-
-        if ($isRaw) {
-            if ($raw === '') {
-                $this->pushError("Raw JOIN expression can't be empty.");
-
-                return null;
-            }
-
-            if (!$alias) {
-                $this->pushError("Alias is required for raw JOINs.");
-
-                return null;
-            }
-        }
-
-        $sourceIsMain = $sourceTable === null;
-        $source = $sourceIsMain ? $this->schema : null;
-
-        if (!$sourceIsMain) {
-            [, $source] = $this->aliases->resolveSchema($sourceTable ?? '');
-            $this->aliases->mergeErrors($this->errors);
-            if (!$this->errors->isEmpty() || !$source) {
-                return null;
-            }
-        }
-
-        if (!$source) {
-            return null;
-        }
-
-        // If source table is not the main, we need to be sure source table is already joined
-        if (!$sourceIsMain && !$this->hasJoinFor($source->name())) {
-            $this->pushError(
-                "Table '{$sourceTable}' is not in joined table list, "
-                . "can't use as source for another join."
-            );
-
-            return null;
-        }
-
-        return [$source, $target];
     }
 
     /**
@@ -1743,108 +937,6 @@ class Select
     }
 
     /**
-     * @return string
-     */
-    private function buildFromSql(): string
-    {
-        $sql = 'FROM ';
-
-        /** @var Schema $mainSchema */
-        $mainSchema = $this->schema;
-
-        [, , $mainAlias] = $this->aliases->resolveSchema($mainSchema->name());
-        $this->aliases->mergeErrors($this->errors);
-        if (!$this->errors->isEmpty()) {
-            return '';
-        }
-
-        $fullMainName = $this->finder->fullTableName($mainSchema);
-        $sql .= $mainAlias ? "`{$fullMainName}` AS `{$mainAlias}`" : "`{$fullMainName}`";
-
-        foreach ($this->joins as $join) {
-            $sql .= ' ' . $join->clause($this->finder, $this->aliases);
-        }
-
-        return $sql;
-    }
-
-    /**
-     * @return string
-     */
-    private function buildOrderSql(): string
-    {
-        $orderParts = [];
-        foreach ($this->order as [$col, $dir, $raw]) {
-            $orderParts[] = ($raw && ($dir === null)) ? $col : "{$col} {$dir}";
-        }
-
-        if ($orderParts) {
-            return 'ORDER BY ' . implode(', ', $orderParts);
-        }
-
-        return '';
-    }
-
-    /**
-     * @return string
-     */
-    private function buildLimitSql(): string
-    {
-        [$hardLimit, $perPage, $pageOrOffset] = $this->limit;
-        if (($hardLimit === null) || ($perPage === null)) {
-            return '';
-        }
-
-        $offset = $hardLimit ? $pageOrOffset : (($pageOrOffset - 1) * $perPage);
-
-        return sprintf('LIMIT %d, %d', $offset, $perPage);
-    }
-
-    /**
-     * @param string $column
-     * @return string
-     */
-    private function fullyQualifiedColName(string $rawColumn): ?string
-    {
-        if (!$this->errors->isEmpty()) {
-            return null;
-        }
-
-        [$column, $table] = Where::maybeSplitTableName($rawColumn, $this->errors);
-        if (!$this->errors->isEmpty()) {
-            return null;
-        }
-
-        [$realColumn, , , $colTable] = $this->aliases->resolveColumn($column);
-        $this->aliases->mergeErrors($this->errors);
-        /** @psalm-suppress ParadoxicalCondition */
-        if (!$this->errors->isEmpty() || !$realColumn) {
-            return null;
-        }
-
-        /** @var Schema $mainSchema */
-        $mainSchema = $this->schema;
-        $tableName = $table ?? $mainSchema->name();
-
-        [$tableRealName, $schema, $tableAlias] = $this->aliases->resolveSchema($tableName);
-        $this->aliases->mergeErrors($this->errors);
-        /** @psalm-suppress ParadoxicalCondition */
-        if (!$this->errors->isEmpty()) {
-            return null;
-        }
-
-        if (!$schema || $colTable && ($colTable !== $tableRealName)) {
-            $this->errors->withError("Could not correctly resolve column '{$rawColumn}'.");
-
-            return null;
-        }
-
-        $tableNameOrAlias = $tableAlias ?? $this->finder->fullTableName($schema);
-
-        return "`{$tableNameOrAlias}`.`{$realColumn}`";
-    }
-
-    /**
      * @param string $sql
      * @return array{string, int|null, array<int, array>|null}
      */
@@ -1886,16 +978,5 @@ class Select
     {
         $this->executed = null;
         $this->sql = null;
-    }
-
-    /**
-     * @param string $string
-     * @return Select
-     */
-    private function pushError(string $string): Select
-    {
-        $this->errors->withError($string);
-
-        return $this;
     }
 }
