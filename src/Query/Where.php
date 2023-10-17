@@ -502,7 +502,7 @@ class Where
             return null;
         }
 
-        [$realColumn, , , $colTable] = $aliases->resolveColumn($column);
+        [$realColumn, , , $colTable] = $aliases->resolveColumnForWhere($column);
         $aliases->mergeErrors($this->errors);
         if (!$this->errors->isEmpty() || !$realColumn) {
             return null;

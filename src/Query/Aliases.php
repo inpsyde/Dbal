@@ -219,38 +219,21 @@ class Aliases
     }
 
     /**
-     * @param string $table
      * @param string $name
      * @return array{string|null, string|null, string|null, string|null}
      */
     public function resolveColumn(string $name): array
     {
-        if (!$name) {
-            $this->errors->withError("Could not resolve empty column name.");
+        return $this->doResolveColumn($name, false);
+    }
 
-            return [null, null, null, null];
-        }
-
-        if (!$this->columnsAliasData) {
-            return [$name, null, null, null];
-        }
-
-        $aliasData = $this->columnsAliasData[$name] ?? null;
-        if ($aliasData === null) {
-            $maybeRealName = $this->columnAliasToNames[$name] ?? null;
-            if ($maybeRealName) {
-                $name = $maybeRealName;
-                $aliasData = $this->columnsAliasData[$name] ?? null;
-            }
-        }
-
-        if ($aliasData === null) {
-            return [$name, null, null, null];
-        }
-
-        [$alias, $tableFullName, $tableName] = $aliasData;
-
-        return [$name, $alias, $tableFullName, $tableName];
+    /**
+     * @param string $name
+     * @return array{string|null, string|null, string|null, string|null}
+     */
+    public function resolveColumnForWhere(string $name): array
+    {
+        return $this->doResolveColumn($name, true);
     }
 
     /**
@@ -319,5 +302,40 @@ class Aliases
         $this->columnAliasToNames[$alias] = $colName;
 
         return $this;
+    }
+
+    /**
+     * @param string $name
+     * @param bool $forWhere
+     * @return array{string|null, string|null, string|null, string|null}
+     */
+    private function doResolveColumn(string $name, bool $forWhere): array
+    {
+        if (!$name) {
+            $this->errors->withError("Could not resolve empty column name.");
+
+            return [null, null, null, null];
+        }
+
+        if (!$this->columnsAliasData) {
+            return [$name, null, null, null];
+        }
+
+        $aliasData = $this->columnsAliasData[$name] ?? null;
+        if (($aliasData === null) && !$forWhere) {
+            $maybeRealName = $this->columnAliasToNames[$name] ?? null;
+            if ($maybeRealName) {
+                $name = $maybeRealName;
+                $aliasData = $this->columnsAliasData[$name] ?? null;
+            }
+        }
+
+        if ($aliasData === null) {
+            return [$name, null, null, null];
+        }
+
+        [$alias, $tableFullName, $tableName] = $aliasData;
+
+        return [$name, $alias, $tableFullName, $tableName];
     }
 }
