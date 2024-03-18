@@ -58,7 +58,7 @@ class TableInstaller
 
         $wpdb = Dbal::wpdb();
         $baseName = $schema->name();
-        $versions[$baseName] = $newVer;
+        $versions[$baseName] = $newVer->value();
         $columns = $schema->columns();
         $keys = $schema->indexes();
 

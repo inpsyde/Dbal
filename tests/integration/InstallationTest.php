@@ -105,6 +105,9 @@ class InstallationTest extends IntegrationTestCase
         static::assertNotNull($table);
         $expectedColumns = $table->columns();
 
+        static::assertSame(1, $countInstalled);
+        static::assertSame(0, $countUpdated);
+
         /** @var Column $expectedColumn */
         foreach ($expectedColumns as $expectedColumn) {
             $name = $expectedColumn->name();
@@ -132,7 +135,7 @@ class InstallationTest extends IntegrationTestCase
 
         static::assertArrayNotHasKey(TableOne::ENUM, $actualTypes);
 
-        static::assertSame(1, $countUpdated);
+        static::assertSame(1, $countInstalled);
         static::assertSame(1, $countUpdated);
 
         // Nothing should be done if version is the same
@@ -144,6 +147,6 @@ class InstallationTest extends IntegrationTestCase
 
         static::assertSame($actualColumns, $actualColumnsAgain);
         static::assertSame(1, $countUpdated);
-        static::assertSame(1, $countUpdated);
+        static::assertSame(1, $countInstalled);
     }
 }

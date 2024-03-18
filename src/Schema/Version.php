@@ -38,7 +38,10 @@ final class Version
         $versionString = '';
         $token = strtok($main, '.');
         while ($token !== false) {
-            is_numeric($token) and $versionString .= (string) abs((int) $token);
+            if (is_numeric($token)) {
+                $tokenStr = (string) abs((int) $token);
+                $versionString .= ($versionString === '') ? $tokenStr : ".{$tokenStr}";
+            }
             $token = strtok('.');
         }
 
@@ -100,7 +103,7 @@ final class Version
      * @psalm-assert-if-true Version<non-empty-lowercase-string> $this
      * @psalm-assert-if-true Version<non-empty-lowercase-string> $version
      */
-    public function higherThan(Version $version): bool
+    public function greaterThan(Version $version): bool
     {
         return $this->compare($version, '>');
     }
@@ -112,7 +115,7 @@ final class Version
      * @psalm-assert-if-true Version<non-empty-lowercase-string> $this
      * @psalm-assert-if-true Version<non-empty-lowercase-string> $version
      */
-    public function higherThanOrEquals(Version $version): bool
+    public function greaterThanOrEquals(Version $version): bool
     {
         return $this->compare($version, '>=');
     }

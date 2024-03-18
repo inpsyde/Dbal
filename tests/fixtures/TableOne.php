@@ -23,10 +23,7 @@ class TableOne implements InstallableSchema
     public const ENUM = 'enum';
     public const CAN_BE_NULL = 'can_be_null';
 
-    /**
-     * @var string
-     */
-    private $version;
+    private string $version;
 
     /**
      * @param string $version
