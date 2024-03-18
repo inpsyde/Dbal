@@ -13,15 +13,9 @@ final class PhpErrors
         | E_RECOVERABLE_ERROR
         | E_PARSE;
 
-    /**
-     * @var callable|null
-     */
+    /** @var callable|null */
     private $previousErrorHandler;
-
-    /**
-     * @var bool
-     */
-    private $restored = false;
+    private bool $restored = false;
 
     /**
      * @return PhpErrors
@@ -32,7 +26,9 @@ final class PhpErrors
         $previousErrorHandler = set_error_handler(
             static function (int $code, string $message, string $file = '', int $line = 0): bool {
                 if (!static::areErrorsSuppressed($code)) {
-                    throw new \ErrorException($message, $code, E_ERROR, $file, $line);
+                    // phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                    throw new \ErrorException(esc_html($message), $code, E_ERROR, $file, $line);
+                    // phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 }
 
                 return true;

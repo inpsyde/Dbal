@@ -8,11 +8,6 @@
             "name": "Inpsyde",
             "homepage": "https://inpsyde.com",
 			"role": "company"
-        },
-        {
-            "name": "Giuseppe Mazzapica",
-            "homepage": "https://gmazzap.me",
-			"role": "developer"
         }
     ],
     "minimum-stability": "dev",
@@ -27,19 +22,19 @@
         }
     ],
     "require": {
-        "php": ">=7.2",
+        "php": ">=7.4 < 8.4",
         "ext-json": "*"
     },
     "require-dev": {
-        "inpsyde/php-coding-standards": "^1",
-        "phpunit/phpunit": "^8.5.26",
+        "inpsyde/php-coding-standards": "^2@dev",
+        "phpunit/phpunit": "^9.6.17",
         "brain/monkey": "^2.6.1",
-        "roots/wordpress": ">=6.3.1",
-        "vimeo/psalm": "^4.23.0",
+        "roots/wordpress-no-content": ">=6.4.3",
+        "vimeo/psalm": "^5.23.0",
         "inpsyde/wp-stubs-versions": "dev-latest",
         "globalis/wp-cli-bin": "^2.8.1",
-        "symfony/process": "^v5.4.8",
-        "symfony/dotenv": "^v5.4.5"
+        "symfony/process": "^v5.4.36",
+        "symfony/dotenv": "^v5.4.36"
     },
     "autoload": {
         "psr-4": {
@@ -51,24 +46,27 @@
             "Inpsyde\\Dbal\\Tests\\": "tests/src/",
             "Inpsyde\\Dbal\\Tests\\Unit\\": "tests/unit/",
             "Inpsyde\\Dbal\\Tests\\Integration\\": "tests/integration/"
-        }
+        },
+        "classmap": [
+            "tests/fixtures/"
+        ]
     },
     "scripts": {
         "cs": "@php ./vendor/squizlabs/php_codesniffer/bin/phpcs",
         "psalm": "@php ./vendor/vimeo/psalm/psalm --no-cache --no-diff --find-unused-psalm-suppress --output-format=compact",
-        "tests:unit": "@php ./vendor/phpunit/phpunit/phpunit --testsuite=unit",
-        "tests:unit:no-cov": "@php ./vendor/phpunit/phpunit/phpunit --testsuite=unit --no-coverage",
+        "tests:unit:cov": "@php ./vendor/phpunit/phpunit/phpunit --testsuite=unit",
+        "tests:unit": "@php ./vendor/phpunit/phpunit/phpunit --testsuite=unit --no-coverage",
         "tests:integration": "@php ./vendor/phpunit/phpunit/phpunit --testsuite=integration --no-coverage",
         "tests": [
             "@tests:integration",
             "@tests:unit"
         ],
-        "tests:no-cov": [
+        "tests:cov": [
             "@tests:integration",
-            "@tests:unit:no-cov"
+            "@tests:unit:cov"
         ],
         "qa": [
-            "@tests:unit:no-cov",
+            "@tests:unit",
             "@cs",
             "@psalm"
         ]

@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Inpsyde\Dbal\Tests\Unit\Query;
 
+use Inpsyde\Dbal\ErrorCollector;
 use Inpsyde\Dbal\Query\Aliases;
 use Inpsyde\Dbal\Query\Compare;
-use Inpsyde\Dbal\Query\Where;
-use Inpsyde\Dbal\ErrorCollector;
 use Inpsyde\Dbal\Query\Join;
+use Inpsyde\Dbal\Query\Where;
+use Inpsyde\Dbal\Tests\UnitTestCase;
 use Inpsyde\Dbal\Tests\TableOne;
 use Inpsyde\Dbal\Tests\TableTwo;
-use Inpsyde\Dbal\Tests\UnitTestCase;
 
 class JoinTest extends UnitTestCase
 {
@@ -181,7 +181,7 @@ class JoinTest extends UnitTestCase
 
         $one = $finder->fullTableName(new TableOne());
         $expected = "INNER JOIN ({$raw}) AS `p` ON ";
-        $expected .= "`{$one}`.`" .  TableOne::INTEGER . "` = `p`.`ID`";
+        $expected .= "`{$one}`.`" . TableOne::INTEGER . "` = `p`.`ID`";
 
         static::assertSame($expected, $actual);
     }

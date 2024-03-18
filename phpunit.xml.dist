@@ -1,32 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/8.0/phpunit.xsd"
-        bootstrap="tests/bootstrap.php"
-        backupGlobals="false"
-        backupStaticAttributes="false"
-        colors="true"
-        convertErrorsToExceptions="true"
-        convertNoticesToExceptions="true"
-        convertWarningsToExceptions="true"
-        processIsolation="true"
-        stopOnFailure="false"
-        verbose="true"
->
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    bootstrap="./tests/bootstrap.php"
+    colors="true"
+    backupGlobals="false"
+    xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd">
+
+    <coverage processUncoveredFiles="true">
+        <include>
+            <directory suffix=".php">src</directory>
+        </include>
+    </coverage>
+
     <testsuites>
         <testsuite name="unit">
-            <directory suffix="Test.php">tests/unit</directory>
+            <directory>tests/unit</directory>
         </testsuite>
         <testsuite name="integration">
-            <directory suffix="Test.php">tests/integration</directory>
+            <directory>tests/integration</directory>
         </testsuite>
     </testsuites>
-    <filter>
-        <whitelist processUncoveredFilesFromWhitelist="true">
-            <directory suffix=".php">src</directory>
-        </whitelist>
-    </filter>
+
     <extensions>
-        <extension class="Inpsyde\Dbal\Tests\WpInstallExtension" />
+        <extension class="Inpsyde\Dbal\Tests\WpInstallExtension"/>
     </extensions>
 </phpunit>

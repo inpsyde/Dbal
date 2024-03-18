@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Inpsyde\Dbal\Schema;
 
+/**
+ * @psalm-consistent-constructor
+ */
 class ColumnValueEncoder
 {
     private const CORE_MAYBE_SERIALIZED = [
@@ -17,31 +20,20 @@ class ColumnValueEncoder
         'usermeta' => ['meta_value' => 1],
     ];
 
-    /**
-     * @var Column
-     */
-    private $column;
-
-    /**
-     * @var bool
-     */
-    private $coreMaybeSerialized = false;
-
-    /**
-     * @var bool
-     */
-    private $core = false;
+    private Column $column;
+    private bool $coreMaybeSerialized = false;
+    private bool $core = false;
 
     /**
      * @param Column $column
      * @param WpSchema $schema
-     * @return ColumnValueEncoder
+     * @return static
      */
     public static function forCore(Column $column, WpSchema $schema): ColumnValueEncoder
     {
-        $instance = new self($column);
+        $instance = new static($column);
         $instance->core = true;
-        if (!empty(self::CORE_MAYBE_SERIALIZED[$schema->name()][$column->name()])) {
+        if (isset(self::CORE_MAYBE_SERIALIZED[$schema->name()][$column->name()])) {
             $instance->coreMaybeSerialized = true;
         }
 
@@ -50,11 +42,11 @@ class ColumnValueEncoder
 
     /**
      * @param Column $column
-     * @return ColumnValueEncoder
+     * @return static
      */
     public static function for(Column $column): ColumnValueEncoder
     {
-        return new self($column);
+        return new static($column);
     }
 
     /**
@@ -76,13 +68,13 @@ class ColumnValueEncoder
         }
 
         if ($this->core && $this->coreMaybeSerialized) {
-            return maybe_unserialize((string)$value);
+            return maybe_unserialize((string) $value);
         }
 
         if (!$this->core && $this->column->isSerialized()) {
             $value = is_string($value) ? @unserialize($value, ['allowed_classes' => false]) : null;
             if (is_array($value) || $value instanceof \stdClass) {
-                return (array)$value;
+                return (array) $value;
             }
 
             return [];
@@ -109,8 +101,8 @@ class ColumnValueEncoder
         }
 
         return in_array($type, [Column::TIMESTAMP, Column::DATETIME], true)
-            ? $this->castDateTime((string)$value)
-            : $this->castStringValue((string)$value);
+            ? $this->castDateTime((string) $value)
+            : $this->castStringValue((string) $value);
     }
 
     /**
@@ -136,7 +128,7 @@ class ColumnValueEncoder
             /** @var int|float|string|bool $value */
             $cast = $this->castBoolean($value);
 
-            return $cast === null ? null : (int)$cast;
+            return ($cast === null) ? null : (int) $cast;
         }
 
         if ($this->column->isNumeric()) {
@@ -182,9 +174,7 @@ class ColumnValueEncoder
     private function castEnum($value): ?string
     {
         $choices = $this->column->choices() ?? [''];
-        $default = $this->column->isNullable()
-            ? null
-            : (string)reset($choices);
+        $default = $this->column->isNullable() ? null : (string) reset($choices);
 
         if (!is_string($value)) {
             return $default;
@@ -207,7 +197,7 @@ class ColumnValueEncoder
     {
         $filtered = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
         if ($filtered === null) {
-            return $this->column->isNullable() ? null : (bool)$this->defaultValue();
+            return $this->column->isNullable() ? null : (bool) $this->defaultValue();
         }
 
         return $filtered;
@@ -223,7 +213,7 @@ class ColumnValueEncoder
         if (!is_numeric($value)) {
             return $this->column->isNullable() ? null : $this->defaultValue();
         }
-        $value = $isReal ? (float)$value : (int)$value;
+        $value = $isReal ? (float) $value : (int) $value;
         if ($this->column->isBit() || $this->column->isUnsigned()) {
             $value = abs($value);
         }
@@ -267,10 +257,10 @@ class ColumnValueEncoder
             return $value;
         }
 
-        $default = $this->column->isNullable() ? null : (string)$this->defaultValue();
+        $default = $this->column->isNullable() ? null : (string) $this->defaultValue();
 
         if ($type === Column::YEAR) {
-            return is_numeric($value) ? sprintf('%d', (int)$value) : $default;
+            return is_numeric($value) ? sprintf('%d', (int) $value) : $default;
         }
 
         $regex = '~^([0-9]+)\:([0-9]{1,2})(?:\:([0-9]{1,2})(?:\.([0-9]{1,6}))?)?$~';
@@ -278,10 +268,10 @@ class ColumnValueEncoder
             return $this->column->isNullable() ? null : $value;
         }
 
-        $hours = (int)$matches[1];
-        $minutes = (int)$matches[2];
-        $seconds = (int)($matches[3] ?? 0);
-        $milliseconds = (int)($matches[4] ?? 0);
+        $hours = (int) $matches[1];
+        $minutes = (int) $matches[2];
+        $seconds = (int) ($matches[3] ?? 0);
+        $milliseconds = (int) ($matches[4] ?? 0);
 
         if ($minutes > 59 || $seconds > 59) {
             return $default;
@@ -291,7 +281,7 @@ class ColumnValueEncoder
     }
 
     /**
-     * @return mixed|null
+     * @return mixed
      */
     private function defaultValue()
     {
@@ -336,7 +326,7 @@ class ColumnValueEncoder
     private function encodeForCore($value): ?string
     {
         if ($this->coreMaybeSerialized) {
-            return is_scalar($value) ? (string)$value : (string)maybe_serialize((string)$value);
+            return is_scalar($value) ? (string) $value : (string) maybe_serialize((string) $value);
         }
 
         if ($value instanceof \DateTimeInterface) {
@@ -344,10 +334,10 @@ class ColumnValueEncoder
         }
 
         if (is_scalar($value)) {
-            return (string)$value;
+            return (string) $value;
         }
 
-        return $this->column->isNullable() ? null : (string)($this->defaultValue() ?: '');
+        return $this->column->isNullable() ? null : (string) ($this->defaultValue() ?: '');
     }
 
     /**
@@ -361,10 +351,10 @@ class ColumnValueEncoder
         }
 
         if (is_array($value) || $value instanceof \stdClass) {
-            return serialize((array)$value);
+            return serialize((array) $value);
         }
 
-        return $this->column->isNullable() ? null : (string)$this->defaultValue();
+        return $this->column->isNullable() ? null : (string) $this->defaultValue();
     }
 
     /**
@@ -377,28 +367,27 @@ class ColumnValueEncoder
 
         $flags = JSON_INVALID_UTF8_IGNORE | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES;
         if (is_array($value) || $value instanceof \stdClass) {
-            $encoded = json_encode((array)$value, $flags);
+            $encoded = json_encode((array) $value, $flags);
 
-            return json_last_error() === JSON_ERROR_NONE ? (string)$encoded : $default;
+            return (json_last_error() === JSON_ERROR_NONE) ? (string) $encoded : $default;
         }
 
         if (is_string($value)) {
-            /** @psalm-suppress UnusedFunctionCall */
             json_decode($value);
 
-            return json_last_error() === JSON_ERROR_NONE ? $value : $default;
+            return (json_last_error() === JSON_ERROR_NONE) ? $value : $default;
         }
 
         if (is_int($value)) {
-            $encoded = json_encode((string)$value, $flags);
+            $encoded = json_encode((string) $value, $flags);
 
-            return json_last_error() === JSON_ERROR_NONE ? (string)$encoded : $default;
+            return (json_last_error() === JSON_ERROR_NONE) ? (string) $encoded : $default;
         }
 
         if (is_float($value)) {
             $encoded = json_encode(rtrim(sprintf('%F', $value), '0'), $flags);
 
-            return json_last_error() === JSON_ERROR_NONE ? (string)$encoded : $default;
+            return (json_last_error() === JSON_ERROR_NONE) ? (string) $encoded : $default;
         }
 
         return $default;
@@ -411,14 +400,14 @@ class ColumnValueEncoder
     private function encodeDatetime($value): ?string
     {
         $type = $this->column->type();
-        $default = $this->column->isNullable() ? null : (string)$this->defaultValue();
+        $default = $this->column->isNullable() ? null : (string) $this->defaultValue();
         $fullFormat = 'Y-m-d H:i:s';
         $dateOnlyFormat = 'Y-m-d';
         $isDateOnly = $type === Column::DATE;
 
         if (is_int($value) || is_float($value)) {
             $date = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
-            $value = $date->setTimestamp((int)$value);
+            $value = $date->setTimestamp((int) $value);
         }
 
         if ($value instanceof \DateTimeInterface) {
@@ -463,20 +452,20 @@ class ColumnValueEncoder
     private function encodeStringValue($value): ?string
     {
         $type = $this->column->type();
-        $default = $this->column->isNullable() ? null : (string)$this->defaultValue();
+        $default = $this->column->isNullable() ? null : (string) $this->defaultValue();
         $isYear = $type === Column::YEAR;
 
-        if (!$isYear && $type !== Column::TIME) {
+        if (!$isYear && ($type !== Column::TIME)) {
             return is_string($value) ? $value : $default;
         }
 
         if (is_int($value) || is_float($value)) {
-            if ($isYear && $value < 999999) {
-                return sprintf('%d', (int)$value);
+            if ($isYear && ($value < 999999)) {
+                return sprintf('%d', (int) $value);
             }
 
             $date = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
-            $value = $date->setTimestamp((int)$value);
+            $value = $date->setTimestamp((int) $value);
         }
 
         if ($value instanceof \DateTimeInterface) {
@@ -493,6 +482,6 @@ class ColumnValueEncoder
                 : $default;
         }
 
-        return is_numeric($value) ? sprintf('%d', (int)$value) : $default;
+        return is_numeric($value) ? sprintf('%d', (int) $value) : $default;
     }
 }

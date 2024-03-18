@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Inpsyde\Dbal\Tests\Unit;
 
+use Brain\Monkey;
 use Inpsyde\Dbal\Cache;
+use Inpsyde\Dbal\Tests\UnitTestCase;
 use Inpsyde\Dbal\Tests\TableOne;
 use Inpsyde\Dbal\Tests\TablePivot;
 use Inpsyde\Dbal\Tests\TableTwo;
-use Inpsyde\Dbal\Tests\UnitTestCase;
-use Brain\Monkey;
 
 class CacheTest extends UnitTestCase
 {
-    private $cache = [];
+    private array $cache = [];
 
     /**
      * @return void

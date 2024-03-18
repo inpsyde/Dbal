@@ -6,11 +6,11 @@ namespace Inpsyde\Dbal\Tests\Unit\Query;
 
 use Inpsyde\Dbal\Query\Aliases;
 use Inpsyde\Dbal\Query\ColumnsResultParser;
-use Inpsyde\Dbal\Schema\Columns;
 use Inpsyde\Dbal\Schema\Column;
+use Inpsyde\Dbal\Schema\Columns;
+use Inpsyde\Dbal\Tests\UnitTestCase;
 use Inpsyde\Dbal\Tests\TableOne;
 use Inpsyde\Dbal\Tests\TableTwo;
-use Inpsyde\Dbal\Tests\UnitTestCase;
 
 class ColumnsResultParserTest extends UnitTestCase
 {

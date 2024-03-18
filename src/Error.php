@@ -6,15 +6,12 @@ namespace Inpsyde\Dbal;
 
 final class Error extends \Error
 {
-    /**
-     * @var bool
-     */
-    private $fromThrowable = false;
+    private bool $fromThrowable = false;
 
     /**
      * @param Error $error
      * @param string $message
-     * @return Error
+     * @return static
      */
     public static function withMerged(Error $error, string $message = ''): Error
     {
@@ -28,7 +25,7 @@ final class Error extends \Error
     /**
      * @param Error $error
      * @param \Throwable $throwable
-     * @return Error
+     * @return static
      */
     public static function withMergedThrowable(Error $error, \Throwable $throwable): Error
     {
@@ -37,7 +34,7 @@ final class Error extends \Error
 
     /**
      * @param \Throwable $error
-     * @return Error
+     * @return static
      */
     public static function fromThrowable(\Throwable $error): Error
     {
@@ -45,7 +42,7 @@ final class Error extends \Error
             return $error;
         }
 
-        $instance = new Error($error->getMessage(), (int)$error->getCode(), $error);
+        $instance = new static($error->getMessage(), (int) $error->getCode(), $error);
         $instance->fromThrowable = true;
 
         return $instance;
@@ -55,13 +52,9 @@ final class Error extends \Error
      * @param string $message
      * @param int $code
      * @param \Throwable|null $previous
-     *
-     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
      */
-    public function __construct($message = '', $code = 0, \Throwable $previous = null)
+    public function __construct(string $message = '', int $code = 0, \Throwable $previous = null)
     {
-        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
-
         parent::__construct($message, $code, $previous);
 
         /** @var array<array<string, mixed>> $trace */
@@ -77,23 +70,23 @@ final class Error extends \Error
                 continue;
             }
 
-            $this->file = (string)$originated['file'];
-            $this->line = (int)($originated['line'] ?? 0);
+            $this->file = (string) $originated['file'];
+            $this->line = (int) ($originated['line'] ?? 0);
             break;
         }
     }
 
     /**
      * @param \Throwable $error
-     * @return Error
+     * @return static
      */
     public function merge(\Throwable $error): Error
     {
-        return new Error($error->getMessage(), (int)$error->getCode(), $this);
+        return new static($error->getMessage(), (int) $error->getCode(), $this);
     }
 
     /**
-     * @return array<string>
+     * @return list<string>
      */
     public function allMessages(): array
     {
@@ -102,7 +95,7 @@ final class Error extends \Error
 
         while ($previous) {
             if (!$previous instanceof Error || !$previous->fromThrowable) {
-                $messages[] =  $previous->getMessage();
+                $messages[] = $previous->getMessage();
             }
 
             $previous = $previous->getPrevious();

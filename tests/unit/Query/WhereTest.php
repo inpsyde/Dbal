@@ -7,9 +7,9 @@ namespace Inpsyde\Dbal\Tests\Unit\Query;
 use Inpsyde\Dbal\Query\Aliases;
 use Inpsyde\Dbal\Query\Compare;
 use Inpsyde\Dbal\Query\Where;
+use Inpsyde\Dbal\Tests\UnitTestCase;
 use Inpsyde\Dbal\Tests\TableOne;
 use Inpsyde\Dbal\Tests\TableTwo;
-use Inpsyde\Dbal\Tests\UnitTestCase;
 
 class WhereTest extends UnitTestCase
 {

@@ -11,10 +11,7 @@ use Inpsyde\Dbal\Schema\Schema;
 
 final class WriteBuilder
 {
-    /**
-     * @var string
-     */
-    private $tableName;
+    private string $tableName;
 
     /**
      * @param string $tableName
@@ -61,7 +58,7 @@ final class WriteBuilder
     /**
      * @param array $firstRow
      * @param array $secondRow
-     * @param array[] $rows
+     * @param array<array> $rows
      * @return Result
      */
     public function insertMany(array $firstRow, array $secondRow, array ...$rows): Result

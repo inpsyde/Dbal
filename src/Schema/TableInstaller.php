@@ -15,17 +15,10 @@ class TableInstaller
 
     private const OPTION_VERSIONS = 'dbal_table_versions';
     private const OPTION_VERSIONS_NETWORK = 'dbal_table_versions_net';
-    private const UPDATE_PHP_PATH = 'wp-admin/includes/upgrade.php';
 
-    /**
-     * @var array<string,array>
-     */
-    private $versions = [];
-
-    /**
-     * @var SchemaFinder
-     */
-    private $schemaFinder;
+    /** @var array<string, array> */
+    private array $versions = [];
+    private SchemaFinder $schemaFinder;
 
     /**
      * @param SchemaFinder $schemaFinder
@@ -55,11 +48,11 @@ class TableInstaller
          * @var string $fullName
          * @var bool $exists
          * @var array<string, array> $versions
-         * @var string $newVer
-         * @var string|null $savedVer
+         * @var Version $newVer
+         * @var Version $savedVer
          */
         [$done, $fullName, $exists, $versions, $newVer, $savedVer] = $this->installStatus($schema);
-        if ($done || !$fullName) {
+        if ($done || ($fullName === '')) {
             return $done;
         }
 
@@ -73,7 +66,7 @@ class TableInstaller
             ? [self::ACTION_UPDATE, self::ACTION_UPDATED]
             : [self::ACTION_INSTALL, self::ACTION_INSTALLED];
 
-        $hookArgs = $exists ? [$savedVer] : [];
+        $hookArgs = $exists ? [$savedVer, $newVer] : [$newVer];
         do_action($beforeHook, $schema, $wpdb, ...$hookArgs);
 
         $columnsSql = $columns->schemaSql();
@@ -81,14 +74,7 @@ class TableInstaller
         $dbCharsetCollate = $wpdb->get_charset_collate();
         $charsetCollate = $dbCharsetCollate ? " {$dbCharsetCollate}" : '';
 
-        if ($exists) {
-            $oldColumns = (array)($wpdb->get_results("SHOW COLUMNS FROM `{$fullName}`") ?: []);
-            $colsToDelete = array_diff(array_column($oldColumns, 'Field'), $columns->allNames());
-            foreach ($colsToDelete as $colToDelete) {
-                $wpdb->query("ALTER TABLE `{$fullName}` DROP COLUMN `{$colToDelete}`");
-            }
-        }
-
+        $exists and $this->dropColumns($wpdb, $fullName, $columns);
         dbDelta("CREATE TABLE `{$fullName}` ({$columnsSql}{$keysSql}){$charsetCollate}");
 
         if (!$exists && !$this->tableExists($wpdb, $fullName)) {
@@ -98,7 +84,7 @@ class TableInstaller
         $this->persistVersions($versions, $schema->isNetworkWide());
 
         $exists
-            ? $schema->onUpdate($wpdb, $fullName, (string)$savedVer)
+            ? $schema->onUpdate($wpdb, $fullName, $savedVer->value() ?? '')
             : $schema->onInstall($wpdb, $fullName);
 
         do_action($afterHook, $schema, $wpdb, ...$hookArgs);
@@ -138,8 +124,8 @@ class TableInstaller
      */
     private function tableExists(\wpdb $wpdb, string $tableName): bool
     {
-        return (bool)$wpdb->query(
-            (string)($wpdb->prepare('SHOW TABLES LIKE %s', $tableName) ?? '')
+        return (bool) $wpdb->query(
+            (string) ($wpdb->prepare('SHOW TABLES LIKE %s', $tableName) ?? '')
         );
     }
 
@@ -150,8 +136,8 @@ class TableInstaller
     private function installStatus(InstallableSchema $schema): array
     {
         $newVer = $this->prepareInstall($schema);
-        if (!$newVer) {
-            return [false, '', false, null, null, null];
+        if (!$newVer->isValid()) {
+            return [false, '', false, null, Version::newEmpty(), Version::newEmpty()];
         }
 
         $network = $schema->isNetworkWide();
@@ -160,38 +146,32 @@ class TableInstaller
 
         $versions = $this->loadVersions($network);
         $savedVer = is_string($versions[$baseName] ?? null)
-            ? $this->validateVersion($versions[$baseName])
-            : null;
+            ? Version::new($versions[$baseName])
+            : Version::newEmpty();
 
         $exists = $this->tableExists(Dbal::wpdb(), $fullName);
-        if ($exists && ($savedVer === null)) {
-            $savedVer = '0.0.0.0';
+        if ($exists && !$savedVer->isValid()) {
+            $savedVer = Version::new('0.0.0.0');
         }
 
-        if (!$savedVer) {
+        if (!$savedVer->isValid()) {
             return [false, $fullName, $exists, $versions, $newVer, null];
         }
 
-        if (version_compare($savedVer, $newVer, '>')) {
-            throw new \Exception(
-                "Can't downgrade table {$fullName} to version {$newVer} from version {$savedVer}."
-            );
-        }
-
-        return [$savedVer === $newVer, $fullName, $exists, $versions, $newVer, $savedVer];
+        return [$savedVer->equals($newVer), $fullName, $exists, $versions, $newVer, $savedVer];
     }
 
     /**
      * @param InstallableSchema $schema
-     * @return string|null
+     * @return Version
      */
-    private function prepareInstall(InstallableSchema $schema): ?string
+    private function prepareInstall(InstallableSchema $schema): Version
     {
         if (!function_exists('dbDelta')) {
-            require_once ABSPATH . self::UPDATE_PHP_PATH;
+            require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         }
 
-        return $this->validateVersion($schema->version());
+        return Version::new($schema->version());
     }
 
     /**
@@ -210,8 +190,8 @@ class TableInstaller
         }
 
         $versions = $network ? get_site_option($option) : get_option($option);
-        if (!$versions || !is_array($versions)) {
-            $versions and delete_option($option);
+        if (($versions === []) || !is_array($versions)) {
+            ($versions !== []) and delete_option($option);
             $versions = [];
         }
 
@@ -226,7 +206,7 @@ class TableInstaller
      * @param bool $network
      * @return void
      */
-    private function persistVersions(array $versions, bool $network)
+    private function persistVersions(array $versions, bool $network): void
     {
         $option = $network ? self::OPTION_VERSIONS_NETWORK : self::OPTION_VERSIONS;
         $this->versions[$option] = $versions;
@@ -239,32 +219,40 @@ class TableInstaller
     }
 
     /**
-     * @param string $version
-     * @return string|null
+     * @param \wpdb $wpdb
+     * @param string $schemaName
+     * @param Columns $columns
+     * @return void
      */
-    private function validateVersion(string $version): ?string
+    private function dropColumns(\wpdb $wpdb, string $schemaName, Columns $columns): void
     {
-        $version = trim($version);
-        if ($version === '') {
-            return null;
+        $currentColumns = $wpdb->get_results(
+            (string) $wpdb->prepare(
+                "SHOW COLUMNS FROM %i",
+                $schemaName
+            )
+        );
+
+        if (($currentColumns === []) || !is_array($currentColumns)) {
+            return;
         }
 
-        // This is to address a bug where versions starting with "0" where saved
-        // e.g. as "02.0" instead of "0.2.0".
-        if (preg_match('~^0[0-9](?:\.[0-9]+|$)~', $version)) {
-            $version = '0.' . (string)substr($version, 1);
-        }
+        $dropColsSql = '';
+        $colsToDelete = [];
 
-        $validated = [];
-        $numbers = explode('.', $version);
-        foreach ($numbers as $number) {
-            if (!is_numeric($number)) {
-                return null;
+        $targetNames = $columns->allNames();
+        foreach ($currentColumns as $currentColumn) {
+            $currentColName = is_array($currentColumn) ? ($currentColumn['Field'] ?? null) : null;
+            if (($currentColName !== null) && !in_array($currentColName, $targetNames, true)) {
+                ($dropColsSql !== '') and $dropColsSql .= ', ';
+                $dropColsSql .= 'DROP COLUMN %i';
+                $colsToDelete[] = $currentColName;
             }
-
-            $validated[] = abs((int)$number);
         }
 
-        return implode('.', $validated);
+        if ($colsToDelete !== []) {
+            $sql = "ALTER TABLE %i {$dropColsSql};";
+            $wpdb->query((string) $wpdb->prepare($sql, $schemaName, ...$colsToDelete));
+        }
     }
 }

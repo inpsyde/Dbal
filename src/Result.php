@@ -125,7 +125,7 @@ final class Result
             $callback = $this->error ? $onError : $onSuccess;
             $param = $this->error ?? $this->value;
 
-            return $callback
+            return ($callback !== null)
                 ? $this->merge(Result::new($callback($param)))
                 : static::new($this);
         } catch (\Throwable $throwable) {

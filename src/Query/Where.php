@@ -53,20 +53,14 @@ class Where
         self::LESS_EQ => self::LESS_EQ,
     ];
 
-    /**
-     * @var array<array>
-     */
-    private $clauses = [];
-
-    /**
-     * @var ErrorCollector
-     */
-    private $errors;
+    /** @var list<array> */
+    private array $clauses = [];
+    private ErrorCollector $errors;
 
     /**
      * @param string $column
      * @param ErrorCollector $collector
-     * @return array{string, string|null}
+     * @return array{string, non-empty-string|null}
      */
     public static function maybeSplitTableName(string $column, ErrorCollector $collector): array
     {
@@ -76,11 +70,12 @@ class Where
         $table = null;
 
         if ($colPartsCount === 2) {
-            $column = $colParts[1];
-            $table = $colParts[0] ?: null;
+            [$table, $column] = $colParts;
+            ($table === '') and $table = null;
+            ($column === '') and $column = null;
         }
 
-        if (!$column || ($colPartsCount > 2)) {
+        if (($column === null) || ($column === '') || ($colPartsCount > 2)) {
             $collector->withError("Invalid column name '{$origCol}'.");
 
             return ['', null];
@@ -369,7 +364,7 @@ class Where
      */
     public function hasClauses(): bool
     {
-        return (bool)$this->clauses;
+        return (bool) $this->clauses;
     }
 
     /**
@@ -460,7 +455,7 @@ class Where
             }
 
             $schemaName = $schema->name();
-            if (empty($columns[$schemaName])) {
+            if (!isset($columns[$schemaName])) {
                 $columns[$schemaName] = $schema->columns();
             }
 
@@ -504,7 +499,7 @@ class Where
 
         [$realColumn, , , $colTable] = $aliases->resolveColumn($column);
         $aliases->mergeErrors($this->errors);
-        if (!$this->errors->isEmpty() || !$realColumn) {
+        if (!$this->errors->isEmpty() || ($realColumn === null)) {
             return null;
         }
 
@@ -516,7 +511,7 @@ class Where
             return null;
         }
 
-        if ($colTable && ($colTable !== $tableRealName)) {
+        if (($colTable !== null) && ($colTable !== '') && ($colTable !== $tableRealName)) {
             $this->errors->withError(
                 "Table '{$colTable}' used in column alias for '{$realColumn}' does not match "
                 . "{$tableRealName} used for same column in WHERE clause."
@@ -547,8 +542,12 @@ class Where
     ): string {
 
         $clause and $clause .= " {$type} ";
-        $columnName and $clause .= "{$columnName} ";
-        $operator and $clause .= "{$operator} ";
+        if (($columnName !== null) && ($columnName !== '')) {
+            $clause .= "{$columnName} ";
+        }
+        if (($operator !== null) && ($operator !== '')) {
+            $clause .= "{$operator} ";
+        }
         $clause .= $value;
 
         return $clause;
@@ -596,10 +595,7 @@ class Where
     ): string {
 
         $wpdb = Dbal::wpdb();
-
-        if (!$format) {
-            $format = '%s';
-        }
+        $format ??= '%s';
 
         $multiValue = is_array($columnValue)
             && in_array($operator, [self::IN, self::NOT_IN], true);
@@ -612,7 +608,7 @@ class Where
             $columnClause = "{$column} {$operator} {$format}";
             $columnValue = $this->encodeValue($columnValue, $valueColumnObject);
 
-            return $clause . (string)$wpdb->prepare($columnClause, $columnValue);
+            return $clause . (string) $wpdb->prepare($columnClause, $columnValue);
         }
 
         $parsedValue = [];
@@ -624,7 +620,7 @@ class Where
         $clause and $clause .= " {$type} ";
         $columnClause = "{$column} {$operator} ({$inFormat}) ";
 
-        return $clause . (string)$wpdb->prepare($columnClause, ...$parsedValue);
+        return $clause . (string) $wpdb->prepare($columnClause, ...$parsedValue);
     }
 
     /**
@@ -656,7 +652,7 @@ class Where
             return $clause;
         }
 
-        if (!$leftCol || ($rightColOrValue === null) || !$operator) {
+        if (($leftCol === null) || ($leftCol === '') || ($rightColOrValue === null)) {
             return $clause;
         }
 
@@ -722,7 +718,7 @@ class Where
 
     /**
      * @param string $operator
-     * @param mixed|null $value
+     * @param mixed $value
      * @return void
      */
     private function checkOperator(?string $operator, $value): void
@@ -776,7 +772,7 @@ class Where
     {
         if ($operator !== null) {
             $operator = strtoupper($operator);
-            if (empty(self::OPERATORS[$operator])) {
+            if (!isset(self::OPERATORS[$operator])) {
                 $this->errors->withError("Invalid WHERE operator '{$operator}'.");
 
                 return [null, null];
@@ -798,7 +794,7 @@ class Where
         }
 
         if (is_array($value) || $value instanceof \stdClass) {
-            $value = serialize((array)$value);
+            $value = serialize((array) $value);
         } elseif ($value instanceof \DateTimeInterface) {
             $value = $value->format('Y-m-d H:i:s');
         }

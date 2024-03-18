@@ -9,10 +9,8 @@ class Dbal
     public const ACTION_REGISTER_SCHEMA = 'dbal.register-schema';
     public const ACTION_READY = 'dbal.ready';
 
-    /**
-     * @var array<string, object>|null
-     */
-    private static $objects = null;
+    /** @var array<string, object>|null */
+    private static ?array $objects = null;
 
     /**
      * @return bool
@@ -23,12 +21,14 @@ class Dbal
     }
 
     /**
-     * @return array
+     * @return array<string, object>
+     *
+     * @psalm-assert array<string, object> static::$objects
      */
     public static function initialize(): array
     {
-        if (self::$objects !== null) {
-            return self::$objects;
+        if (static::$objects !== null) {
+            return static::$objects;
         }
 
         $schemas = Schema\SchemasRegister::new();
@@ -45,7 +45,9 @@ class Dbal
             Cache::class => $cache,
         ];
 
-        $initializer = static function () use ($schemas, $schemaFinder): void {
+        $initializer = static function () use ($schemas, $schemaFinder, &$initializer): void {
+
+            remove_action('setup_theme', $initializer, 0);
 
             do_action(self::ACTION_REGISTER_SCHEMA, $schemas, $schemaFinder);
 
@@ -56,9 +58,9 @@ class Dbal
             do_action(self::ACTION_READY);
         };
 
-        did_action('setup_theme') > 0
+        (did_action('setup_theme') > 0)
             ? $initializer()
-            : add_action('setup_theme', $initializer);
+            : add_action('setup_theme', $initializer, 0);
 
         return self::$objects;
     }

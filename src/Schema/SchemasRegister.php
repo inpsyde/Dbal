@@ -4,40 +4,37 @@ declare(strict_types=1);
 
 namespace Inpsyde\Dbal\Schema;
 
+/** @psalm-consistent-constructor */
 class SchemasRegister
 {
     private const INSTALL = 1;
     private const UNINSTALL = 2;
 
-    /**
-     * @var array<string, array{InstallableSchema, int}>
-     */
-    private $schemas = [];
+    /** @var array<string, list{InstallableSchema, int}> */
+    private array $schemas = [];
 
-    /**
-     * @var array<int, int>
-     */
-    private $counts = [self::INSTALL => 0, self::UNINSTALL => 0];
+    /** @var array<1|2, int<0,max>> */
+    private array $counts = [self::INSTALL => 0, self::UNINSTALL => 0];
 
     /**
      * @param string $name
      * @return bool
+     * @deprecated
      */
     public static function validateColumnName(string $name): bool
     {
-        return $name && (preg_match('~[^a-z0-9_]+~i', $name) === 0);
+        return Schemas::validateIdentifierName($name);
     }
 
     /**
-     * @return SchemasRegister
+     * @return static
      */
     public static function new(): SchemasRegister
     {
-        return new self();
+        return new static();
     }
 
     /**
-     * Empty on purpose.
      */
     private function __construct()
     {
@@ -46,7 +43,7 @@ class SchemasRegister
     /**
      * @param InstallableSchema $schema
      * @param InstallableSchema ...$schemas
-     * @return SchemasRegister
+     * @return static
      */
     public function registerForInstall(
         InstallableSchema $schema,
@@ -65,7 +62,7 @@ class SchemasRegister
     /**
      * @param InstallableSchema $schema
      * @param InstallableSchema ...$schemas
-     * @return SchemasRegister
+     * @return static
      */
     public function registerForUninstall(
         InstallableSchema $schema,
@@ -85,7 +82,7 @@ class SchemasRegister
      * Register schema for a given action
      *
      * @param InstallableSchema $schema
-     * @param int $for
+     * @param 1|2 $for
      *
      * @throws \Exception
      */
@@ -93,16 +90,21 @@ class SchemasRegister
     {
         $name = $schema->name();
 
-        if (!$name) {
+        if ($name === '') {
             throw new \Exception("Schema name can't be empty.");
         }
 
-        if (!Schemas::validateSchemaName($name)) {
-            throw new \Exception("'{$name}' is not a valid schema name.");
+        if (!Schemas::validateIdentifierName($name)) {
+            throw new \Exception(sprintf('"%s" is not a valid schema name.', esc_html($name)));
         }
 
-        if (!empty($this->schemas[$name])) {
-            throw new \Exception("Scheme with name {$name} already registered.");
+        if (isset($this->schemas[$name])) {
+            throw new \Exception(
+                sprintf(
+                    'Scheme with name "%s" already registered.',
+                    esc_html($name)
+                )
+            );
         }
 
         $this->schemas[$name] = [$schema, $for];
@@ -147,7 +149,7 @@ class SchemasRegister
      */
     public function installOrUninstall(TableInstaller $installer, int $targetOperation): bool
     {
-        if (empty($this->counts[$targetOperation])) {
+        if (($this->counts[$targetOperation] ?? 0) === 0) {
             return true;
         }
 

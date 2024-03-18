@@ -4,22 +4,18 @@ declare(strict_types=1);
 
 namespace Inpsyde\Dbal\Schema;
 
+/**
+ * @template-implements \IteratorAggregate<int, Column>
+ */
 final class Columns implements \IteratorAggregate, \Countable
 {
-    /**
-     * @var array<string, Column>
-     */
-    private $columns;
+    /** @var array<string, Column> */
+    private array $columns;
 
-    /**
-     * @var array<string, ColumnValueEncoder>
-     */
-    private $parsers = [];
+    /** @var array<string, ColumnValueEncoder> */
+    private array $parsers = [];
 
-    /**
-     * @var Column|null
-     */
-    private $autoIncr;
+    private ?Column $autoIncr = null;
 
     /**
      * @param Column $column
@@ -43,8 +39,13 @@ final class Columns implements \IteratorAggregate, \Countable
         $this->columns = [];
         foreach ($columns as $column) {
             $name = $column->name();
-            if (!empty($names[$name])) {
-                throw new \Exception("Column names must be unique, '{$name}' already in use.");
+            if (isset($names[$name])) {
+                throw new \Exception(
+                    sprintf(
+                        'Column names must be unique, "%s" already in use.',
+                        esc_html($name)
+                    )
+                );
             }
 
             if (!$column->isAutoIncrement()) {
@@ -135,7 +136,7 @@ final class Columns implements \IteratorAggregate, \Countable
 
     /**
      * @param array $data
-     * @return array{array<string, integer|float|string>, array<string, string>, list<string>}
+     * @return list{array<string, integer|float|string>, array<string, string>, list<string>}
      */
     public function columnsInfoForDataInsert(array $data): array
     {
@@ -192,7 +193,7 @@ final class Columns implements \IteratorAggregate, \Countable
                 continue;
             }
 
-            if (empty($this->parsers[$name])) {
+            if (!isset($this->parsers[$name])) {
                 $this->parsers[$name] = ColumnValueEncoder::for($column);
             }
 
@@ -204,7 +205,7 @@ final class Columns implements \IteratorAggregate, \Countable
     }
 
     /**
-     * @return \Traversable<Column>
+     * @return \Traversable<int, Column>
      */
     public function getIterator(): \Traversable
     {

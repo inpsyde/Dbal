@@ -15,15 +15,8 @@ class Transaction
     public const CONSISTENT_SNAPSHOT = 256;
     public const DEFAULT = 0;
 
-    /**
-     * @var string
-     */
-    private $mode;
-
-    /**
-     * @var string
-     */
-    private $isolation;
+    private string $mode;
+    private string $isolation;
 
     /**
      * @param int $flags

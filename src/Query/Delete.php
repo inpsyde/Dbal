@@ -1,23 +1,5 @@
 <?php
 
-/**
- * This file is part of the "Dbal" package.
- *
- * Copyright (C) 2023 Inpsyde GmbH
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
-
 declare(strict_types=1);
 
 namespace Inpsyde\Dbal\Query;
@@ -37,13 +19,10 @@ class Delete extends BaseSelect
     public const DELETE = 'delete';
     public const FILTER_QUERY_PART = 'dbal.delete-query-part';
 
-    /** @var Cache|null */
-    private $cache;
+    private ?Cache $cache;
 
-    /**
-     * @var list<Schema>
-     */
-    private $tablesOnly = [];
+    /** @var list<Schema> */
+    private array $tablesOnly = [];
 
     /**
      * @param string $tableName
@@ -190,7 +169,7 @@ class Delete extends BaseSelect
             if (is_numeric($rows)) {
                 $this->flushCache(...$allSchemas);
 
-                return Result::new((int)$rows);
+                return Result::new((int) $rows);
             }
 
             $this->errors->withError('Failed deleting rows');
@@ -252,8 +231,9 @@ class Delete extends BaseSelect
         ?string $raw = null
     ): BaseSelect {
 
-        if ($alias || ($this->limit[0] !== null)) {
-            if ($alias) {
+        $alias ??= '';
+        if (($alias !== '') || ($this->limit[0] !== null)) {
+            if (($alias !== '')) {
                 $this->pushError('Aliases are not allowed in DELETE queries');
             }
 

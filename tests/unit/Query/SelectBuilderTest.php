@@ -7,10 +7,10 @@ namespace Inpsyde\Dbal\Tests\Unit\Query;
 use Brain\Monkey;
 use Inpsyde\Dbal\Dbal;
 use Inpsyde\Dbal\Query\SelectBuilder;
+use Inpsyde\Dbal\Tests\UnitTestCase;
 use Inpsyde\Dbal\Tests\TableOne;
 use Inpsyde\Dbal\Tests\TablePivot;
 use Inpsyde\Dbal\Tests\TableTwo;
-use Inpsyde\Dbal\Tests\UnitTestCase;
 
 class SelectBuilderTest extends UnitTestCase
 {
@@ -38,7 +38,7 @@ class SelectBuilderTest extends UnitTestCase
         static::assertFalse(Dbal::isReady());
 
         Monkey\Actions\expectDone(Dbal::ACTION_READY)
-            ->whenHappen(static function () {
+            ->whenHappen(static function (): void {
                 $schemas = Dbal::schemas();
                 $schemas->registerForInstall(new TableOne(), new TableTwo(), new TablePivot());
             });
@@ -68,7 +68,7 @@ QUERY;
 
         Monkey\Actions\expectDone(Dbal::ACTION_READY)
             ->zeroOrMoreTimes()
-            ->whenHappen(static function () {
+            ->whenHappen(static function (): void {
                 Dbal::schemas()->registerForInstall(new TableOne());
             });
 

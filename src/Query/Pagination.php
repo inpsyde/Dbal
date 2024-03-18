@@ -6,25 +6,10 @@ namespace Inpsyde\Dbal\Query;
 
 final class Pagination
 {
-    /**
-     * @var int|null
-     */
-    private $perPage;
-
-    /**
-     * @var int
-     */
-    private $page;
-
-    /**
-     * @var int
-     */
-    private $totalPages;
-
-    /**
-     * @var ?int
-     */
-    private $totalRows = null;
+    private ?int $perPage;
+    private int $page;
+    private int $totalPages;
+    private ?int $totalRows = null;
 
     /**
      * @param int $perPage
@@ -45,7 +30,7 @@ final class Pagination
      */
     public static function byTotalRows(int $totalRows, int $perPage, int $page): Pagination
     {
-        $instance = static::new($perPage, $page, (int)ceil($totalRows / $perPage));
+        $instance = static::new($perPage, $page, (int) ceil($totalRows / $perPage));
         $instance->totalRows = $totalRows;
 
         return $instance;

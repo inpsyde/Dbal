@@ -15,54 +15,24 @@ abstract class BaseSelect
     public const WHERE = 'where';
     public const ORDER = 'order';
     public const LIMIT = 'limit';
-
     public const ASC = 'ASC';
     public const DESC = 'DESC';
 
-    /**
-     * @var Schema|null
-     */
-    protected $schema;
+    protected ?Schema $schema;
+    protected SchemaFinder $finder;
+    protected Aliases $aliases;
+    protected ErrorCollector $errors;
+    protected ?Where $where = null;
+    protected bool $unfiltered = false;
 
-    /**
-     * @var SchemaFinder
-     */
-    protected $finder;
+    /** @var array<string, Join> */
+    protected array $joins = [];
 
-    /**
-     * @var array<string, Join>
-     */
-    protected $joins = [];
+    /** @var list<list{string, string|null, bool}> */
+    protected array $order = [];
 
-    /**
-     * @var Aliases
-     */
-    protected $aliases;
-
-    /**
-     * @var Where|null
-     */
-    protected $where;
-
-    /**
-     * @var array<array{string, string|null, bool}>
-     */
-    protected $order = [];
-
-    /**
-     * @var array{bool|null, int|null, int}
-     */
-    protected $limit = [null, null, 0];
-
-    /**
-     * @var bool
-     */
-    protected $unfiltered = false;
-
-    /**
-     * @var ErrorCollector
-     */
-    protected $errors;
+    /** @var list{bool|null, int|null, int}  */
+    protected array $limit = [null, null, 0];
 
     /**
      * @param string $tableName
@@ -74,7 +44,7 @@ abstract class BaseSelect
         $this->schema = $this->finder->findSchema($tableName);
         $this->aliases = Aliases::new($this->finder);
         $this->errors = new ErrorCollector();
-        if (!$this->schema) {
+        if ($this->schema === null) {
             $tableName
                 ? $this->errors->withError("Table '{$tableName}' not found.")
                 : $this->errors->withError("SELECT table name can't be empty.");
@@ -126,8 +96,12 @@ abstract class BaseSelect
      * @param string|null $alias
      * @return static
      */
-    public function leftJoinWhere(string $joinTable, Where $where, ?string $alias = null): BaseSelect
-    {
+    public function leftJoinWhere(
+        string $joinTable,
+        Where $where,
+        ?string $alias = null
+    ): BaseSelect {
+
         return $this->withJoin(
             Join::LEFT,
             $joinTable,
@@ -274,8 +248,12 @@ abstract class BaseSelect
      * @param string|null $alias
      * @return static
      */
-    public function innerJoinWhere(string $joinTable, Where $where, ?string $alias = null): BaseSelect
-    {
+    public function innerJoinWhere(
+        string $joinTable,
+        Where $where,
+        ?string $alias = null
+    ): BaseSelect {
+
         return $this->withJoin(
             Join::INNER,
             $joinTable,
@@ -449,9 +427,7 @@ abstract class BaseSelect
             return $this;
         }
 
-        if (!$this->where) {
-            $this->where = Where::new();
-        }
+        $this->where ??= Where::new();
         $this->where->and($column, $value, $operator);
         $this->where->pushErrorTo($this->errors);
 
@@ -791,8 +767,8 @@ abstract class BaseSelect
             return '';
         }
 
-        $parts = $this->buildQueryParts();
-        if (!$parts) {
+        $parts = $this->buildQueryParts() ?? [];
+        if ($parts === []) {
             return '';
         }
 
@@ -820,7 +796,7 @@ abstract class BaseSelect
     public function buildQueryPartsNoEscape(): ?array
     {
         $parts = $this->buildQueryParts();
-        if (!$parts) {
+        if (($parts === null) || ($parts === [])) {
             return $parts;
         }
 
@@ -876,7 +852,7 @@ abstract class BaseSelect
             return null;
         }
 
-        if ($this->unfiltered || !has_filter($filterName)) {
+        if ($this->unfiltered || (has_filter($filterName) === false)) {
             return $parts;
         }
 
@@ -898,7 +874,7 @@ abstract class BaseSelect
     {
         [$name, , , $tableAliases] = $this->aliases->resolveSchema($joinTableName);
         $this->aliases->mergeErrors($this->errors);
-        if (!$name || !$this->errors->isEmpty()) {
+        if (($name === '') || ($name === null) || !$this->errors->isEmpty()) {
             return false;
         }
 
@@ -969,7 +945,7 @@ abstract class BaseSelect
             return $this;
         }
 
-        if ($alias) {
+        if (($alias !== null) && ($alias !== '')) {
             /** @psalm-suppress PossiblyNullReference */
             ($raw !== null)
                 ? $this->aliases->forRawSchema($alias)
@@ -1048,7 +1024,9 @@ abstract class BaseSelect
 
         $isRaw = $raw !== null;
 
-        $target = ($isRaw || !$targetTable) ? null : $this->finder->findSchema($targetTable);
+        $target = ($isRaw || ($targetTable === null) || ($targetTable === ''))
+            ? null
+            : $this->finder->findSchema($targetTable);
         if (!$target && !$isRaw) {
             $this->pushError("Could not find table '{$targetTable}' to join.");
 
@@ -1062,7 +1040,7 @@ abstract class BaseSelect
                 return null;
             }
 
-            if (!$alias) {
+            if (($alias === null) || ($alias === '')) {
                 $this->pushError("Alias is required for raw JOINs.");
 
                 return null;
@@ -1114,7 +1092,9 @@ abstract class BaseSelect
         }
 
         $fullMainName = $this->finder->fullTableName($mainSchema);
-        $sql .= $mainAlias ? "`{$fullMainName}` AS `{$mainAlias}`" : "`{$fullMainName}`";
+        $sql .= (($mainAlias !== null) && ($mainAlias !== ''))
+            ? "`{$fullMainName}` AS `{$mainAlias}`"
+            : "`{$fullMainName}`";
 
         foreach ($this->joins as $join) {
             $sql .= ' ' . $join->clause($this->finder, $this->aliases);
@@ -1177,7 +1157,7 @@ abstract class BaseSelect
         [$realColumn, , , $colTable] = $this->aliases->resolveColumn($column);
         $this->aliases->mergeErrors($this->errors);
         /** @psalm-suppress ParadoxicalCondition */
-        if (!$this->errors->isEmpty() || !$realColumn) {
+        if (!$this->errors->isEmpty() || ($realColumn === null)) {
             return null;
         }
 
@@ -1192,7 +1172,10 @@ abstract class BaseSelect
             return null;
         }
 
-        if (!$schema || $colTable && ($colTable !== $tableRealName)) {
+        if (
+            !$schema
+            || (($colTable !== '') && ($colTable !== null) && ($colTable !== $tableRealName))
+        ) {
             $this->errors->withError("Could not correctly resolve column '{$rawColumn}'.");
 
             return null;

@@ -21,42 +21,21 @@ class Select extends BaseSelect
 
     public const FILTER_QUERY_PART = 'dbal.select-query-part';
 
-    private const RAW_COL_KEY = '生 ';
+    private const RAW_COL_KEY = '*raw* ';
 
-    /**
-     * @var Cache|null
-     */
-    private $cache;
+    private ?Cache $cache;
+    private ?string $sql = null;
+    private ?Schemas $allColSchemas = null;
+    private ?ResultsParser $resultsParser = null;
 
-    /**
-     * @var array<string, array<string, array{string, bool, string|null}>>
-     */
-    private $columns = [];
+    /** @var array<string, array<string, list{string, bool, string|null}>> */
+    private array $columns = [];
 
-    /**
-     * @var list<string>
-     */
-    private $groupBy = [];
+    /**  @var list<string> */
+    private array $groupBy = [];
 
-    /**
-     * @var array{int, array<int, array>}|null
-     */
-    private $executed;
-
-    /**
-     * @var string|null
-     */
-    private $sql;
-
-    /**
-     * @var Schemas|null
-     */
-    private $allColSchemas;
-
-    /**
-     * @var ResultsParser|null
-     */
-    private $resultsParser;
+    /** @var list{int, array<int, array>}|null */
+    private ?array $executed = null;
 
     /**
      * @param string $tableName
@@ -91,7 +70,7 @@ class Select extends BaseSelect
         parent::__construct($tableName, $finder);
         $this->cache = $cache;
 
-        if ($alias && $this->schema) {
+        if (($alias !== null) && ($alias !== '') && $this->schema) {
             $this->aliases = $this->aliases->forSchema($this->schema->name(), $alias);
             $this->aliases->mergeErrors($this->errors);
         }
@@ -479,7 +458,7 @@ class Select extends BaseSelect
         }
 
         $row = $rows ? reset($rows) : null;
-        if (!$row) {
+        if (($row === null) || ($row === [])) {
             return ResultSet::empty();
         }
 
@@ -522,7 +501,7 @@ class Select extends BaseSelect
         }
 
         [$hardLimit, $perPage, $page] = $this->limit;
-        $pagination = (($hardLimit === false) && $perPage && $page)
+        $pagination = (($hardLimit === false) && ($perPage !== null) && ($page > 0))
             ? Pagination::byTotalRows($foundRows, $perPage, $page)
             : Pagination::notPaginated();
 
@@ -534,7 +513,7 @@ class Select extends BaseSelect
      */
     public function buildSql(): string
     {
-        if (!$this->sql) {
+        if (($this->sql === null) || ($this->sql === '')) {
             $sql = parent::buildSql();
             ($sql !== '') and $this->sql = $sql;
         }
@@ -664,11 +643,12 @@ class Select extends BaseSelect
      * @param bool $raw
      * @return static
      *
-     * phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
+     * phpcs:disable Inpsyde.CodeQuality.FunctionLength
      * @TODO: consider refactoring
      */
     private function withColumn(string $column, ?string $alias = null, bool $raw = false): Select
     {
+        // phpcs:enable Inpsyde.CodeQuality.FunctionLength
         if (!$this->errors->isEmpty()) {
             return $this;
         }
@@ -676,7 +656,7 @@ class Select extends BaseSelect
         /** @var Schema $mainSchema */
         $mainSchema = $this->schema;
 
-        [$column, $table] = $raw && substr_count($column, '(')
+        [$column, $table] = ($raw && substr_count($column, '('))
             ? [$column, null]
             : Where::maybeSplitTableName($column, $this->errors);
 
@@ -685,8 +665,8 @@ class Select extends BaseSelect
         }
 
         $tableName = null;
-        if ($table || !$raw) {
-            $tableName = $table === null ? $mainSchema->name() : $table;
+        if (($table !== null) || !$raw) {
+            $tableName = ($table === null) ? $mainSchema->name() : $table;
             $isRawAlias = $this->aliases->isRawSchemaAlias($tableName);
 
             [$schemaName, $schema, $schemaAlias] = $isRawAlias
@@ -713,7 +693,7 @@ class Select extends BaseSelect
             }
         }
 
-        if ($raw && !$alias && $column !== '*') {
+        if ($raw && (($alias === null) || ($alias === '')) && ($column !== '*')) {
             return $this->pushError(
                 "Please provide a non-empty alias for raw column (like MySQL functions)."
             );
@@ -724,14 +704,17 @@ class Select extends BaseSelect
         $this->resetMemoized();
 
         /** @var string $columnsKey */
-        $columnsKey = ($raw && !$table) ? self::RAW_COL_KEY : ($schemaAlias ?? $tableName);
+        $columnsKey = ($raw && ($table === null))
+            ? self::RAW_COL_KEY
+            : ($schemaAlias ?? $tableName);
         $schemaColumns = $this->columns[$columnsKey] ?? [];
         $schemaColumns[$column] = [$column, $raw, $alias];
         $this->columns[$columnsKey] = $schemaColumns;
 
-        if ($alias) {
+        if (($alias !== null) && ($alias !== '')) {
+            $table ??= '';
             $this->aliases = $raw
-                ? $this->aliases->forRawColumn($column, $alias, $table ? $tableName : null)
+                ? $this->aliases->forRawColumn($column, $alias, ($table !== '') ? $tableName : null)
                 : $this->aliases->forColumn($column, $alias, $tableName ?? '');
 
             $this->aliases->mergeErrors($this->errors);
@@ -766,7 +749,7 @@ class Select extends BaseSelect
         $schemas = [];
         foreach (array_keys($this->columns) as $tableNameOrAlias) {
             if (
-                $tableNameOrAlias === self::RAW_COL_KEY
+                ($tableNameOrAlias === self::RAW_COL_KEY)
                 || $this->aliases->isRawSchemaAlias($tableNameOrAlias)
             ) {
                 continue;
@@ -817,9 +800,7 @@ class Select extends BaseSelect
             $sql = $this->buildSql();
 
             $rows = $wpdb->get_results($sql, ARRAY_A);
-            if (!$rows || !is_array($rows)) {
-                $rows = [];
-            }
+            is_array($rows) or $rows = [];
 
             if ($wpdb->last_error) {
                 $this->pushError($wpdb->last_error);
@@ -828,7 +809,7 @@ class Select extends BaseSelect
             }
 
             $foundRows = ($this->limit[0] === false)
-                ? (int)$wpdb->get_var('SELECT FOUND_ROWS()')
+                ? (int) $wpdb->get_var('SELECT FOUND_ROWS()')
                 : count($rows);
 
             $this->executed = [$foundRows, array_values(array_filter($rows, 'is_array'))];
@@ -887,13 +868,13 @@ class Select extends BaseSelect
         $hasAll = !empty($columns['*']);
         foreach ($columns as [$colName, $isRaw, $alias]) {
             // If we're getting all columns, we don't need more.
-            if ($colName !== '*' && $hasAll && !$isRaw) {
+            if (($colName !== '*') && $hasAll && !$isRaw) {
                 continue;
             }
 
             [$colRealName, $colAlias] = $this->aliases->resolveColumn($colName);
             $this->aliases->mergeErrors($this->errors);
-            if (!$this->errors->isEmpty() || !$colRealName) {
+            if (!$this->errors->isEmpty() || ($colRealName === null)) {
                 return '';
             }
 
@@ -902,7 +883,7 @@ class Select extends BaseSelect
                 continue;
             }
 
-            if ($isRawAll && $colAlias) {
+            if ($isRawAll && ($colAlias !== null) && ($colAlias !== '')) {
                 $sql and $sql .= ', ';
                 $sql .= "{$colRealName} AS `{$colAlias}`";
                 continue;
@@ -930,7 +911,9 @@ class Select extends BaseSelect
 
             $sql .= ($isRaw && !$isRawSchema) ? $colRealName : "`{$tableRef}`.`{$colRealName}`";
             $colAlias = $alias ?? $colAlias;
-            $colAlias and $sql .= " AS `{$colAlias}`";
+            if (($colAlias !== null) && ($colAlias !== '')) {
+                $sql .= " AS `{$colAlias}`";
+            }
         }
 
         return $sql;
@@ -958,14 +941,14 @@ class Select extends BaseSelect
         }
 
         $tableKeys = $this->cache->buildCacheKeyForTables(...$tables);
-        $fullKey = substr(md5("{$tableKeys}|{$sql}"), -18, 16) ?: '';
+        $fullKey = (string) substr(md5("{$tableKeys}|{$sql}"), -18, 16);
 
         $cached = $this->cache->get($fullKey);
-        if ($cached && is_array($cached) && isset($cached[0]) && isset($cached[1])) {
+        if (is_array($cached) && isset($cached[0]) && isset($cached[1])) {
             /** @var array<int, array> $rows */
             $rows = $cached[1];
 
-            return [$fullKey, (int)$cached[0], $rows];
+            return [$fullKey, (int) $cached[0], $rows];
         }
 
         return [$fullKey, null, null];

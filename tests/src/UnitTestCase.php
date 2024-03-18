@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Inpsyde\Dbal\Tests;
 
+use Brain\Monkey;
 use Inpsyde\Dbal\Schema\SchemaFinder;
 use Inpsyde\Dbal\Schema\SchemasRegister;
 use Inpsyde\Dbal\Schema\WpSchemas;
-use Brain\Monkey;
-use PHPUnit\Framework\TestCase;
 
 class UnitTestCase extends TestCase
 {
@@ -24,19 +23,32 @@ class UnitTestCase extends TestCase
         global $wpdb;
         $wpdb = new DummyWpdb();
 
+        Monkey\Functions\stubEscapeFunctions();
         Monkey\Functions\when('wp_timezone')->justReturn(new \DateTimeZone('Europe/Rome'));
         Monkey\Functions\when('esc_sql')->alias([$wpdb, '_real_escape']);
 
         Monkey\Functions\when('maybe_serialize')->alias(
-            static function ($value) { // phpcs:ignore
+            /**
+             * @param mixed $value
+             * @return mixed
+             *
+             * @psalm-suppress MissingClosureParamType
+             */
+            static function ($value) {
                 return is_scalar($value) ? $value : serialize($value);
             }
         );
 
         Monkey\Functions\when('is_serialized')->alias(
-            static function ($value) { // phpcs:ignore
+            /**
+             * @param mixed $value
+             * @return bool
+             *
+             * @psalm-suppress MissingClosureParamType
+             */
+            static function ($value): bool {
                 if (!is_string($value) || $value === "b:0;") {
-                    return $value === "b:0;";
+                    return $value === 'b:0;';
                 }
 
                 return @unserialize($value) !== false;
@@ -44,8 +56,14 @@ class UnitTestCase extends TestCase
         );
 
         Monkey\Functions\when('maybe_unserialize')->alias(
-            static function ($value) { // phpcs:ignore
-                return is_serialized($value) ? unserialize($value) : $value;
+            /**
+             * @param mixed $value
+             * @return mixed
+             *
+             * @psalm-suppress MissingClosureParamType
+             */
+            static function ($value) {
+                return (is_string($value) && is_serialized($value)) ? unserialize($value) : $value;
             }
         );
     }
@@ -56,6 +74,7 @@ class UnitTestCase extends TestCase
     protected function tearDown(): void
     {
         unset($GLOBALS['wpdb']);
+        $this->resetDbal();
         Monkey\tearDown();
         parent::tearDown();
     }

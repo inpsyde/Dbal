@@ -8,20 +8,9 @@ use Inpsyde\Dbal\Schema\Columns;
 
 class ColumnsResultParser
 {
-    /**
-     * @var Columns
-     */
-    private $columns;
-
-    /**
-     * @var string
-     */
-    private $schema;
-
-    /**
-     * @var Aliases
-     */
-    private $aliases;
+    private Columns $columns;
+    private string $schema;
+    private Aliases $aliases;
 
     /**
      * @param Columns $columns
@@ -49,7 +38,7 @@ class ColumnsResultParser
         $this->schema = $schemaName;
         $this->aliases = $aliases;
 
-        if (!$schemaName) {
+        if ($schemaName === '') {
             throw new \Exception("Empty schema name for ColumnsResultParser.");
         }
     }
@@ -74,12 +63,18 @@ class ColumnsResultParser
             }
 
             [$column, $alias, , $tableRealName] = $this->aliases->resolveColumn($key);
-            if ($tableRealName && ($tableRealName !== $this->schema)) {
+            if (
+                ($tableRealName !== null)
+                && ($tableRealName !== '')
+                && ($tableRealName !== $this->schema)
+            ) {
                 continue;
             }
 
             /** @var string $column */
-            $alias and $columnsToAlias[$column] = $alias;
+            if (($alias !== null) && ($alias !== '')) {
+                $columnsToAlias[$column] = $alias;
+            }
             $toParse[$column] = $value;
         }
 

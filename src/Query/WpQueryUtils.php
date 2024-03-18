@@ -21,9 +21,9 @@ class WpQueryUtils
          * @psalm-suppress MissingClosureParamType
          * @psalm-suppress MissingClosureReturnType
          */
-        $filter = static function ($null, $currentQuery) use (&$sql, $query) {
+        $filter = static function ($null, \WP_Query $currentQuery) use (&$sql, $query) {
             if ($currentQuery === $query) {
-                $sql = $query->request;
+                $sql = (string) $query->request;
 
                 return [];
             }
@@ -31,10 +31,12 @@ class WpQueryUtils
             return $null;
         };
 
+        // phpcs:disable Inpsyde.CodeQuality.HookPriority
         add_filter('posts_pre_query', $filter, PHP_INT_MAX, 2);
         $query->query($args);
         remove_filter('posts_pre_query', $filter, PHP_INT_MAX);
+        // phpcs:enable Inpsyde.CodeQuality.HookPriority
 
-        return (string)$sql;
+        return $sql;
     }
 }

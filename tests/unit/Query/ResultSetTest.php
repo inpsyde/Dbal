@@ -7,8 +7,8 @@ namespace Inpsyde\Dbal\Tests\Unit\Query;
 use Inpsyde\Dbal\Error;
 use Inpsyde\Dbal\Query\ResultSet;
 use Inpsyde\Dbal\Query\Select;
-use Inpsyde\Dbal\Tests\TableOne;
 use Inpsyde\Dbal\Tests\UnitTestCase;
+use Inpsyde\Dbal\Tests\TableOne;
 
 class ResultSetTest extends UnitTestCase
 {
@@ -259,7 +259,7 @@ class ResultSetTest extends UnitTestCase
             ],
         ];
 
-        $expected = (object)[
+        $expected = (object) [
             TableOne::ID => 2,
             TableOne::TEXT => 'Bar',
             TableOne::SERIALIZED => ['c', 'd'],
@@ -285,7 +285,7 @@ class ResultSetTest extends UnitTestCase
                 return $row[TableOne::ID] === 2;
             })
             ->map(static function (array $row): \stdClass {
-                return (object)$row;
+                return (object) $row;
             });
 
         $firstItem = iterator_to_array($set)[0];
@@ -335,11 +335,11 @@ class ResultSetTest extends UnitTestCase
             ->pickFirst()
             ->toResult()
             ->bind(
-                static function (\Iterator $iterator) use (&$check) {
+                static function (\Iterator $iterator) use (&$check): void {
                     static::assertSame(0.001, $iterator->current()[TableOne::DOUBLE]);
                     $check = true; // make sure the above assertion ran.
                 },
-                static function () {
+                static function (): void {
                     static::fail('bind "onError" branch should never be executed.');
                 }
             );

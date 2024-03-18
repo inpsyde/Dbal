@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Inpsyde\Dbal\Tests\Unit\Query;
 
-use Inpsyde\Dbal\Query\Aliases;
 use Inpsyde\Dbal\ErrorCollector;
+use Inpsyde\Dbal\Query\Aliases;
+use Inpsyde\Dbal\Tests\UnitTestCase;
 use Inpsyde\Dbal\Tests\TableOne;
 use Inpsyde\Dbal\Tests\TableTwo;
-use Inpsyde\Dbal\Tests\UnitTestCase;
 
 class AliasesTest extends UnitTestCase
 {
@@ -50,7 +50,7 @@ class AliasesTest extends UnitTestCase
         $aliases = Aliases::new($this->initializeSampleTablesFinder());
         $collector = new ErrorCollector();
 
-        $aliases = $aliases->forSchema(TableOne::NAME, '" foo "');
+        $aliases = $aliases->forSchema(TableOne::NAME, ' foo ');
         $aliases->mergeErrors($collector);
 
         $this->expectExceptionMessageMatches('/valid/i');

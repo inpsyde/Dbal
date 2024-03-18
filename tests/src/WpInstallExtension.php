@@ -11,10 +11,7 @@ use Symfony\Component\Process\Process;
 
 final class WpInstallExtension implements BeforeFirstTestHook, AfterLastTestHook
 {
-    /**
-     * @var bool
-     */
-    private static $initialized = false;
+    private static bool $initialized = false;
 
     /**
      * @return void
@@ -39,30 +36,35 @@ final class WpInstallExtension implements BeforeFirstTestHook, AfterLastTestHook
             return;
         }
 
-        $options = getopt('', ["testsuite:", "filter:"]) ?: [];
+        $options = getopt('', ['testsuite:', 'filter:']);
+        ($options === false) and $options = [];
+
         $filter = $options['filter'] ?? null;
         $suite = $options['testsuite'] ?? null;
         $args = $GLOBALS['argv'] ?? [];
+        is_array($args) or $args = [];
 
-        if (!$filter) {
+        if ($filter === null) {
             $filterKey = array_search('--filter', $args, true);
-            $filter = (is_numeric($filterKey) && $filterKey >= 0)
-                ? ($args[$filterKey + 1] ?? null)
+            $filter = (is_numeric($filterKey) && ($filterKey >= 0))
+                ? ($args[(int) $filterKey + 1] ?? null)
                 : null;
         }
+        is_string($filter) or $filter = null;
 
-        if (!$suite) {
+        if ($suite === null) {
             $suiteKey = array_search('--testsuite', $args, true);
             $suite = (is_numeric($suiteKey) && $suiteKey >= 0)
-                ? ($args[$suiteKey + 1] ?? null)
+                ? ($args[(int) $suiteKey + 1] ?? null)
                 : null;
         }
+        is_string($suite) or $suite = null;
 
-        if ($suite && $suite !== 'integration') {
+        if (($suite !== null) && ($suite !== 'integration')) {
             return;
         }
 
-        if (!$suite && $filter && stripos($filter, 'integration') === false) {
+        if (($suite === null) && (stripos($filter ?? '', 'integration') === false)) {
             return;
         }
 
@@ -111,12 +113,15 @@ final class WpInstallExtension implements BeforeFirstTestHook, AfterLastTestHook
     }
 
     /**
-     * @return array
+     * @return list{non-empty-string, non-empty-string, non-empty-string, string}
      */
     private function loadEnvVars(): array
     {
-        $testsEnv = getenv('TESTS_DIR') . '/.env';
-        if (file_exists($testsEnv) && !getenv('WORDPRESS_DB_NAME')) {
+        $testsDir = getenv('TESTS_DIR');
+        assert(is_string($testsDir) && is_dir($testsDir), new \Exception('Please set TESTS_DIR.'));
+
+        $testsEnv = "{$testsDir}/.env";
+        if (file_exists($testsEnv) && (getenv('WORDPRESS_DB_NAME') === false)) {
             (new Dotenv())->load($testsEnv);
         }
 
@@ -125,7 +130,15 @@ final class WpInstallExtension implements BeforeFirstTestHook, AfterLastTestHook
         $dbUser = getenv('WORDPRESS_DB_USER');
         $dbPwd = getenv('WORDPRESS_DB_PASSWORD');
 
-        if (!$dbHost || !$dbName || !$dbUser || !$dbPwd) {
+        if (
+            ($dbHost === '')
+            || ($dbName === '')
+            || ($dbUser === '')
+            || !is_string($dbHost)
+            || !is_string($dbName)
+            || !is_string($dbUser)
+            || !is_string($dbPwd)
+        ) {
             throw new \Exception('Could not initialize WP: missing env vars.');
         }
 
@@ -159,7 +172,12 @@ final class WpInstallExtension implements BeforeFirstTestHook, AfterLastTestHook
     private function runWpCliCommand(array $command): void
     {
         static $cliPath;
-        $cliPath or $cliPath = str_replace('\\', '/', getenv('VENDOR_DIR') . '/bin');
+        if (!isset($cliPath)) {
+            $vendor = getenv('VENDOR_DIR');
+            assert(is_string($vendor) && is_dir($vendor), new \Exception('Please set VENDOR_DIR'));
+            $cliPath = str_replace('\\', '/', $vendor) . '/bin';
+        }
+        /** @var non-falsy-string $cliPath */
 
         array_unshift($command, 'wp');
         $command[] = "--path=" . str_replace('\\', '/', ABSPATH);
@@ -176,7 +194,7 @@ final class WpInstallExtension implements BeforeFirstTestHook, AfterLastTestHook
             'WORDPRESS_DB_PASSWORD' => $dbPwd,
         ];
 
-        $process = new Process($command, (string)$cliPath, $env);
+        $process = new Process($command, (string) $cliPath, $env);
         $process->run();
         if (!$process->isSuccessful()) {
             throw new \Exception($process->getErrorOutput());

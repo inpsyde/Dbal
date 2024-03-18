@@ -6,34 +6,19 @@ namespace Inpsyde\Dbal\Schema;
 
 final class Index
 {
-    /**
-     * @var bool
-     */
-    private $primary = false;
+    private bool $primary = false;
+    private bool $unique = false;
+    private string $name = '';
 
-    /**
-     * @var bool
-     */
-    private $unique = false;
+    /** @var list<string>  */
+    private array $columns = [];
 
-    /**
-     * @var string
-     */
-    private $name = '';
-
-    /**
-     * @var string[]
-     */
-    private $columns = [];
-
-    /**
-     * @var array<string, int>
-     */
-    private $limits = [];
+    /** @var array<string, int> */
+    private array $limits = [];
 
     /**
      * @param string $name
-     * @return Index
+     * @return static
      */
     public static function primary(string $name): Index
     {
@@ -43,7 +28,7 @@ final class Index
     /**
      * @param string $name
      * @param string ...$columns
-     * @return Index
+     * @return static
      */
     public static function unique(string $name, string ...$columns): Index
     {
@@ -53,7 +38,7 @@ final class Index
     /**
      * @param string $name
      * @param string ...$columns
-     * @return Index
+     * @return static
      */
     public static function key(string $name, string ...$columns): Index
     {
@@ -73,35 +58,46 @@ final class Index
         string ...$columns
     ) {
 
-        if (!SchemasRegister::validateColumnName($name)) {
-            throw new \Exception("'{$name}' is not a valid index name.");
+        if (!Schemas::validateIdentifierName($name)) {
+            throw new \Exception(
+                sprintf(
+                    '"%s" is not a valid index name.',
+                    esc_html($name)
+                )
+            );
         }
 
         foreach ($columns as $column) {
-            if (!SchemasRegister::validateColumnName($column)) {
-                throw new \Exception("'{$column}' is not a valid column name in key {$name}.");
+            if (!Schemas::validateIdentifierName($column)) {
+                throw new \Exception(
+                    sprintf(
+                        '"%s" is not a valid column name in key "%s".',
+                        esc_html($column),
+                        esc_html($name)
+                    )
+                );
             }
         }
 
         $this->name = $name;
         $this->primary = $primary;
         $this->unique = $unique;
-        $this->columns = $columns ?: [$name];
+        $this->columns = ($columns === []) ? [$name] : array_values($columns);
     }
 
     /**
      * @param string $column
      * @param int $size
-     * @return Index
+     * @return static
      */
     public function limitColSize(string $column, int $size): Index
     {
         if ($size < 1) {
-            throw new \Exception("Invalid key size '{$size}'.");
+            throw new \Exception(sprintf('Invalid key size "%s".', esc_html((string) $size)));
         }
 
         if (!in_array($column, $this->columns, true)) {
-            throw new \Exception("Unknown column '{$column}'.");
+            throw new \Exception(sprintf('Unknown column "%s".', esc_html($column)));
         }
 
         $this->limits[$column] = $size;
@@ -133,7 +129,7 @@ final class Index
     {
         if ($this->primary) {
             $length = $this->limits[$this->name] ?? null;
-            $lengthStr = $length ? "($length)" : '';
+            $lengthStr = is_int($length) ? sprintf('(%d)', $length) : '';
             // 2 spaces before parenthesis because of `dbDelta`.
             return "PRIMARY KEY  (`{$this->name}`{$lengthStr})";
         }
@@ -143,10 +139,15 @@ final class Index
 
         foreach ($this->columns as $column) {
             if (!$columns->hasColumn($column)) {
-                throw new \Exception("'{$column}' is not a valid column name.");
+                throw new \Exception(
+                    sprintf(
+                        '"%s" is not a valid column name.',
+                        esc_html($column)
+                    )
+                );
             }
             $length = $this->limits[$column] ?? null;
-            $lengthStr = $length ? sprintf('(%d)', $length) : '';
+            $lengthStr = is_int($length) ? sprintf('(%d)', $length) : '';
             $sql .= "`{$column}`{$lengthStr},";
         }
 

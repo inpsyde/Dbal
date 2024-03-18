@@ -27,25 +27,10 @@ class Write
     /** @deprecated */
     private const DELETE = 'delete';
 
-    /**
-     * @var Schema|null
-     */
-    private $schema;
-
-    /**
-     * @var Cache|null
-     */
-    private $cache;
-
-    /**
-     * @var SchemaFinder
-     */
-    private $finder;
-
-    /**
-     * @var ErrorCollector
-     */
-    private $errors;
+    private ?Schema $schema;
+    private ?Cache $cache;
+    private SchemaFinder $finder;
+    private ErrorCollector $errors;
 
     /**
      * @param string $tableName
@@ -375,7 +360,9 @@ class Write
         static::assertNotMissing($missing, $tableName, false);
 
         if (!$data) {
-            throw new \Exception("Error inserting row in {$tableName} table, no data.");
+            throw new \Exception(
+                sprintf('Error inserting row in %s table, no data.', esc_html($tableName))
+            );
         }
 
         $toPrepare = [];
@@ -401,7 +388,7 @@ class Write
         bool $isUpdate
     ): void {
 
-        if (!$missing) {
+        if (($missing === null) || ($missing === [])) {
             return;
         }
 
@@ -415,7 +402,7 @@ class Write
             : "{$missingStr} {$be} missing or null";
 
         throw new \Exception(
-            sprintf('Error %s row in %s table, %s.', $task, $tableName, $reason)
+            esc_html(sprintf('Error %s row in %s table, %s.', $task, $tableName, $reason))
         );
     }
 
@@ -435,7 +422,7 @@ class Write
             $escParams[] = $value;
         }
 
-        return (string)(Dbal::wpdb()->prepare(implode(', ', $valuesSql), $escParams) ?? '');
+        return (string) (Dbal::wpdb()->prepare(implode(', ', $valuesSql), $escParams) ?? '');
     }
 
     /**
@@ -477,7 +464,7 @@ class Write
             /** @var callable $method */
             $method = [$wpdb, $func];
 
-            return (int)$method($finder->fullTableName($schema), ...$args);
+            return (int) $method($finder->fullTableName($schema), ...$args);
         };
 
         return $this->safeExecute($execute, $type);
@@ -491,7 +478,7 @@ class Write
     private function executeQuery(string $query, string $type): Result
     {
         $execute = static function (\wpdb $wpdb) use ($query): int {
-            return (int)$wpdb->query($query);
+            return (int) $wpdb->query($query);
         };
 
         return $this->safeExecute($execute, $type);
@@ -537,9 +524,9 @@ class Write
                 return Result::new($value)->mergeError($error);
             }
 
-            $data = (object)['rows' => (int)$result];
+            $data = (object) ['rows' => (int) $result];
             if ($operation === self::CREATE) {
-                $data->insertId = (int)$wpdb->insert_id;
+                $data->insertId = (int) $wpdb->insert_id;
             }
 
             return Result::new($data);

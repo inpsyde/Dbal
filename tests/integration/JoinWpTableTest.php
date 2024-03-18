@@ -10,6 +10,9 @@ use Inpsyde\Dbal\Query\WpQueryUtils;
 use Inpsyde\Dbal\Tests\QueriesTestCase;
 use Inpsyde\Dbal\Tests\TableOne;
 
+/**
+ * @runTestsInSeparateProcesses
+ */
 class JoinWpTableTest extends QueriesTestCase
 {
     /**
@@ -55,7 +58,7 @@ class JoinWpTableTest extends QueriesTestCase
 
         $value = $results->first();
         static::assertIsArray($value);
-        static::assertSame((int)$id, $value[TableOne::POST_ID]);
+        static::assertSame((int) $id, $value[TableOne::POST_ID]);
         static::assertSame(['foo'], $value[TableOne::SERIALIZED]);
     }
 
@@ -112,7 +115,7 @@ class JoinWpTableTest extends QueriesTestCase
 
         $value = $results->first();
         static::assertIsArray($value);
-        static::assertSame((int)$id, $value[TableOne::POST_ID]);
+        static::assertSame((int) $id, $value[TableOne::POST_ID]);
         static::assertSame(['foo'], $value[TableOne::SERIALIZED]);
     }
 
@@ -135,7 +138,7 @@ class JoinWpTableTest extends QueriesTestCase
             $expectedReverse[] = [
                 TableOne::ID => $result->extract()->insertId,
                 TableOne::POST_ID => $id,
-               'title' => $letters[$i],
+                'title' => $letters[$i],
             ];
         }
 

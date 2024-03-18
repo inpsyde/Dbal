@@ -1,18 +1,19 @@
 <?php
 
+/**
+ * phpcs:disable
+ */
+
 declare(strict_types=1);
 
 namespace Inpsyde\Dbal\Tests;
 
-/**
- * phpcs:disable
- */
 class DummyWpdb extends \wpdb
 {
-    public $nextResultRows = [];
+    public array $nextResultRows = [];
     public $nextGetVarResult = '';
     public $nextQueryResult = null;
-    public $nextNumQueryResult = [null, null];
+    public array $nextNumQueryResult = [null, null];
 
     public function __construct()
     {

@@ -1,4 +1,4 @@
-<?php // phpcs:disable
+<?php
 
 declare(strict_types=1);
 
@@ -18,7 +18,7 @@ putenv('LIB_DIR=' . $libDir);
 error_reporting(E_ALL);
 
 if (!defined('ABSPATH')) {
-    define('ABSPATH', "{$vendorDir}/wordpress/wordpress/");
+    define('ABSPATH', "{$vendorDir}/roots/wordpress-no-content/");
 }
 
 if (!defined('PHPUNIT_COMPOSER_INSTALL')) {

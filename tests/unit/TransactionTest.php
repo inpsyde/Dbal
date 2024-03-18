@@ -61,7 +61,8 @@ class TransactionTest extends UnitTestCase
     public function testDefaultTransactionNoSignal(): void
     {
         $result = Transaction::new()(
-            static function (): void {}
+            static function (): void {
+            }
         );
 
         global $wpdb;
@@ -179,7 +180,8 @@ class TransactionTest extends UnitTestCase
     public function testIsolationReadCommitted(): void
     {
         Transaction::new(Transaction::READ_COMMITTED)(
-            static function (): void {}
+            static function (): void {
+            }
         );
 
         global $wpdb;
@@ -187,7 +189,7 @@ class TransactionTest extends UnitTestCase
         $expectedQueries = [
             'SET TRANSACTION ISOLATION LEVEL READ COMMITTED;',
             'START TRANSACTION;',
-            'COMMIT;'
+            'COMMIT;',
         ];
 
         static::assertSame($expectedQueries, $actualQueries);
@@ -199,7 +201,8 @@ class TransactionTest extends UnitTestCase
     public function testIsolationReadUncommitted(): void
     {
         Transaction::new(Transaction::READ_UNCOMMITTED)(
-            static function (): void {}
+            static function (): void {
+            }
         );
 
         global $wpdb;
@@ -207,7 +210,7 @@ class TransactionTest extends UnitTestCase
         $expectedQueries = [
             'SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;',
             'START TRANSACTION;',
-            'COMMIT;'
+            'COMMIT;',
         ];
 
         static::assertSame($expectedQueries, $actualQueries);
@@ -219,7 +222,8 @@ class TransactionTest extends UnitTestCase
     public function testIsolationSerializable(): void
     {
         Transaction::new(Transaction::SERIALIZABLE)(
-            static function (): void {}
+            static function (): void {
+            }
         );
 
         global $wpdb;
@@ -227,7 +231,7 @@ class TransactionTest extends UnitTestCase
         $expectedQueries = [
             'SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;',
             'START TRANSACTION;',
-            'COMMIT;'
+            'COMMIT;',
         ];
 
         static::assertSame($expectedQueries, $actualQueries);
@@ -239,7 +243,8 @@ class TransactionTest extends UnitTestCase
     public function testIsolationRepeatableRead(): void
     {
         Transaction::new(Transaction::REPEATABLE_READ)(
-            static function (): void {}
+            static function (): void {
+            }
         );
 
         global $wpdb;
@@ -247,7 +252,7 @@ class TransactionTest extends UnitTestCase
         $expectedQueries = [
             'SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;',
             'START TRANSACTION;',
-            'COMMIT;'
+            'COMMIT;',
         ];
 
         static::assertSame($expectedQueries, $actualQueries);
@@ -276,21 +281,21 @@ class TransactionTest extends UnitTestCase
      */
     public function testMergingSuccessfulResultsInTransaction(): void
     {
-        $f1 = static function (): Result {
+        $cb1 = static function (): Result {
             return Result::new(1);
         };
 
-        $f2 = static function (Result $result): Result {
+        $cb2 = static function (Result $result): Result {
             return $result->merge(Result::new(2));
         };
 
-        $f3 = static function (Result $result): Result {
+        $cb3 = static function (Result $result): Result {
             return $result->merge(Result::new(3));
         };
 
         $result = Transaction::new()(
-            static function () use ($f1, $f2, $f3): Result {
-                return $f3($f2($f1()));
+            static function () use ($cb1, $cb2, $cb3): Result {
+                return $cb3($cb2($cb1()));
             }
         );
 
@@ -302,21 +307,21 @@ class TransactionTest extends UnitTestCase
      */
     public function testMergingResultsWithErrorInTransaction(): void
     {
-        $f1 = static function (): Result {
+        $cb1 = static function (): Result {
             return Result::new(1);
         };
 
-        $f2 = static function (Result $result): Result {
+        $cb2 = static function (Result $result): Result {
             return $result->merge(Result::new(new \Exception('Meh')));
         };
 
-        $f3 = static function (Result $result): Result {
+        $cb3 = static function (Result $result): Result {
             return $result->merge(Result::new(3));
         };
 
         $result = Transaction::new()(
-            static function () use ($f1, $f2, $f3): Result {
-                return $f3($f2($f1()));
+            static function () use ($cb1, $cb2, $cb3): Result {
+                return $cb3($cb2($cb1()));
             }
         );
 
@@ -328,11 +333,11 @@ class TransactionTest extends UnitTestCase
      */
     public function testMultipleSuccessfulCallbacksInTransaction(): void
     {
-        $f2 = static function (): Result {
+        $cb2 = static function (): Result {
             return Result::new(2);
         };
 
-        $f3 = static function (Result $result): Result {
+        $cb3 = static function (Result $result): Result {
             return $result->merge(Result::new(3));
         };
 
@@ -340,8 +345,8 @@ class TransactionTest extends UnitTestCase
             static function (): Result {
                 return Result::new(1);
             },
-            static function () use ($f2, $f3): Result {
-                return $f3($f2());
+            static function () use ($cb2, $cb3): Result {
+                return $cb3($cb2());
             },
             static function (): Result {
                 return Result::new(4);
@@ -383,19 +388,19 @@ class TransactionTest extends UnitTestCase
      */
     public function testMultipleCallbacksForwardingResultValue(): void
     {
-        $insert1 = function (): Result {
+        $insert1 = static function (): Result {
             $insert1 = Result::new(['rows' => 1, 'insertId' => 123]);
             if ($insert1->isErrored()) {
                 return $insert1;
             }
 
             $data = new \stdClass();
-            $data->ids = [(int)$insert1->extract()['insertId']];
+            $data->ids = [(int) $insert1->extract()['insertId']];
 
-            return  Result::new($data);
+            return Result::new($data);
         };
 
-        $insert2 = function (Result $previous): Result {
+        $insert2 = static function (Result $previous): Result {
             if ($previous->isErrored()) {
                 return $previous;
             }
@@ -406,7 +411,7 @@ class TransactionTest extends UnitTestCase
             }
 
             $data = $previous->extract();
-            $data->ids[] = (int)$insert2->extract()['insertId'];
+            $data->ids[] = (int) $insert2->extract()['insertId'];
 
             return Result::new($data);
         };
@@ -422,7 +427,8 @@ class TransactionTest extends UnitTestCase
     public function testWithConsistentSnapshot(): void
     {
         Transaction::new(Transaction::CONSISTENT_SNAPSHOT)(
-            static function (): void {}
+            static function (): void {
+            }
         );
 
         global $wpdb;
@@ -431,7 +437,7 @@ class TransactionTest extends UnitTestCase
         $expectedQueries = [
             'SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;',
             'START TRANSACTION WITH CONSISTENT SNAPSHOT;',
-            'COMMIT;'
+            'COMMIT;',
         ];
 
         static::assertSame($expectedQueries, $actualQueries);
@@ -442,8 +448,9 @@ class TransactionTest extends UnitTestCase
      */
     public function testWithConsistentSnapshotWithOverrideIsolation(): void
     {
-        Transaction::new(Transaction::SERIALIZABLE|Transaction::CONSISTENT_SNAPSHOT)(
-            static function (): void {}
+        Transaction::new(Transaction::SERIALIZABLE | Transaction::CONSISTENT_SNAPSHOT)(
+            static function (): void {
+            }
         );
 
         global $wpdb;
@@ -452,7 +459,7 @@ class TransactionTest extends UnitTestCase
         $expectedQueries = [
             'SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;',
             'START TRANSACTION WITH CONSISTENT SNAPSHOT;',
-            'COMMIT;'
+            'COMMIT;',
         ];
 
         static::assertSame($expectedQueries, $actualQueries);
@@ -464,7 +471,8 @@ class TransactionTest extends UnitTestCase
     public function testReadOnlyMode(): void
     {
         Transaction::new(Transaction::READ_ONLY)(
-            static function (): void {}
+            static function (): void {
+            }
         );
 
         global $wpdb;
@@ -472,7 +480,7 @@ class TransactionTest extends UnitTestCase
 
         $expectedQueries = [
             'START TRANSACTION READ ONLY;',
-            'COMMIT;'
+            'COMMIT;',
         ];
 
         static::assertSame($expectedQueries, $actualQueries);
@@ -483,8 +491,9 @@ class TransactionTest extends UnitTestCase
      */
     public function testReadCommittedAndReadOnlyMode(): void
     {
-        Transaction::new(Transaction::READ_COMMITTED|Transaction::READ_ONLY)(
-            static function (): void {}
+        Transaction::new(Transaction::READ_COMMITTED | Transaction::READ_ONLY)(
+            static function (): void {
+            }
         );
 
         global $wpdb;
@@ -493,7 +502,7 @@ class TransactionTest extends UnitTestCase
         $expectedQueries = [
             'SET TRANSACTION ISOLATION LEVEL READ COMMITTED;',
             'START TRANSACTION READ ONLY;',
-            'COMMIT;'
+            'COMMIT;',
         ];
 
         static::assertSame($expectedQueries, $actualQueries);
@@ -504,8 +513,9 @@ class TransactionTest extends UnitTestCase
      */
     public function testReadUncommittedAndReadWriteMode(): void
     {
-        Transaction::new(Transaction::READ_UNCOMMITTED|Transaction::READ_WRITE)(
-            static function (): void {}
+        Transaction::new(Transaction::READ_UNCOMMITTED | Transaction::READ_WRITE)(
+            static function (): void {
+            }
         );
 
         global $wpdb;
@@ -514,7 +524,7 @@ class TransactionTest extends UnitTestCase
         $expectedQueries = [
             'SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;',
             'START TRANSACTION READ WRITE;',
-            'COMMIT;'
+            'COMMIT;',
         ];
 
         static::assertSame($expectedQueries, $actualQueries);
@@ -525,8 +535,9 @@ class TransactionTest extends UnitTestCase
      */
     public function testReadOnlyModeWithConsistentSnapshot(): void
     {
-        Transaction::new(Transaction::CONSISTENT_SNAPSHOT|Transaction::READ_ONLY)(
-            static function (): void {}
+        Transaction::new(Transaction::CONSISTENT_SNAPSHOT | Transaction::READ_ONLY)(
+            static function (): void {
+            }
         );
 
         global $wpdb;
@@ -535,7 +546,7 @@ class TransactionTest extends UnitTestCase
         $expectedQueries = [
             'SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;',
             'START TRANSACTION WITH CONSISTENT SNAPSHOT, READ ONLY;',
-            'COMMIT;'
+            'COMMIT;',
         ];
 
         static::assertSame($expectedQueries, $actualQueries);
@@ -546,8 +557,9 @@ class TransactionTest extends UnitTestCase
      */
     public function testReadWriteWithConsistentSnapshot(): void
     {
-        Transaction::new(Transaction::CONSISTENT_SNAPSHOT|Transaction::READ_WRITE)(
-            static function (): void {}
+        Transaction::new(Transaction::CONSISTENT_SNAPSHOT | Transaction::READ_WRITE)(
+            static function (): void {
+            }
         );
 
         global $wpdb;
@@ -556,7 +568,7 @@ class TransactionTest extends UnitTestCase
         $expectedQueries = [
             'SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;',
             'START TRANSACTION WITH CONSISTENT SNAPSHOT, READ WRITE;',
-            'COMMIT;'
+            'COMMIT;',
         ];
 
         static::assertSame($expectedQueries, $actualQueries);

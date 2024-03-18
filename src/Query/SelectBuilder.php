@@ -10,20 +10,11 @@ use Inpsyde\Dbal\Result;
 
 final class SelectBuilder
 {
-    /**
-     * @var string
-     */
-    private $tableName;
+    private string $tableName;
+    private ?string $alias;
 
-    /**
-     * @var string|null
-     */
-    private $alias;
-
-    /**
-     * @var list<array{string, array}>
-     */
-    private $record = [];
+    /** @var list<list{string, array}> */
+    private array $record = [];
 
     /**
      * @param string $tableName
@@ -46,7 +37,7 @@ final class SelectBuilder
     }
 
     /**
-     * @return $this
+     * @return static
      */
     public function unfiltered(): SelectBuilder
     {
@@ -60,7 +51,7 @@ final class SelectBuilder
      * @param string|null $columnNameOnMain
      * @param string|null $columnNameOnJoined
      * @param string|null $alias
-     * @return $this
+     * @return static
      */
     public function leftJoin(
         string $joinTable,
@@ -78,7 +69,7 @@ final class SelectBuilder
      * @param string $joinTable
      * @param Where $where
      * @param string|null $alias
-     * @return $this
+     * @return static
      */
     public function leftJoinWhere(
         string $joinTable,
@@ -97,7 +88,7 @@ final class SelectBuilder
      * @param string|null $columnNameOnSource
      * @param string|null $columnNameOnJoined
      * @param string|null $alias
-     * @return $this
+     * @return static
      */
     public function leftJoinWith(
         string $joinTable,
@@ -117,7 +108,7 @@ final class SelectBuilder
      * @param string $sourceTable
      * @param Where $where
      * @param string|null $alias
-     * @return $this
+     * @return static
      */
     public function leftJoinWhereWith(
         string $joinTable,
@@ -136,7 +127,7 @@ final class SelectBuilder
      * @param string $alias
      * @param string|null $columnOnMain
      * @param string|null $columnOnExpression
-     * @return $this
+     * @return static
      */
     public function leftJoinRaw(
         string $expression,
@@ -156,7 +147,7 @@ final class SelectBuilder
      * @param string $sourceTable
      * @param string|null $columnOnMain
      * @param string|null $columnOnExpression
-     * @return $this
+     * @return static
      */
     public function leftJoinRawWith(
         string $expression,
@@ -176,7 +167,7 @@ final class SelectBuilder
      * @param string|null $columnNameOnMain
      * @param string|null $columnNameOnJoined
      * @param string|null $alias
-     * @return $this
+     * @return static
      */
     public function innerJoin(
         string $joinTable,
@@ -194,7 +185,7 @@ final class SelectBuilder
      * @param string $joinTable
      * @param Where $where
      * @param string|null $alias
-     * @return $this
+     * @return static
      */
     public function innerJoinWhere(
         string $joinTable,
@@ -213,7 +204,7 @@ final class SelectBuilder
      * @param string|null $columnNameOnSource
      * @param string|null $columnNameOnJoined
      * @param string|null $alias
-     * @return $this
+     * @return static
      */
     public function innerJoinWith(
         string $joinTable,
@@ -233,7 +224,7 @@ final class SelectBuilder
      * @param string $sourceTable
      * @param Where $where
      * @param string|null $alias
-     * @return $this
+     * @return static
      */
     public function innerJoinWhereWith(
         string $joinTable,
@@ -252,7 +243,7 @@ final class SelectBuilder
      * @param string $alias
      * @param string|null $columnOnMain
      * @param string|null $columnOnExpression
-     * @return $this
+     * @return static
      */
     public function innerJoinRaw(
         string $expression,
@@ -272,7 +263,7 @@ final class SelectBuilder
      * @param string $sourceTable
      * @param string|null $columnOnMain
      * @param string|null $columnOnExpression
-     * @return $this
+     * @return static
      */
     public function innerJoinRawWith(
         string $expression,
@@ -294,7 +285,7 @@ final class SelectBuilder
      * @param string $pivotColumnForJoined
      * @param string|null $columnOnMain
      * @param string|null $columnOnJoined
-     * @return $this
+     * @return static
      */
     public function joinViaPivot(
         string $joinTable,

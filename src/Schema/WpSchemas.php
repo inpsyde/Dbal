@@ -6,20 +6,22 @@ namespace Inpsyde\Dbal\Schema;
 
 use Inpsyde\Dbal\Dbal;
 
+/**
+ * @psalm-consistent-constructor
+ */
 final class WpSchemas
 {
-    /**
-     * @var array<string, Columns>
-     */
-    private static $columns = [];
+    /** @var array<string, Columns> */
+    private static array $columns = [];
+
+    /** @var array<string, string> $dbSchemas */
+    private static array $dbSchemas = [];
+
+    /** @var array<string, string> $dbCharsets */
+    private static array $dbCharsets = [];
 
     /**
-     * @var array<string, string> $dbSchemas
-     */
-    private static $dbSchemas = [];
-
-    /**
-     * @return WpSchemas
+     * @return static
      */
     public static function new(): WpSchemas
     {
@@ -204,28 +206,31 @@ final class WpSchemas
             return static::$columns[$table];
         }
 
+        $charset = $this->loadCharsetForRegex('~');
         $sql = $this->loadWpSchema();
-        $definitionStartParts = explode("CREATE TABLE {$table} (", $sql, 2);
-        if (empty($definitionStartParts[1])) {
+
+        preg_match(
+            "~CREATE TABLE (?:IF NOT EXISTS )?{$table} ?\((.+?)\)(?: ?{$charset})?;~i",
+            $sql,
+            $matches
+        );
+
+        if (!isset($matches[1])) {
             return null;
         }
 
-        $rawSchemaParts = explode("PRIMARY KEY", $definitionStartParts[1], 2);
-        if (empty($rawSchemaParts[1])) {
-            return null;
-        }
-
-        $rawSchema = $rawSchemaParts[0];
         $columns = [];
-        $schemaLines = explode("\n", $rawSchema);
-        foreach ($schemaLines as $schemaLine) {
-            $column = Column::parseRawDefinition($schemaLine);
-            if ($column) {
-                $columns[] = $column;
+        $token = strtok($matches[1], ',');
+        while ($token !== false) {
+            $def = trim($token);
+            $token = strtok(',');
+            if (preg_match('~^(?:(?:PRIMARY )?KEY|INDEX|FULLTEXT|CONSTRAINT) ~i', $def) !== 1) {
+                $column = Column::parseRawDefinition($def);
+                $column and $columns[] = $column;
             }
         }
 
-        if (!$columns) {
+        if ($columns === []) {
             return null;
         }
 
@@ -239,7 +244,7 @@ final class WpSchemas
      */
     private function loadWpSchema(): string
     {
-        $key = (string)Dbal::wpdb()->prefix;
+        $key = (string) Dbal::wpdb()->prefix;
 
         if (!empty(static::$dbSchemas[$key])) {
             return static::$dbSchemas[$key];
@@ -262,9 +267,29 @@ final class WpSchemas
             // phpcs:enable Inpsyde.CodeQuality.VariablesName.SnakeCaseVar
         }
 
-        $schema = (string)wp_get_db_schema('all');
-        static::$dbSchemas[$key] = $schema;
+        $schema = (string) wp_get_db_schema('all');
+        static::$dbSchemas[$key] = preg_replace('~\s+~', ' ', trim($schema));
 
-        return $schema;
+        return static::$dbSchemas[$key];
+    }
+
+    /**
+     * @param string $delimiter
+     * @return string
+     */
+    private function loadCharsetForRegex(string $delimiter): string
+    {
+        $db = Dbal::wpdb();
+
+        $key = $db->prefix . $delimiter;
+
+        if (isset(static::$dbCharsets[$key])) {
+            return static::$dbCharsets[$key];
+        }
+
+        $collate = preg_quote($db->get_charset_collate(), $delimiter);
+        static::$dbCharsets[$key] = $collate;
+
+        return $collate;
     }
 }
