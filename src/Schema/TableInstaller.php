@@ -242,7 +242,7 @@ class TableInstaller
 
         $targetNames = $columns->allNames();
         foreach ($currentColumns as $currentColumn) {
-            $currentColName = is_array($currentColumn) ? ($currentColumn['Field'] ?? null) : null;
+            $currentColName = is_object($currentColumn) ? ($currentColumn->Field ?? null) : null;
             if (($currentColName !== null) && !in_array($currentColName, $targetNames, true)) {
                 ($dropColsSql !== '') and $dropColsSql .= ', ';
                 $dropColsSql .= 'DROP COLUMN %i';
