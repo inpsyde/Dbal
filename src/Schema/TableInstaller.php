@@ -17,6 +17,11 @@ class TableInstaller
     private const OPTION_VERSIONS_NETWORK = 'dbal_table_versions_net';
     private const UPDATE_PHP_PATH = 'wp-admin/includes/upgrade.php';
 
+    private const CACHE_KEY = 'dbal_tables_installer';
+
+    /** @var array<string, bool>|null  */
+    private static $proceedTables = null;
+
     /**
      * @var array<string,array>
      */
@@ -138,9 +143,29 @@ class TableInstaller
      */
     private function tableExists(\wpdb $wpdb, string $tableName): bool
     {
-        return (bool)$wpdb->query(
+        if (is_null(static::$proceedTables )) {
+            /** @var array<string, bool>|false $value */
+            $value = wp_cache_get(self::CACHE_KEY, 'dbal');
+            static::$proceedTables = is_array($value) ? $value : [];
+        }
+
+        if (array_key_exists($tableName, static::$proceedTables)) {
+            return (bool) static::$proceedTables[$tableName];
+        }
+
+        $result = (bool)$wpdb->query(
             (string)($wpdb->prepare('SHOW TABLES LIKE %s', $tableName) ?? '')
         );
+
+        if (!$result) {
+            return false;
+        }
+
+        self::$proceedTables[$tableName] = true;
+
+        wp_cache_set(self::CACHE_KEY, static::$proceedTables, 'dbal', 300);
+
+        return static::$proceedTables[$tableName];
     }
 
     /**
