@@ -12,6 +12,7 @@ class TableInstaller
     public const ACTION_UPDATE = 'dbal.table-update';
     public const ACTION_INSTALLED = 'dbal.table-installed';
     public const ACTION_UPDATED = 'dbal.table-updated';
+    public const FILTER_TABLE_EXISTENT_CHECK = 'dbal.table-exists-check';
 
     private const OPTION_VERSIONS = 'dbal_table_versions';
     private const OPTION_VERSIONS_NETWORK = 'dbal_table_versions_net';
@@ -19,8 +20,8 @@ class TableInstaller
 
     private const CACHE_KEY = 'dbal_tables_installer';
 
-    /** @var array<string, bool>|null  */
-    private static $proceedTables = null;
+    /** @var string[]|null  */
+    private static $dbTables = null;
 
     /**
      * @var array<string,array>
@@ -96,7 +97,7 @@ class TableInstaller
 
         dbDelta("CREATE TABLE `{$fullName}` ({$columnsSql}{$keysSql}){$charsetCollate}");
 
-        if (!$exists && !$this->tableExists($wpdb, $fullName)) {
+        if (!$exists && !$this->tableExists($wpdb, $fullName, $newVer, true)) {
             return false;
         }
 
@@ -139,33 +140,41 @@ class TableInstaller
     /**
      * @param \wpdb $wpdb
      * @param string $tableName
+     * @param string|null $currentVersion
+     * @param bool $useRawQuery
      * @return bool
      */
-    private function tableExists(\wpdb $wpdb, string $tableName): bool
+    private function tableExists(\wpdb $wpdb, string $tableName, ?string $currentVersion,  bool $useRawQuery = false): bool
     {
-        if (is_null(static::$proceedTables )) {
-            /** @var array<string, bool>|false $value */
-            $value = wp_cache_get(self::CACHE_KEY, 'dbal');
-            static::$proceedTables = is_array($value) ? $value : [];
+        if ($useRawQuery) {
+            $result = (bool) $wpdb->query(
+                (string)($wpdb->prepare('SHOW TABLES LIKE %s', $tableName) ?? '')
+            );
+
+            if (
+                !is_null(static::$dbTables) &&
+                !in_array($tableName, static::$dbTables, true)
+                && $result
+            ) {
+                static::$dbTables[] = $tableName;
+            }
+
+            return $result;
         }
 
-        if (array_key_exists($tableName, static::$proceedTables)) {
-            return (bool) static::$proceedTables[$tableName];
+        $haltChecking = (bool) apply_filters(self::FILTER_TABLE_EXISTENT_CHECK, false, $tableName, $currentVersion);
+
+        if ($haltChecking) {
+            return true;
         }
 
-        $result = (bool)$wpdb->query(
-            (string)($wpdb->prepare('SHOW TABLES LIKE %s', $tableName) ?? '')
-        );
-
-        if (!$result) {
-            return false;
+        if (is_null(static::$dbTables )) {
+            /** @var string[] $results */
+            $results = $wpdb->get_col('SHOW TABLES');
+            static::$dbTables = $results;
         }
 
-        self::$proceedTables[$tableName] = true;
-
-        wp_cache_set(self::CACHE_KEY, static::$proceedTables, 'dbal', 300);
-
-        return static::$proceedTables[$tableName];
+        return in_array($tableName, static::$dbTables, true);
     }
 
     /**
@@ -188,7 +197,7 @@ class TableInstaller
             ? $this->validateVersion($versions[$baseName])
             : null;
 
-        $exists = $this->tableExists(Dbal::wpdb(), $fullName);
+        $exists = $this->tableExists(Dbal::wpdb(), $fullName, $savedVer);
         if ($exists && ($savedVer === null)) {
             $savedVer = '0.0.0.0';
         }
