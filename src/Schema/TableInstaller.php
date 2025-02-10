@@ -97,7 +97,7 @@ class TableInstaller
 
         dbDelta("CREATE TABLE `{$fullName}` ({$columnsSql}{$keysSql}){$charsetCollate}");
 
-        if (!$exists && !$this->tableExists($wpdb, $fullName, $newVer, true)) {
+        if (!$exists && !$this->postInstallCheck($wpdb, $fullName)) {
             return false;
         }
 
@@ -140,31 +140,35 @@ class TableInstaller
     /**
      * @param \wpdb $wpdb
      * @param string $tableName
-     * @param string|null $currentVersion
-     * @param bool $useRawQuery
      * @return bool
      */
-    private function tableExists(\wpdb $wpdb, string $tableName, ?string $currentVersion,  bool $useRawQuery = false): bool
+    private function postInstallCheck(\wpdb $wpdb, string $tableName): bool
     {
-        if ($useRawQuery) {
-            $result = (bool) $wpdb->query(
-                (string)($wpdb->prepare('SHOW TABLES LIKE %s', $tableName) ?? '')
-            );
 
-            if (
-                !is_null(static::$dbTables) &&
-                !in_array($tableName, static::$dbTables, true)
-                && $result
-            ) {
-                static::$dbTables[] = $tableName;
-            }
+        $result = (bool) $wpdb->query(
+            (string)($wpdb->prepare('SHOW TABLES LIKE %s', $tableName) ?? '')
+        );
 
-            return $result;
+        if (
+            !is_null(static::$dbTables) &&
+            !in_array($tableName, static::$dbTables, true)
+            && $result
+        ) {
+            static::$dbTables[] = $tableName;
         }
 
-        $haltChecking = (bool) apply_filters(self::FILTER_TABLE_EXISTENT_CHECK, false, $tableName, $currentVersion);
+        return $result;
+    }
 
-        if ($haltChecking) {
+    /**
+     * @param \wpdb $wpdb
+     * @param string $tableName
+     * @param string|null $currentVersion
+     * @return bool
+     */
+    private function tableExists(\wpdb $wpdb, string $tableName, ?string $currentVersion = null): bool
+    {
+        if (apply_filters(self::FILTER_TABLE_EXISTENT_CHECK, false, $tableName, $currentVersion)) {
             return true;
         }
 
