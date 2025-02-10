@@ -12,13 +12,11 @@ class TableInstaller
     public const ACTION_UPDATE = 'dbal.table-update';
     public const ACTION_INSTALLED = 'dbal.table-installed';
     public const ACTION_UPDATED = 'dbal.table-updated';
-    public const FILTER_TABLE_EXISTENT_CHECK = 'dbal.table-exists-check';
+    public const FILTER_SKIP_TABLE_EXISTENCE_CHECK = 'dbal.skip-table-exists-check';
 
     private const OPTION_VERSIONS = 'dbal_table_versions';
     private const OPTION_VERSIONS_NETWORK = 'dbal_table_versions_net';
     private const UPDATE_PHP_PATH = 'wp-admin/includes/upgrade.php';
-
-    private const CACHE_KEY = 'dbal_tables_installer';
 
     /** @var string[]|null  */
     private static $dbTables = null;
@@ -168,7 +166,7 @@ class TableInstaller
      */
     private function tableExists(\wpdb $wpdb, string $tableName, ?string $currentVersion = null): bool
     {
-        if (apply_filters(self::FILTER_TABLE_EXISTENT_CHECK, false, $tableName, $currentVersion)) {
+        if (apply_filters(self::FILTER_SKIP_TABLE_EXISTENCE_CHECK, false, $tableName, $currentVersion)) {
             return true;
         }
 
