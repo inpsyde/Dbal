@@ -149,8 +149,8 @@ class TableInstaller
 
         if (
             !is_null(static::$dbTables) &&
-            !in_array($tableName, static::$dbTables, true)
-            && $result
+            !in_array($tableName, static::$dbTables, true) &&
+            $result
         ) {
             static::$dbTables[] = $tableName;
         }
@@ -170,7 +170,7 @@ class TableInstaller
             return true;
         }
 
-        if (is_null(static::$dbTables )) {
+        if (is_null(static::$dbTables)) {
             /** @var string[] $results */
             $results = $wpdb->get_col('SHOW TABLES');
             static::$dbTables = $results;
