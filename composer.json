@@ -4,15 +4,16 @@
     "type": "library",
     "license": "GPL-2.0-or-later",
     "authors": [
-		{
-            "name": "Inpsyde",
-            "homepage": "https://inpsyde.com",
-			"role": "company"
+        {
+            "name": "Syde GmbH",
+            "homepage": "https://syde.com/",
+            "email": "hello@syde.com",
+            "role": "Company"
         },
         {
             "name": "Giuseppe Mazzapica",
             "homepage": "https://gmazzap.me",
-			"role": "developer"
+            "role": "developer"
         }
     ],
     "minimum-stability": "dev",
