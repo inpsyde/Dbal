@@ -12,10 +12,12 @@ class TableInstaller
     public const ACTION_UPDATE = 'dbal.table-update';
     public const ACTION_INSTALLED = 'dbal.table-installed';
     public const ACTION_UPDATED = 'dbal.table-updated';
+    public const FILTER_SKIP_TABLE_EXISTENCE_CHECK = 'dbal.skip-table-exists-check';
 
     private const OPTION_VERSIONS = 'dbal_table_versions';
     private const OPTION_VERSIONS_NETWORK = 'dbal_table_versions_net';
 
+    private static ?array $dbTables = null;
     /** @var array<string, array> */
     private array $versions = [];
     private SchemaFinder $schemaFinder;
@@ -77,7 +79,7 @@ class TableInstaller
         $exists and $this->dropColumns($wpdb, $fullName, $columns);
         dbDelta("CREATE TABLE `{$fullName}` ({$columnsSql}{$keysSql}){$charsetCollate}");
 
-        if (!$exists && !$this->tableExists($wpdb, $fullName)) {
+        if (!$exists && !$this->postInstallCheck($wpdb, $fullName)) {
             return false;
         }
 
@@ -122,11 +124,43 @@ class TableInstaller
      * @param string $tableName
      * @return bool
      */
-    private function tableExists(\wpdb $wpdb, string $tableName): bool
+    private function postInstallCheck(\wpdb $wpdb, string $tableName): bool
     {
-        return (bool) $wpdb->query(
-            (string) ($wpdb->prepare('SHOW TABLES LIKE %s', $tableName) ?? '')
+
+        $result = (bool) $wpdb->query(
+            (string)($wpdb->prepare('SHOW TABLES LIKE %s', $tableName) ?? '')
         );
+
+        if (
+            !is_null(static::$dbTables) &&
+            !in_array($tableName, static::$dbTables, true) &&
+            $result
+        ) {
+            static::$dbTables[] = $tableName;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param \wpdb $wpdb
+     * @param string $tableName
+     * @param string|null $currentVersion
+     * @return bool
+     */
+    private function tableExists(\wpdb $wpdb, string $tableName, ?string $currentVersion = null): bool
+    {
+        if (apply_filters(self::FILTER_SKIP_TABLE_EXISTENCE_CHECK, false, $tableName, $currentVersion)) {
+            return true;
+        }
+
+        if (is_null(static::$dbTables)) {
+            /** @var string[] $results */
+            $results = $wpdb->get_col('SHOW TABLES');
+            static::$dbTables = $results;
+        }
+
+        return in_array($tableName, static::$dbTables, true);
     }
 
     /**
@@ -149,7 +183,7 @@ class TableInstaller
             ? Version::new($versions[$baseName])
             : Version::newEmpty();
 
-        $exists = $this->tableExists(Dbal::wpdb(), $fullName);
+        $exists = $this->tableExists(Dbal::wpdb(), $fullName, $savedVer);
         if ($exists && !$savedVer->isValid()) {
             $savedVer = Version::new('0.0.0.0');
         }

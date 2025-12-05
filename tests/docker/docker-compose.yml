@@ -1,4 +1,3 @@
-version: '3.9'
 services:
     php83:
         profiles: [ "php83" ]
