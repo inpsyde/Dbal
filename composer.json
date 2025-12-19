@@ -29,7 +29,7 @@
         "syde/phpcs": "~1.0.1",
         "phpunit/phpunit": "^9.6.17",
         "brain/monkey": "^2.6.1",
-        "roots/wordpress-no-content": ">=6.4.3",
+        "roots/wordpress-no-content": ">=6.7",
         "inpsyde/wp-stubs-versions": "dev-latest",
         "phpstan/phpstan": "^2.1.1",
         "phpstan/phpstan-deprecation-rules": "^2.0.1",
