@@ -38,7 +38,7 @@ jobs:
     if: ${{ (github.event_name != 'workflow_dispatch') || ((github.event.inputs.jobs == 'Run lint only') || (github.event.inputs.jobs == 'Run all')) }}
     strategy:
       matrix:
-        php: [ '8.0', '8.1', '8.2', '8.3', '8.4' ]
+        php: [ '8.1', '8.2', '8.3', '8.4' ]
     with:
       PHP_VERSION: ${{ matrix.php }}
 
@@ -46,7 +46,7 @@ jobs:
     if: ${{ (github.event_name != 'workflow_dispatch') || ((github.event.inputs.jobs == 'Run PHPCS only') || (github.event.inputs.jobs == 'Run all')) }}
     uses: inpsyde/reusable-workflows/.github/workflows/coding-standards-php.yml@main
     with:
-      PHP_VERSION: '8.0'
+      PHP_VERSION: '8.1'
 
   static-code-analysis-php:
     if: ${{ (github.event_name != 'workflow_dispatch') || ((github.event.inputs.jobs == 'Run PHPStan only') || (github.event.inputs.jobs == 'Run all')) }}

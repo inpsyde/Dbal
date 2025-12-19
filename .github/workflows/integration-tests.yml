@@ -28,12 +28,12 @@ jobs:
         strategy:
             matrix:
                 php-version: [ '8.0', '8.1', '8.2', '8.3' ]
-                wp-version: [ '6.2', '6.3', '6.4', '6' ]
+                wp-version: [ '6.5', '6.6', '6.7', '6' ]
                 exclude:
                     - php-version: '8.3'
-                      wp-version: '6.2'
+                      wp-version: '6.5'
                     - php-version: '8.3'
-                      wp-version: '6.3'
+                      wp-version: '6.6'
         steps:
             -   name: Checkout
                 uses: actions/checkout@v4
@@ -47,7 +47,7 @@ jobs:
             -   name: Adjust Composer Dependencies
                 run: |
                     composer config --unset repositories.0
-                    composer remove inpsyde/php-coding-standards inpsyde/wp-stubs-versions roots/wordpress-no-content vimeo/psalm --dev --no-update
+                    composer remove syde/phpcs inpsyde/wp-stubs-versions roots/wordpress-no-content vimeo/psalm --dev --no-update
                     composer require "roots/wordpress-no-content:${{ matrix.wp-version }}.*" --no-update
 
             -   name: Install Composer Dependencies
