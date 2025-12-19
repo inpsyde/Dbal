@@ -7,10 +7,10 @@ namespace Inpsyde\Dbal\Tests\Unit\Query;
 use Brain\Monkey;
 use Inpsyde\Dbal\Dbal;
 use Inpsyde\Dbal\Query\SelectBuilder;
-use Inpsyde\Dbal\Tests\UnitTestCase;
 use Inpsyde\Dbal\Tests\TableOne;
 use Inpsyde\Dbal\Tests\TablePivot;
 use Inpsyde\Dbal\Tests\TableTwo;
+use Inpsyde\Dbal\Tests\UnitTestCase;
 
 class SelectBuilderTest extends UnitTestCase
 {

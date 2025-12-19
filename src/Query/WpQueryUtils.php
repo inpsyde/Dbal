@@ -7,7 +7,7 @@ namespace Inpsyde\Dbal\Query;
 class WpQueryUtils
 {
     /**
-     * @param array $args
+     * @param array<string, mixed> $args
      * @return string
      */
     public static function buildSqlForArgs(array $args): string
@@ -17,9 +17,6 @@ class WpQueryUtils
 
         /**
          * @wp-hook posts_pre_query
-         *
-         * @psalm-suppress MissingClosureParamType
-         * @psalm-suppress MissingClosureReturnType
          */
         $filter = static function ($null, \WP_Query $currentQuery) use (&$sql, $query) {
             if ($currentQuery === $query) {
@@ -31,11 +28,11 @@ class WpQueryUtils
             return $null;
         };
 
-        // phpcs:disable Inpsyde.CodeQuality.HookPriority
+        // phpcs:disable Syde.WordPress.HookPriority
         add_filter('posts_pre_query', $filter, PHP_INT_MAX, 2);
         $query->query($args);
         remove_filter('posts_pre_query', $filter, PHP_INT_MAX);
-        // phpcs:enable Inpsyde.CodeQuality.HookPriority
+        // phpcs:enable Syde.WordPress.HookPriority
 
         return $sql;
     }

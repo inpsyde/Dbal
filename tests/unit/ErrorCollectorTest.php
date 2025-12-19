@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Inpsyde\Dbal\Tests\Unit;
 
-use Inpsyde\Dbal\ErrorCollector;
 use Inpsyde\Dbal\Error;
+use Inpsyde\Dbal\ErrorCollector;
 use Inpsyde\Dbal\Tests\UnitTestCase;
 
 class ErrorCollectorTest extends UnitTestCase

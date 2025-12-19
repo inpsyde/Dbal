@@ -8,8 +8,8 @@ use Brain\Monkey;
 use Inpsyde\Dbal\Dbal;
 use Inpsyde\Dbal\Query\Where;
 use Inpsyde\Dbal\Query\WriteBuilder;
-use Inpsyde\Dbal\Tests\UnitTestCase;
 use Inpsyde\Dbal\Tests\TableOne;
+use Inpsyde\Dbal\Tests\UnitTestCase;
 
 class WriteBuilderTest extends UnitTestCase
 {

@@ -46,10 +46,6 @@ final class PhpErrors
     {
         $errorReporting = error_reporting();
 
-        if (PHP_MAJOR_VERSION < 8) {
-            return $errorReporting === 0;
-        }
-
         if ($errorReporting !== self::PHP_8_FATAL_ERROR_CODES) {
             return false;
         }
@@ -72,7 +68,6 @@ final class PhpErrors
     {
         if (!$this->restored) {
             $this->restored = true;
-            /** @psalm-suppress MixedArgumentTypeCoercion */
             set_error_handler($this->previousErrorHandler); // phpcs:ignore
             $this->previousErrorHandler = null;
         }

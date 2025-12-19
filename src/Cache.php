@@ -16,13 +16,13 @@ class Cache
     private const OVERALL_KEY = '_dbal_cache';
 
     /** @var array<string, mixed> */
-    private static array $fallback = [];
+    protected static array $fallback = [];
 
     /** @var array<string, string> */
-    private static array $tableKeys = [];
+    protected static array $tableKeys = [];
 
-    private bool $initialized = false;
-    private SchemaFinder $finder;
+    protected bool $initialized = false;
+    protected SchemaFinder $finder;
 
     /**
      * @param SchemaFinder $finder
@@ -36,7 +36,7 @@ class Cache
     /**
      * @param SchemaFinder $finder
      */
-    private function __construct(SchemaFinder $finder)
+    protected function __construct(SchemaFinder $finder)
     {
         $this->finder = $finder;
     }
@@ -56,6 +56,8 @@ class Cache
     /**
      * @param string $key
      * @return mixed
+     *
+     * phpcs:disable Syde.Functions.ReturnTypeDeclaration.NoReturnType
      */
     public function get(string $key)
     {
@@ -77,13 +79,13 @@ class Cache
      * @param mixed $value
      * @return void
      */
-    public function set(string $key, $value): void
+    public function set(string $key, mixed $value): void
     {
         if (is_resource($value)) {
             return;
         }
 
-        /** @var string|object|array $strValue */
+        /** @var string|object|array<mixed> $strValue */
         $strValue = is_scalar($value) ? (string) $value : ($value ?? '');
 
         /*
@@ -125,6 +127,8 @@ class Cache
      * @param string $tableName
      * @param string ...$tables
      * @return string
+     *
+     * phpcs:disable SlevomatCodingStandard.Complexity.Cognitive.ComplexityTooHigh
      */
     public function buildCacheKeyForTables(string $tableName, string ...$tables): string
     {
@@ -265,9 +269,7 @@ class Cache
     /**
      * @return void
      *
-     * phpcs:disable Inpsyde.CodeQuality.FunctionLength
-     *
-     * @psalm-suppress DocblockTypeContradiction
+     * phpcs:disable Syde.Functions.FunctionLength.TooLong
      */
     private function addCleanCacheHooks(): void
     {

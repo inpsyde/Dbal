@@ -4,30 +4,17 @@ declare(strict_types=1);
 
 namespace Inpsyde\Dbal;
 
-/**
- * @template T of Error|null
- *
- * @psalm-suppress MixedReturnTypeCoercion
- * @psalm-suppress InvalidReturnType
- * @psalm-suppress InvalidReturnStatement
- */
 final class Result
 {
-    /**
-     * @var mixed
-     */
-    private $value;
+    private mixed $value;
 
-    /**
-     * @var T
-     */
-    private $error;
+    private ?Error $error;
 
     /**
      * @param mixed $value
-     * @return Result<T>
+     * @return Result
      */
-    public static function new($value): Result
+    public static function new(mixed $value): Result
     {
         if ($value instanceof Result) {
             return new static($value->value, $value->error);
@@ -46,9 +33,9 @@ final class Result
 
     /**
      * @param mixed $value
-     * @param T $error
+     * @param Error|null $error
      */
-    private function __construct($value, ?Error $error)
+    private function __construct(mixed $value, ?Error $error)
     {
         $this->value = $value;
         $this->error = $error;
@@ -56,11 +43,6 @@ final class Result
 
     /**
      * @return bool
-     *
-     * @psalm-assert-if-true Result<Error> $this
-     * @psalm-assert-if-true Error $this->error
-     * @psalm-assert-if-false Result<null> $this
-     * @psalm-assert-if-false null $this->error
      */
     public function isErrored(): bool
     {
@@ -69,11 +51,6 @@ final class Result
 
     /**
      * @return bool
-     *
-     * @psalm-assert-if-false Result<Error> $this
-     * @psalm-assert-if-false Error $this->error
-     * @psalm-assert-if-true Result<null> $this
-     * @psalm-assert-if-true null $this->error
      */
     public function isValid(): bool
     {
@@ -83,8 +60,7 @@ final class Result
     /**
      * @return mixed
      *
-     * @psalm-assert Result<null> $this
-     * @psalm-assert null $this->error
+     * phpcs:disable Syde.Functions.ReturnTypeDeclaration.NoReturnType
      */
     public function extract()
     {
@@ -95,9 +71,6 @@ final class Result
 
     /**
      * @return void
-     *
-     * @psalm-assert Result<null> $this
-     * @psalm-assert null $this->error
      */
     public function assert(): void
     {
@@ -107,9 +80,9 @@ final class Result
     }
 
     /**
-     * @return T
+     * @return Error|null
      */
-    public function error(): ?Error
+    public function error(): Error|null
     {
         return $this->error ?: null;
     }
@@ -117,7 +90,7 @@ final class Result
     /**
      * @param callable|null $onSuccess
      * @param callable|null $onError
-     * @return Result<T>
+     * @return Result
      */
     public function bind(?callable $onSuccess = null, ?callable $onError = null): Result
     {
@@ -126,16 +99,16 @@ final class Result
             $param = $this->error ?? $this->value;
 
             return ($callback !== null)
-                ? $this->merge(Result::new($callback($param)))
+                ? $this->merge(self::new($callback($param)))
                 : static::new($this);
         } catch (\Throwable $throwable) {
-            return $this->merge(Result::new(Error::fromThrowable($throwable)));
+            return $this->merge(self::new(Error::fromThrowable($throwable)));
         }
     }
 
     /**
-     * @param Result<T> $result
-     * @return Result<T>
+     * @param Result $result
+     * @return Result
      */
     public function merge(Result $result): Result
     {
@@ -152,7 +125,7 @@ final class Result
 
     /**
      * @param Error $error
-     * @return Result<Error>
+     * @return Result
      */
     public function mergeError(Error $error): Result
     {
@@ -168,9 +141,12 @@ final class Result
     /**
      * @param callable $callback
      * @param mixed $returnIfError
+     *
      * @return mixed
+     *
+     * phpcs:disable Syde.Functions.ReturnTypeDeclaration.NoReturnType
      */
-    public function extractWith(callable $callback, $returnIfError = null)
+    public function extractWith(callable $callback, mixed $returnIfError = null)
     {
         if (!$this->isErrored()) {
             return $callback($this->value);

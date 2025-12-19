@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Inpsyde\Dbal\Schema;
 
 /**
+ * @phpstan-type ColumnsData array<string, mixed>
+ * @phpstan-type ColumnsFormats array<string, string>
+ *
  * @template-implements \IteratorAggregate<int, Column>
  */
 final class Columns implements \IteratorAggregate, \Countable
@@ -72,7 +75,9 @@ final class Columns implements \IteratorAggregate, \Countable
         $sql = '';
         foreach ($this->columns as $column) {
             $definition = $column->schemaDefinition();
-            $sql and $sql .= ',';
+            if ($sql !== '') {
+                $sql .= ',';
+            }
             $sql .= "\n\t{$definition}";
         }
 
@@ -116,9 +121,9 @@ final class Columns implements \IteratorAggregate, \Countable
     /**
      * @param string $column
      * @param mixed $value
-     * @return array{integer|float|string|array|null, string|null}
+     * @return array{mixed, string|null}
      */
-    public function selectColumnInfo(string $column, $value): array
+    public function selectColumnInfo(string $column, mixed $value): array
     {
         if (!$this->hasColumn($column)) {
             return [null, null];
@@ -126,7 +131,7 @@ final class Columns implements \IteratorAggregate, \Countable
 
         [$parsed, $formats] = $this->columnInfoForData($column, $value);
 
-        /** @var integer|float|string|array|null $value */
+        /** @var mixed $value */
         $value = $parsed[$column] ?? null;
         /** @var string $format */
         $format = $formats[$column] ?? '%s';
@@ -135,46 +140,36 @@ final class Columns implements \IteratorAggregate, \Countable
     }
 
     /**
-     * @param array $data
-     * @return list{array<string, integer|float|string>, array<string, string>, list<string>}
+     * @param ColumnsData $data
+     * @return array{ColumnsData, ColumnsFormats, string[]|null}
      */
     public function columnsInfoForDataInsert(array $data): array
     {
-        /**
-         * @var array<string, integer|float|string> $parsedData
-         * @var array<string, string> $formats
-         * @var list<string> $missing
-         */
         [$parsedData, $formats, $missing] = $this->columnsInfoForData($data, true, false);
 
         return [$parsedData, $formats, $missing];
     }
 
     /**
-     * @param array $data
-     * @return array{array<string, integer|float|string>, array<string, string>, list<string>}
+     * @param ColumnsData $data
+     * @return array{ColumnsData, ColumnsFormats, string[]|null}
      */
     public function columnsInfoForDataUpdate(array $data): array
     {
-        /**
-         * @var array<string, integer|float|string> $parsedData
-         * @var array<string, string> $formats
-         * @var list<string> $missing
-         */
         [$parsedData, $formats, $missing] = $this->columnsInfoForData($data, false, true);
 
         return [$parsedData, $formats, $missing];
     }
 
     /**
-     * @param array $data
-     * @return array{array<string, integer|float|string>, array<string, string>}
+     * @param ColumnsData $data
+     * @return array{ColumnsData, ColumnsFormats}
      */
     public function columnsInfoForDataRead(array $data): array
     {
         /**
-         * @var array<string, integer|float|string> $parsedData
-         * @var array<string, string> $formats
+         * @var ColumnsData $parsedData
+         * @var ColumnsFormats $formats
          */
         [$parsedData, $formats] = $this->columnsInfoForData($data, false, false);
 
@@ -182,7 +177,7 @@ final class Columns implements \IteratorAggregate, \Countable
     }
 
     /**
-     * @param array $row
+     * @param array<string, mixed> $row
      * @return array<string, mixed>
      */
     public function parseQueryResultRow(array $row): array
@@ -221,10 +216,13 @@ final class Columns implements \IteratorAggregate, \Countable
     }
 
     /**
-     * @param array $data
+     * @param ColumnsData $data
      * @param bool $forInsert
      * @param bool $forUpdate
-     * @return array
+     *
+     * @return array{ColumnsData, ColumnsFormats, string[]|null}
+     *
+     * phpcs:disable SlevomatCodingStandard.Complexity.Cognitive.ComplexityTooHigh
      */
     private function columnsInfoForData(array $data, bool $forInsert, bool $forUpdate): array
     {
@@ -238,7 +236,9 @@ final class Columns implements \IteratorAggregate, \Countable
             $required = $forInsert && $column->isRequiredOnInsert();
 
             if (!array_key_exists($name, $data)) {
-                $required and $missing[] = $name;
+                if ($required) {
+                    $missing[] = $name;
+                }
                 continue;
             }
 
@@ -263,22 +263,23 @@ final class Columns implements \IteratorAggregate, \Countable
             );
         }
 
-        return $forEditing ? [$parsedData, $formats, $missing] : [$parsedData, $formats];
+        return $forEditing ? [$parsedData, $formats, $missing] : [$parsedData, $formats, null];
     }
 
     /**
-     * @param Column $column
+     * @param string $name
      * @param mixed $value
      * @param bool $required
      * @param bool $forEdit
-     * @param array $parsedData
-     * @param array $formats
-     * @param array|null $missing
-     * @return array{array, array, array|null}
+     * @param ColumnsData $parsedData
+     * @param ColumnsFormats $formats
+     * @param string[]|null $missing
+     *
+     * @return array{ColumnsData, ColumnsFormats, string[]|null}
      */
     private function columnInfoForData(
         string $name,
-        $value,
+        mixed $value,
         bool $required = false,
         bool $forEdit = false,
         array $parsedData = [],
@@ -310,7 +311,9 @@ final class Columns implements \IteratorAggregate, \Countable
             $formats[$name] = $column->format();
             $parsedData[$name] = $value;
         } elseif ($required) {
-            ($missing === null) and $missing = [];
+            if ($missing === null) {
+                $missing = [];
+            }
             $missing[] = $name;
         }
 
@@ -318,7 +321,7 @@ final class Columns implements \IteratorAggregate, \Countable
     }
 
     /**
-     * @param array $data
+     * @param array<mixed> $data
      * @return bool
      */
     private function isNumericArray(array $data): bool

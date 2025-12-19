@@ -35,7 +35,8 @@ class Schemas implements \Countable, \IteratorAggregate
     }
 
     /**
-     * @param Schema $schema
+     * @param Schema ...$schemas
+     *
      * @return Schemas
      */
     public static function new(Schema ...$schemas): Schemas

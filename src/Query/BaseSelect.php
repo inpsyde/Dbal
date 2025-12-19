@@ -75,7 +75,7 @@ abstract class BaseSelect
      */
     public function leftJoin(
         string $joinTable,
-        string $columnNameOnMain = null,
+        ?string $columnNameOnMain = null,
         ?string $columnNameOnJoined = null,
         ?string $alias = null
     ): BaseSelect {
@@ -403,7 +403,7 @@ abstract class BaseSelect
      * @param string|null $operator
      * @return static
      */
-    public function where(string $column, $value, ?string $operator = null): BaseSelect
+    public function where(string $column, mixed $value, ?string $operator = null): BaseSelect
     {
         if (!$this->errors->isEmpty()) {
             return $this;
@@ -421,7 +421,7 @@ abstract class BaseSelect
      * @param string|null $operator
      * @return static
      */
-    public function andWhere(string $column, $value, ?string $operator = null): BaseSelect
+    public function andWhere(string $column, mixed $value, ?string $operator = null): BaseSelect
     {
         if (!$this->errors->isEmpty()) {
             return $this;
@@ -440,7 +440,7 @@ abstract class BaseSelect
      * @param string|null $operator
      * @return static
      */
-    public function orWhere(string $column, $value, ?string $operator = null): BaseSelect
+    public function orWhere(string $column, mixed $value, ?string $operator = null): BaseSelect
     {
         if (!$this->errors->isEmpty()) {
             return $this;
@@ -901,6 +901,8 @@ abstract class BaseSelect
      * @param Where|null $where
      * @param string|null $raw
      * @return static
+     *
+     * phpcs:disable SlevomatCodingStandard.Complexity.Cognitive.ComplexityTooHigh
      */
     protected function withJoin(
         string $type,
@@ -946,7 +948,6 @@ abstract class BaseSelect
         }
 
         if (($alias !== null) && ($alias !== '')) {
-            /** @psalm-suppress PossiblyNullReference */
             ($raw !== null)
                 ? $this->aliases->forRawSchema($alias)
                 : $this->aliases->forSchema($target->name(), $alias);
@@ -1010,6 +1011,8 @@ abstract class BaseSelect
      * @param string|null $alias
      * @param string|null $raw
      * @return array{Schema, Schema|null}|null
+     *
+     * phpcs:disable SlevomatCodingStandard.Complexity.Cognitive.ComplexityTooHigh
      */
     protected function determineJoinSchema(
         ?string $sourceTable,
@@ -1156,7 +1159,6 @@ abstract class BaseSelect
 
         [$realColumn, , , $colTable] = $this->aliases->resolveColumn($column);
         $this->aliases->mergeErrors($this->errors);
-        /** @psalm-suppress ParadoxicalCondition */
         if (!$this->errors->isEmpty() || ($realColumn === null)) {
             return null;
         }
@@ -1167,7 +1169,6 @@ abstract class BaseSelect
 
         [$tableRealName, $schema, $tableAlias] = $this->aliases->resolveSchema($tableName);
         $this->aliases->mergeErrors($this->errors);
-        /** @psalm-suppress ParadoxicalCondition */
         if (!$this->errors->isEmpty()) {
             return null;
         }

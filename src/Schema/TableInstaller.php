@@ -17,8 +17,11 @@ class TableInstaller
     private const OPTION_VERSIONS = 'dbal_table_versions';
     private const OPTION_VERSIONS_NETWORK = 'dbal_table_versions_net';
 
-    private static ?array $dbTables = null;
-    /** @var array<string, array> */
+    /**
+     * @var string[]
+     */
+    protected static array $dbTables = [];
+    /** @var array<string, string> */
     private array $versions = [];
     private SchemaFinder $schemaFinder;
 
@@ -49,7 +52,7 @@ class TableInstaller
          * @var bool $done
          * @var string $fullName
          * @var bool $exists
-         * @var array<string, array> $versions
+         * @var array<string, string> $versions
          * @var Version $newVer
          * @var Version $savedVer
          */
@@ -76,7 +79,9 @@ class TableInstaller
         $dbCharsetCollate = $wpdb->get_charset_collate();
         $charsetCollate = $dbCharsetCollate ? " {$dbCharsetCollate}" : '';
 
-        $exists and $this->dropColumns($wpdb, $fullName, $columns);
+        if ($exists) {
+            $this->dropColumns($wpdb, $fullName, $columns);
+        }
         dbDelta("CREATE TABLE `{$fullName}` ({$columnsSql}{$keysSql}){$charsetCollate}");
 
         if (!$exists && !$this->postInstallCheck($wpdb, $fullName)) {
@@ -128,14 +133,10 @@ class TableInstaller
     {
 
         $result = (bool) $wpdb->query(
-            (string)($wpdb->prepare('SHOW TABLES LIKE %s', $tableName) ?? '')
+            (string) ($wpdb->prepare('SHOW TABLES LIKE %s', $tableName) ?? '')
         );
 
-        if (
-            !is_null(static::$dbTables) &&
-            !in_array($tableName, static::$dbTables, true) &&
-            $result
-        ) {
+        if (!in_array($tableName, static::$dbTables, true) && $result) {
             static::$dbTables[] = $tableName;
         }
 
@@ -154,7 +155,7 @@ class TableInstaller
             return true;
         }
 
-        if (is_null(static::$dbTables)) {
+        if (count(static::$dbTables) < 1) {
             /** @var string[] $results */
             $results = $wpdb->get_col('SHOW TABLES');
             static::$dbTables = $results;
@@ -165,13 +166,13 @@ class TableInstaller
 
     /**
      * @param InstallableSchema $schema
-     * @return array
+     * @return array{bool, string, bool, array<string, string>, Version, Version}
      */
     private function installStatus(InstallableSchema $schema): array
     {
         $newVer = $this->prepareInstall($schema);
         if (!$newVer->isValid()) {
-            return [false, '', false, null, Version::newEmpty(), Version::newEmpty()];
+            return [false, '', false, [], Version::newEmpty(), Version::newEmpty()];
         }
 
         $network = $schema->isNetworkWide();
@@ -183,13 +184,13 @@ class TableInstaller
             ? Version::new($versions[$baseName])
             : Version::newEmpty();
 
-        $exists = $this->tableExists(Dbal::wpdb(), $fullName, $savedVer);
+        $exists = $this->tableExists(Dbal::wpdb(), $fullName, $savedVer->value());
         if ($exists && !$savedVer->isValid()) {
             $savedVer = Version::new('0.0.0.0');
         }
 
         if (!$savedVer->isValid()) {
-            return [false, $fullName, $exists, $versions, $newVer, null];
+            return [false, $fullName, $exists, $versions, $newVer, Version::newEmpty()];
         }
 
         return [$savedVer->equals($newVer), $fullName, $exists, $versions, $newVer, $savedVer];
@@ -225,7 +226,9 @@ class TableInstaller
 
         $versions = $network ? get_site_option($option) : get_option($option);
         if (($versions === []) || !is_array($versions)) {
-            ($versions !== []) and delete_option($option);
+            if ($versions !== []) {
+                delete_option($option);
+            }
             $versions = [];
         }
 
@@ -236,7 +239,7 @@ class TableInstaller
     }
 
     /**
-     * @param array $versions
+     * @param array<string, string> $versions
      * @param bool $network
      * @return void
      */
@@ -278,7 +281,9 @@ class TableInstaller
         foreach ($currentColumns as $currentColumn) {
             $currentColName = is_object($currentColumn) ? ($currentColumn->Field ?? null) : null;
             if (($currentColName !== null) && !in_array($currentColName, $targetNames, true)) {
-                ($dropColsSql !== '') and $dropColsSql .= ', ';
+                if ($dropColsSql !== '') {
+                    $dropColsSql .= ', ';
+                }
                 $dropColsSql .= 'DROP COLUMN %i';
                 $colsToDelete[] = $currentColName;
             }

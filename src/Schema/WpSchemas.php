@@ -48,7 +48,6 @@ final class WpSchemas
      */
     public function postMetaColumns(): ?Columns
     {
-
         return $this->loadTableColumns(Dbal::wpdb()->postmeta);
     }
 
@@ -198,7 +197,10 @@ final class WpSchemas
 
     /**
      * @param string $table
+     *
      * @return Columns|null
+     *
+     * phpcs:disable Syde.CodeQuality.NestingLevel.High
      */
     public function loadTableColumns(string $table): ?Columns
     {
@@ -226,7 +228,9 @@ final class WpSchemas
             $token = strtok(',');
             if (preg_match('~^(?:(?:PRIMARY )?KEY|INDEX|FULLTEXT|CONSTRAINT) ~i', $def) !== 1) {
                 $column = Column::parseRawDefinition($def);
-                $column and $columns[] = $column;
+                if ($column !== null) {
+                    $columns[] = $column;
+                }
             }
         }
 
@@ -251,19 +255,16 @@ final class WpSchemas
         }
 
         if (!function_exists('wp_get_db_schema')) {
-            // phpcs:disable Inpsyde.CodeQuality.VariablesName.SnakeCaseVar
+            // phpcs:disable Syde.CodeQuality.VariablesName.SnakeCaseVar
 
             /**
              * Requiring `schema.php` changes two globals as side effect, so we first back up and
              * then restore those, to make the whole operation transparent.
-             *
-             * @psalm-suppress InvalidGlobal
              */
             global $wp_queries, $charset_collate;
             $backup = [$wp_queries, $charset_collate];
             require_once ABSPATH . 'wp-admin/includes/schema.php';
             [$wp_queries, $charset_collate] = $backup;
-
             // phpcs:enable Inpsyde.CodeQuality.VariablesName.SnakeCaseVar
         }
 
@@ -275,6 +276,7 @@ final class WpSchemas
 
     /**
      * @param string $delimiter
+     *
      * @return string
      */
     private function loadCharsetForRegex(string $delimiter): string

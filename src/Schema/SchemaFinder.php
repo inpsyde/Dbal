@@ -28,7 +28,7 @@ class SchemaFinder
      * @param WpSchemas $wpSchema
      * @param SchemasRegister $schemas
      */
-    private function __construct(WpSchemas $wpSchema, SchemasRegister $schemas)
+    protected function __construct(WpSchemas $wpSchema, SchemasRegister $schemas)
     {
         $this->wpSchema = $wpSchema;
         $this->register = $schemas;
@@ -114,6 +114,8 @@ class SchemaFinder
 
         $regex = "~^{$wpdb->base_prefix}(?<nobase>(?:(?<siteid>[0-9]+)_)?(?<nopref>.+))$~";
 
+        /** @var array{siteid?: string, nopref?: string} $matches */
+        $matches = [];
         if (!preg_match($regex, $tableName, $matches)) {
             return $tableName;
         }
@@ -122,6 +124,7 @@ class SchemaFinder
             return $matches['nobase'] ?? null;
         }
 
+        /** @phpstan-ignore nullCoalesce.offset */
         $site = (int) ($matches['siteid'] ?? 0);
         $validId = $site === (int) $wpdb->siteid;
         $noPrefix = $matches['nopref'] ?? '';
@@ -130,7 +133,6 @@ class SchemaFinder
         }
 
         if (!$validId && is_multisite() && ($site > 1)) {
-            /** @psalm-suppress InvalidGlobal */
             global $_wp_switched_stack;
             $ids = is_array($_wp_switched_stack) ? $_wp_switched_stack : [];
 

@@ -41,8 +41,8 @@ class ResultsParser
     }
 
     /**
-     * @param array $data
-     * @return array
+     * @param array<mixed> $data
+     * @return array<mixed>
      */
     public function parse(array $data): array
     {

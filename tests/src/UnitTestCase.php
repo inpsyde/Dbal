@@ -30,11 +30,13 @@ class UnitTestCase extends TestCase
         Monkey\Functions\when('maybe_serialize')->alias(
             /**
              * @param mixed $value
+             *
              * @return mixed
              *
              * @psalm-suppress MissingClosureParamType
+             * phpcs:disable Syde.Functions.ReturnTypeDeclaration.NoReturnType
              */
-            static function ($value) {
+            static function (mixed $value) {
                 return is_scalar($value) ? $value : serialize($value);
             }
         );
@@ -46,7 +48,7 @@ class UnitTestCase extends TestCase
              *
              * @psalm-suppress MissingClosureParamType
              */
-            static function ($value): bool {
+            static function (mixed $value): bool {
                 if (!is_string($value) || $value === "b:0;") {
                     return $value === 'b:0;';
                 }
@@ -61,8 +63,9 @@ class UnitTestCase extends TestCase
              * @return mixed
              *
              * @psalm-suppress MissingClosureParamType
+             * phpcs:disable Syde.Functions.ReturnTypeDeclaration.NoReturnType
              */
-            static function ($value) {
+            static function (mixed $value) {
                 return (is_string($value) && is_serialized($value)) ? unserialize($value) : $value;
             }
         );
@@ -95,7 +98,7 @@ class UnitTestCase extends TestCase
      * @param mixed $result
      * @return void
      */
-    protected function infixNextWpdbQueryResult($result): void
+    protected function infixNextWpdbQueryResult(mixed $result): void
     {
         global $wpdb;
         /** @var DummyWpdb $wpdb */
@@ -108,7 +111,7 @@ class UnitTestCase extends TestCase
      * @param mixed $result
      * @return void
      */
-    protected function infixNumWpdbQueryResult(int $num, $result): void
+    protected function infixNumWpdbQueryResult(int $num, mixed $result): void
     {
         global $wpdb;
         /** @var DummyWpdb $wpdb */

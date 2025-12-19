@@ -37,7 +37,6 @@ final class Pagination
     }
 
     /**
-     * @param int $totalRows
      * @return Pagination
      */
     public static function notPaginated(): Pagination

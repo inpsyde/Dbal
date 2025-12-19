@@ -17,7 +17,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
     private ?ResultsParser $results;
     private ?Error $error = null;
 
-    /** @var list<array> */
+    /** @var string[] */
     private array $rows;
 
     /** @var callable|null */
@@ -41,7 +41,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
     /**
      * @param Select $select
      * @param ResultsParser $results
-     * @param array $row
+     * @param string[] $row
      * @return ResultSet
      */
     public static function singleRow(
@@ -65,7 +65,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
      * @param Select $select
      * @param ResultsParser $results
      * @param Pagination $pagination
-     * @param array ...$rows
+     * @param string[] ...$rows
      * @return ResultSet
      */
     public static function new(
@@ -82,7 +82,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
      * @param Select|null $select
      * @param ResultsParser|null $results
      * @param Pagination|null $pagination
-     * @param array ...$rows
+     * @param list<string> ...$rows
      */
     private function __construct(
         ?Select $select = null,
@@ -94,6 +94,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
         $this->select = $select;
         $this->pagination = $pagination;
         $this->results = $results;
+        /** @phpstan-ignore assign.propertyType */
         $this->rows = array_values($rows);
     }
 
@@ -142,6 +143,8 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
 
     /**
      * @return mixed
+     *
+     * phpcs:disable Syde.Functions.ReturnTypeDeclaration.NoReturnType
      */
     public function first()
     {
@@ -213,7 +216,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
     }
 
     /**
-     * @return \Traversable<int, array>
+     * @return \Traversable<int, array<mixed>>
      */
     public function getIterator(): \Traversable
     {
@@ -225,7 +228,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
     }
 
     /**
-     * @return \Traversable
+     * @return \Traversable<int, array<mixed>>
      */
     public function autoPaginationIterator(): \Traversable
     {
@@ -259,7 +262,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
     }
 
     /**
-     * @return array
+     * @return array<mixed>
      */
     public function toArray(): array
     {
@@ -278,7 +281,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
 
     /**
      * @param string $column
-     * @return array
+     * @return array<string>
      */
     public function toColumnArray(string $column): array
     {
@@ -288,7 +291,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
     }
 
     /**
-     * @return array
+     * @return array<string, mixed>
      */
     public function jsonSerialize(): array
     {
@@ -309,6 +312,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
         $results = $this->results;
 
         foreach ($rows as $row) {
+            /** @phpstan-ignore-next-line */
             $parsed = $results->parse($row);
             if (($this->filter !== null) && !($this->filter)($parsed)) {
                 continue;

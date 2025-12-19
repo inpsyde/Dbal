@@ -4,17 +4,12 @@ declare(strict_types=1);
 
 namespace Inpsyde\Dbal\Schema;
 
-/**
- * @template T of non-empty-lowercase-string|null
- * @psalm-pure
- */
 final class Version
 {
-    /** @var T */
     private ?string $version;
 
     /**
-     * @return Version<null>
+     * @return Version
      */
     public static function newEmpty(): Version
     {
@@ -23,7 +18,7 @@ final class Version
 
     /**
      * @param string $version
-     * @return Version<non-empty-lowercase-string>|Version<null>
+     * @return Version
      */
     public static function new(string $version): Version
     {
@@ -49,13 +44,15 @@ final class Version
             static::newEmpty();
         }
 
-        ($suffix !== false) and $versionString .= "-{$suffix}";
-        /** @var non-empty-lowercase-string $versionString */
+        if ($suffix !== false) {
+            $versionString .= "-{$suffix}";
+        }
+
         return new static($versionString);
     }
 
     /**
-     * @param T $version
+     * @param string|null $version
      */
     private function __construct(?string $version)
     {
@@ -64,11 +61,6 @@ final class Version
 
     /**
      * @return bool
-     *
-     * @psalm-assert-if-true non-empty-lowercase-string $this->version
-     * @psalm-assert-if-true Version<non-empty-lowercase-string> $this
-     * @psalm-assert-if-false null $this->version
-     * @psalm-assert-if-false Version<null> $this
      */
     public function isValid(): bool
     {
@@ -76,7 +68,7 @@ final class Version
     }
 
     /**
-     * @param Version<T> $version
+     * @param Version $version
      * @return bool
      */
     public function match(Version $version): bool
@@ -85,11 +77,8 @@ final class Version
     }
 
     /**
-     * @param Version<T> $version
+     * @param Version $version
      * @return bool
-     *
-     * @psalm-assert-if-true Version<non-empty-lowercase-string> $this
-     * @psalm-assert-if-true Version<non-empty-lowercase-string> $version
      */
     public function equals(Version $version): bool
     {
@@ -97,11 +86,8 @@ final class Version
     }
 
     /**
-     * @param Version<T> $version
+     * @param Version $version
      * @return bool
-     *
-     * @psalm-assert-if-true Version<non-empty-lowercase-string> $this
-     * @psalm-assert-if-true Version<non-empty-lowercase-string> $version
      */
     public function greaterThan(Version $version): bool
     {
@@ -109,11 +95,8 @@ final class Version
     }
 
     /**
-     * @param Version<T> $version
+     * @param Version $version
      * @return bool
-     *
-     * @psalm-assert-if-true Version<non-empty-lowercase-string> $this
-     * @psalm-assert-if-true Version<non-empty-lowercase-string> $version
      */
     public function greaterThanOrEquals(Version $version): bool
     {
@@ -121,11 +104,8 @@ final class Version
     }
 
     /**
-     * @param Version<T> $version
+     * @param Version $version
      * @return bool
-     *
-     * @psalm-assert-if-true Version<non-empty-lowercase-string> $this
-     * @psalm-assert-if-true Version<non-empty-lowercase-string> $version
      */
     public function lowerThan(Version $version): bool
     {
@@ -133,11 +113,8 @@ final class Version
     }
 
     /**
-     * @param Version<T> $version
+     * @param Version $version
      * @return bool
-     *
-     * @psalm-assert-if-true Version<non-empty-lowercase-string> $this
-     * @psalm-assert-if-true Version<non-empty-lowercase-string> $version
      */
     public function lowerThanOrEquals(Version $version): bool
     {
@@ -145,7 +122,7 @@ final class Version
     }
 
     /**
-     * @return T
+     * @return string|null
      */
     public function value(): ?string
     {
@@ -161,7 +138,7 @@ final class Version
     }
 
     /**
-     * @param Version<T> $version
+     * @param Version $version
      * @param ">"|">="|"<"|"<="|"eq" $operator
      * @return bool
      */

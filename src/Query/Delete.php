@@ -112,7 +112,7 @@ class Delete extends BaseSelect
      * @param string|null $operator
      * @return Result
      */
-    public function delOnPrimary($primaryValue, ?string $operator = null): Result
+    public function delOnPrimary(mixed $primaryValue, ?string $operator = null): Result
     {
         if (!$this->errors->isEmpty()) {
             return Result::new($this->errors);

@@ -7,8 +7,8 @@ namespace Inpsyde\Dbal\Tests\Unit\Query;
 use Inpsyde\Dbal\Error;
 use Inpsyde\Dbal\Query\ResultSet;
 use Inpsyde\Dbal\Query\Select;
-use Inpsyde\Dbal\Tests\UnitTestCase;
 use Inpsyde\Dbal\Tests\TableOne;
+use Inpsyde\Dbal\Tests\UnitTestCase;
 
 class ResultSetTest extends UnitTestCase
 {

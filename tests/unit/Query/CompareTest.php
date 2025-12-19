@@ -8,9 +8,9 @@ use Inpsyde\Dbal\Query\Aliases;
 use Inpsyde\Dbal\Query\Compare;
 use Inpsyde\Dbal\Schema\Schema;
 use Inpsyde\Dbal\Schema\SchemaFinder;
-use Inpsyde\Dbal\Tests\UnitTestCase;
 use Inpsyde\Dbal\Tests\TableOne;
 use Inpsyde\Dbal\Tests\TableTwo;
+use Inpsyde\Dbal\Tests\UnitTestCase;
 
 class CompareTest extends UnitTestCase
 {
@@ -162,6 +162,8 @@ class CompareTest extends UnitTestCase
 
     /**
      * @return array{Schema, SchemaFinder, Aliases, string, string}
+     *
+     * phpcs:disable WordPress.WP.AlternativeFunctions.rand_rand
      */
     private function prepareDependencies(): array
     {

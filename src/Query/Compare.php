@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Inpsyde\Dbal\Query;
 
 use Inpsyde\Dbal\ErrorCollector;
-use Inpsyde\Dbal\Schema\SchemaFinder;
 use Inpsyde\Dbal\Schema\Schema;
+use Inpsyde\Dbal\Schema\SchemaFinder;
 
 final class Compare
 {
@@ -62,7 +62,7 @@ final class Compare
      * @param string|null $operator
      * @return Compare
      */
-    public static function columnValue(string $column, $value, ?string $operator = null): Compare
+    public static function columnValue(string $column, mixed $value, ?string $operator = null): Compare
     {
         $instance = new static($column, null, $operator);
 
@@ -75,7 +75,7 @@ final class Compare
      * @param string|null $operator
      * @return Compare
      */
-    public static function columnRawValue(string $column, $value, ?string $operator = null): Compare
+    public static function columnRawValue(string $column, mixed $value, ?string $operator = null): Compare
     {
         $instance = new static($column, null, $operator);
 
@@ -86,8 +86,6 @@ final class Compare
      * @param string|null $leftCol
      * @param string|null $rightCol
      * @param string|null $operator
-     * @param string|null $tableLeft
-     * @param string|null $tableRight
      */
     private function __construct(?string $leftCol, ?string $rightCol, ?string $operator)
     {
@@ -261,7 +259,7 @@ final class Compare
      * @return array{mixed, string|null}
      */
     private function colValue(
-        $rawValue,
+        mixed $rawValue,
         Schema $defaultSchema,
         SchemaFinder $finder,
         Aliases $aliases
@@ -275,7 +273,9 @@ final class Compare
         $realSchemaName = null;
         if ($schemaName !== null) {
             [$realSchemaName] = $aliases->resolveSchema($schemaName);
-            ($realSchemaName === '') and $realSchemaName = null;
+            if ($realSchemaName === '') {
+                $realSchemaName = null;
+            }
             $aliases->mergeErrors($this->errors);
             if (!$this->errors->isEmpty()) {
                 return [null, null];
@@ -335,7 +335,7 @@ final class Compare
      * @param bool $raw
      * @return static
      */
-    private function checkValue($value, bool $raw): Compare
+    private function checkValue(mixed $value, bool $raw): Compare
     {
         if ($value === null) {
             $this->errors->withError("Can't use null values as compare argument.");

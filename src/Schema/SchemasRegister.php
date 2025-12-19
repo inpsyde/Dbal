@@ -36,7 +36,7 @@ class SchemasRegister
 
     /**
      */
-    private function __construct()
+    protected function __construct()
     {
     }
 
@@ -170,16 +170,22 @@ class SchemasRegister
                 ? $installer->installSchema($schema)
                 : $installer->uninstallSchema($schema);
 
-            $success and $ok++;
+            if ($success) {
+                $ok++;
+            }
             if ($isInstall) {
-                $success and $newSchemas[$name] = [$schema, $operation];
+                if ($success) {
+                    $newSchemas[$name] = [$schema, $operation];
+                }
                 continue;
             }
 
             unset($this->schemas[$name]);
         }
 
-        $isInstall and $this->schemas = $newSchemas;
+        if ($isInstall) {
+            $this->schemas = $newSchemas;
+        }
 
         return $ok === $all;
     }

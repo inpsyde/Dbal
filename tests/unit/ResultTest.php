@@ -116,7 +116,7 @@ class ResultTest extends UnitTestCase
             static function (): void {
                 static::fail();
             },
-            static function (): \Exception {
+            static function (): \Throwable {
                 return new \Exception('Meh meh!');
             }
         );

@@ -13,7 +13,7 @@ final class SelectBuilder
     private string $tableName;
     private ?string $alias;
 
-    /** @var list<list{string, array}> */
+    /** @var list<array{string, array<mixed>}> */
     private array $record = [];
 
     /**
@@ -366,7 +366,7 @@ final class SelectBuilder
      * @param string|null $operator
      * @return static
      */
-    public function where(string $column, $value, ?string $operator = null): SelectBuilder
+    public function where(string $column, mixed $value, ?string $operator = null): SelectBuilder
     {
         $this->record[] = [__FUNCTION__, func_get_args()];
 
@@ -379,7 +379,7 @@ final class SelectBuilder
      * @param string|null $operator
      * @return static
      */
-    public function andWhere(string $column, $value, ?string $operator = null): SelectBuilder
+    public function andWhere(string $column, mixed $value, ?string $operator = null): SelectBuilder
     {
         $this->record[] = [__FUNCTION__, func_get_args()];
 
@@ -392,7 +392,7 @@ final class SelectBuilder
      * @param string|null $operator
      * @return static
      */
-    public function orWhere(string $column, $value, ?string $operator = null): SelectBuilder
+    public function orWhere(string $column, mixed $value, ?string $operator = null): SelectBuilder
     {
         $this->record[] = [__FUNCTION__, func_get_args()];
 

@@ -6,13 +6,16 @@ namespace Inpsyde\Dbal\Tests\Unit;
 
 use Brain\Monkey;
 use Inpsyde\Dbal\Cache;
-use Inpsyde\Dbal\Tests\UnitTestCase;
 use Inpsyde\Dbal\Tests\TableOne;
 use Inpsyde\Dbal\Tests\TablePivot;
 use Inpsyde\Dbal\Tests\TableTwo;
+use Inpsyde\Dbal\Tests\UnitTestCase;
 
 class CacheTest extends UnitTestCase
 {
+    /**
+     * @var array<string, mixed>
+     */
     private array $cache = [];
 
     /**

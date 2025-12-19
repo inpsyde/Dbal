@@ -10,7 +10,7 @@ class Dbal
     public const ACTION_READY = 'dbal.ready';
 
     /** @var array<string, object>|null */
-    private static ?array $objects = null;
+    protected static ?array $objects = null;
 
     /**
      * @return bool

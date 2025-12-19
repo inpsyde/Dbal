@@ -8,9 +8,9 @@ use Inpsyde\Dbal\Cache;
 use Inpsyde\Dbal\Dbal;
 use Inpsyde\Dbal\Error;
 use Inpsyde\Dbal\PhpErrors;
+use Inpsyde\Dbal\Schema\Schema;
 use Inpsyde\Dbal\Schema\SchemaFinder;
 use Inpsyde\Dbal\Schema\Schemas;
-use Inpsyde\Dbal\Schema\Schema;
 
 class Select extends BaseSelect
 {
@@ -28,13 +28,13 @@ class Select extends BaseSelect
     private ?Schemas $allColSchemas = null;
     private ?ResultsParser $resultsParser = null;
 
-    /** @var array<string, array<string, list{string, bool, string|null}>> */
+    /** @var array<string, array<string, array{string, bool, string|null}>> */
     private array $columns = [];
 
     /**  @var list<string> */
     private array $groupBy = [];
 
-    /** @var list{int, array<int, array>}|null */
+    /** @var list{int, array<int, array<mixed>>}|null */
     private ?array $executed = null;
 
     /**
@@ -42,12 +42,13 @@ class Select extends BaseSelect
      * @param string|null $alias
      * @param SchemaFinder|null $finder
      * @param Cache|null $cache
+     *
      * @return Select
      */
     public static function from(
         string $tableName,
         ?string $alias = null,
-        SchemaFinder $finder = null,
+        ?SchemaFinder $finder = null,
         ?Cache $cache = null
     ): Select {
 
@@ -90,6 +91,7 @@ class Select extends BaseSelect
     /**
      * @param string $column
      * @param string ...$columns
+     *
      * @return static
      */
     public function cols(string $column, string ...$columns): Select
@@ -109,6 +111,7 @@ class Select extends BaseSelect
 
     /**
      * @param string ...$tables
+     *
      * @return static
      */
     public function allCols(string ...$tables): Select
@@ -138,6 +141,7 @@ class Select extends BaseSelect
     /**
      * @param string $column
      * @param string|null $alias
+     *
      * @return static
      */
     public function andCol(string $column, ?string $alias = null): Select
@@ -148,6 +152,7 @@ class Select extends BaseSelect
     /**
      * @param string $column
      * @param string $alias
+     *
      * @return static
      */
     public function rawCol(string $column, string $alias): Select
@@ -164,6 +169,7 @@ class Select extends BaseSelect
     /**
      * @param string $column
      * @param string $alias
+     *
      * @return static
      */
     public function andRawCol(string $column, string $alias): Select
@@ -175,11 +181,14 @@ class Select extends BaseSelect
      * @param string $column
      * @param mixed $value
      * @param string|null $operator
+     *
      * @return static
      */
-    public function where(string $column, $value, ?string $operator = null): BaseSelect
+    public function where(string $column, mixed $value, ?string $operator = null): BaseSelect
     {
-        $this->errors->isEmpty() and $this->resetMemoized();
+        if ($this->errors->isEmpty()) {
+            $this->resetMemoized();
+        }
 
         return parent::where($column, $value, $operator);
     }
@@ -188,11 +197,14 @@ class Select extends BaseSelect
      * @param string $column
      * @param mixed $value
      * @param string|null $operator
+     *
      * @return static
      */
-    public function andWhere(string $column, $value, ?string $operator = null): BaseSelect
+    public function andWhere(string $column, mixed $value, ?string $operator = null): BaseSelect
     {
-        $this->errors->isEmpty() and $this->resetMemoized();
+        if ($this->errors->isEmpty()) {
+            $this->resetMemoized();
+        }
 
         return parent::andWhere($column, $value, $operator);
     }
@@ -201,11 +213,14 @@ class Select extends BaseSelect
      * @param string $column
      * @param mixed $value
      * @param string|null $operator
+     *
      * @return static
      */
-    public function orWhere(string $column, $value, ?string $operator = null): BaseSelect
+    public function orWhere(string $column, mixed $value, ?string $operator = null): BaseSelect
     {
-        $this->errors->isEmpty() and $this->resetMemoized();
+        if ($this->errors->isEmpty()) {
+            $this->resetMemoized();
+        }
 
         return parent::orWhere($column, $value, $operator);
     }
@@ -214,6 +229,7 @@ class Select extends BaseSelect
      * @param string $clause
      * @param string|null $column
      * @param string|null $operator
+     *
      * @return static
      */
     public function whereRaw(
@@ -222,7 +238,9 @@ class Select extends BaseSelect
         ?string $operator = null
     ): BaseSelect {
 
-        $this->errors->isEmpty() and $this->resetMemoized();
+        if ($this->errors->isEmpty()) {
+            $this->resetMemoized();
+        }
 
         return parent::whereRaw($clause, $column, $operator);
     }
@@ -231,6 +249,7 @@ class Select extends BaseSelect
      * @param string $clause
      * @param string|null $column
      * @param string|null $operator
+     *
      * @return static
      */
     public function andWhereRaw(
@@ -239,7 +258,9 @@ class Select extends BaseSelect
         ?string $operator = null
     ): BaseSelect {
 
-        $this->errors->isEmpty() and $this->resetMemoized();
+        if ($this->errors->isEmpty()) {
+            $this->resetMemoized();
+        }
 
         return parent::andWhereRaw($clause, $column, $operator);
     }
@@ -248,6 +269,7 @@ class Select extends BaseSelect
      * @param string $clause
      * @param string|null $column
      * @param string|null $operator
+     *
      * @return static
      */
     public function orWhereRaw(
@@ -256,7 +278,9 @@ class Select extends BaseSelect
         ?string $operator = null
     ): BaseSelect {
 
-        $this->errors->isEmpty() and $this->resetMemoized();
+        if ($this->errors->isEmpty()) {
+            $this->resetMemoized();
+        }
 
         return parent::orWhereRaw($clause, $column, $operator);
     }
@@ -264,11 +288,14 @@ class Select extends BaseSelect
     /**
      * @param Where $where
      * @param Where ...$wheres
+     *
      * @return static
      */
     public function whereUsing(Where $where, Where ...$wheres): BaseSelect
     {
-        $this->errors->isEmpty() and $this->resetMemoized();
+        if ($this->errors->isEmpty()) {
+            $this->resetMemoized();
+        }
 
         return parent::whereUsing($where, ...$wheres);
     }
@@ -276,11 +303,14 @@ class Select extends BaseSelect
     /**
      * @param Where $where
      * @param Where ...$wheres
+     *
      * @return static
      */
     public function andWhereUsing(Where $where, Where ...$wheres): BaseSelect
     {
-        $this->errors->isEmpty() and $this->resetMemoized();
+        if ($this->errors->isEmpty()) {
+            $this->resetMemoized();
+        }
 
         return parent::andWhereUsing($where, ...$wheres);
     }
@@ -288,11 +318,14 @@ class Select extends BaseSelect
     /**
      * @param Where $where
      * @param Where ...$wheres
+     *
      * @return static
      */
     public function orWhereUsing(Where $where, Where ...$wheres): BaseSelect
     {
-        $this->errors->isEmpty() and $this->resetMemoized();
+        if ($this->errors->isEmpty()) {
+            $this->resetMemoized();
+        }
 
         return parent::orWhereUsing($where, ...$wheres);
     }
@@ -300,11 +333,14 @@ class Select extends BaseSelect
     /**
      * @param Compare $compare
      * @param Compare ...$compares
+     *
      * @return static
      */
     public function whereCompare(Compare $compare, Compare ...$compares): BaseSelect
     {
-        $this->errors->isEmpty() and $this->resetMemoized();
+        if ($this->errors->isEmpty()) {
+            $this->resetMemoized();
+        }
 
         return parent::whereCompare($compare, ...$compares);
     }
@@ -312,11 +348,14 @@ class Select extends BaseSelect
     /**
      * @param Compare $compare
      * @param Compare ...$compares
+     *
      * @return static
      */
     public function andWhereCompare(Compare $compare, Compare ...$compares): BaseSelect
     {
-        $this->errors->isEmpty() and $this->resetMemoized();
+        if ($this->errors->isEmpty()) {
+            $this->resetMemoized();
+        }
 
         return parent::andWhereCompare($compare, ...$compares);
     }
@@ -324,11 +363,14 @@ class Select extends BaseSelect
     /**
      * @param Compare $compare
      * @param Compare ...$compares
+     *
      * @return static
      */
     public function orWhereCompare(Compare $compare, Compare ...$compares): BaseSelect
     {
-        $this->errors->isEmpty() and $this->resetMemoized();
+        if ($this->errors->isEmpty()) {
+            $this->resetMemoized();
+        }
 
         return parent::orWhereCompare($compare, ...$compares);
     }
@@ -336,6 +378,7 @@ class Select extends BaseSelect
     /**
      * @param int $limit
      * @param int $offset
+     *
      * @return static
      */
     public function limit(int $limit, int $offset = 0): BaseSelect
@@ -351,6 +394,7 @@ class Select extends BaseSelect
 
     /**
      * @param string $column
+     *
      * @return static
      */
     public function groupBy(string $column): Select
@@ -366,6 +410,7 @@ class Select extends BaseSelect
 
     /**
      * @param string $column
+     *
      * @return static
      */
     public function thenGroupBy(string $column): Select
@@ -376,6 +421,7 @@ class Select extends BaseSelect
     /**
      * @param int $page
      * @param int $perPage
+     *
      * @return static
      */
     public function paginated(int $page = 1, int $perPage = 100): Select
@@ -414,6 +460,7 @@ class Select extends BaseSelect
 
     /**
      * @param Pagination $pagination
+     *
      * @return static
      */
     public function paginatedWith(Pagination $pagination): Select
@@ -434,7 +481,6 @@ class Select extends BaseSelect
     public function pickFirst(): ResultSet
     {
         if (!$this->errors->isEmpty()) {
-            /** @psalm-suppress PossiblyNullArgument */
             return ResultSet::errored($this->errors->error());
         }
 
@@ -449,7 +495,6 @@ class Select extends BaseSelect
         [, $rows] = $this->execute();
 
         if (!$this->errors->isEmpty()) {
-            /** @psalm-suppress PossiblyNullArgument */
             return ResultSet::errored($this->errors->error());
         }
 
@@ -457,7 +502,9 @@ class Select extends BaseSelect
             $this->limit = $backup;
         }
 
-        $row = $rows ? reset($rows) : null;
+        $row = $rows
+            ? reset($rows)
+            : null;
         if (($row === null) || ($row === [])) {
             return ResultSet::empty();
         }
@@ -471,7 +518,6 @@ class Select extends BaseSelect
     public function all(): ResultSet
     {
         if (!$this->errors->isEmpty()) {
-            /** @psalm-suppress PossiblyNullArgument */
             return ResultSet::errored($this->errors->error());
         }
 
@@ -488,7 +534,9 @@ class Select extends BaseSelect
 
         $parser = $this->createResultsParser();
 
-        $maybeError = $this->errors->isEmpty() ? null : $this->errors->error();
+        $maybeError = $this->errors->isEmpty()
+            ? null
+            : $this->errors->error();
         if ($maybeError) {
             return ResultSet::errored($maybeError);
         }
@@ -496,7 +544,6 @@ class Select extends BaseSelect
         [$foundRows, $rows] = $this->execute();
 
         if (!$this->errors->isEmpty()) {
-            /** @psalm-suppress PossiblyNullArgument */
             return ResultSet::errored($this->errors->error());
         }
 
@@ -515,7 +562,9 @@ class Select extends BaseSelect
     {
         if (($this->sql === null) || ($this->sql === '')) {
             $sql = parent::buildSql();
-            ($sql !== '') and $this->sql = $sql;
+            if ($sql !== '') {
+                $this->sql = $sql;
+            }
         }
 
         return $this->sql ?? '';
@@ -533,7 +582,9 @@ class Select extends BaseSelect
 
         $parts = array_merge(
             [
-                self::SELECT => $this->limit[0] === false ? 'SELECT SQL_CALC_FOUND_ROWS' : 'SELECT',
+                self::SELECT => $this->limit[0] === false
+                    ? 'SELECT SQL_CALC_FOUND_ROWS'
+                    : 'SELECT',
                 self::COLUMNS => $this->buildColumnsSql(),
             ],
             $base
@@ -544,7 +595,9 @@ class Select extends BaseSelect
             $newParts = [];
             foreach ($parts as $key => $val) {
                 $newParts[$key] = $val;
-                ($key === self::WHERE) and $newParts[self::GROUP_BY] = $groupBy;
+                if ($key === self::WHERE) {
+                    $newParts[self::GROUP_BY] = $groupBy;
+                }
             }
             $parts = $newParts;
         }
@@ -561,6 +614,7 @@ class Select extends BaseSelect
      * @param string|null $alias
      * @param Where|null $where
      * @param string|null $raw
+     *
      * @return static
      */
     protected function withJoin(
@@ -597,6 +651,7 @@ class Select extends BaseSelect
      * @param string $column
      * @param bool $raw
      * @param string|null $dir
+     *
      * @return static
      */
     protected function withOrder(string $column, bool $raw, ?string $dir): BaseSelect
@@ -613,6 +668,7 @@ class Select extends BaseSelect
 
     /**
      * @param string $column
+     *
      * @return static
      */
     private function withGroupBy(string $column): Select
@@ -641,10 +697,11 @@ class Select extends BaseSelect
      * @param string $column
      * @param string|null $alias
      * @param bool $raw
+     *
      * @return static
      *
-     * phpcs:disable Inpsyde.CodeQuality.FunctionLength
-     * @TODO: consider refactoring
+     * phpcs:disable Syde.Functions.FunctionLength.TooLong
+     * phpcs:disable SlevomatCodingStandard.Complexity.Cognitive.ComplexityTooHigh
      */
     private function withColumn(string $column, ?string $alias = null, bool $raw = false): Select
     {
@@ -666,7 +723,9 @@ class Select extends BaseSelect
 
         $tableName = null;
         if (($table !== null) || !$raw) {
-            $tableName = ($table === null) ? $mainSchema->name() : $table;
+            $tableName = ($table === null)
+                ? $mainSchema->name()
+                : $table;
             $isRawAlias = $this->aliases->isRawSchemaAlias($tableName);
 
             [$schemaName, $schema, $schemaAlias] = $isRawAlias
@@ -674,7 +733,6 @@ class Select extends BaseSelect
                 : $this->aliases->resolveSchema($tableName);
 
             $this->aliases->mergeErrors($this->errors);
-            /** @psalm-suppress ParadoxicalCondition */
             if (!$this->errors->isEmpty() || (!$schema && !$isRawAlias)) {
                 return $this;
             }
@@ -714,7 +772,13 @@ class Select extends BaseSelect
         if (($alias !== null) && ($alias !== '')) {
             $table ??= '';
             $this->aliases = $raw
-                ? $this->aliases->forRawColumn($column, $alias, ($table !== '') ? $tableName : null)
+                ? $this->aliases->forRawColumn(
+                    $column,
+                    $alias,
+                    ($table !== '')
+                        ? $tableName
+                        : null
+                )
                 : $this->aliases->forColumn($column, $alias, $tableName ?? '');
 
             $this->aliases->mergeErrors($this->errors);
@@ -776,7 +840,7 @@ class Select extends BaseSelect
     }
 
     /**
-     * @return array{int, array<int, array>}
+     * @return array{int, array<int, array<mixed>>}
      */
     private function execute(): array
     {
@@ -800,7 +864,9 @@ class Select extends BaseSelect
             $sql = $this->buildSql();
 
             $rows = $wpdb->get_results($sql, ARRAY_A);
-            is_array($rows) or $rows = [];
+            if (!is_array($rows)) {
+                $rows = [];
+            }
 
             if ($wpdb->last_error) {
                 $this->pushError($wpdb->last_error);
@@ -860,7 +926,10 @@ class Select extends BaseSelect
      * @param string $sql
      * @param string $table
      * @param array<string, array{string, bool, string|null}> $columns
+     *
      * @return string
+     *
+     * phpcs:disable SlevomatCodingStandard.Complexity.Cognitive.ComplexityTooHigh
      */
     private function buildColumnsSqlForTable(string $sql, string $table, array $columns): string
     {
@@ -884,7 +953,9 @@ class Select extends BaseSelect
             }
 
             if ($isRawAll && ($colAlias !== null) && ($colAlias !== '')) {
-                $sql and $sql .= ', ';
+                if ($sql !== '') {
+                    $sql .= ', ';
+                }
                 $sql .= "{$colRealName} AS `{$colAlias}`";
                 continue;
             }
@@ -900,16 +971,19 @@ class Select extends BaseSelect
                 return '';
             }
 
-            /** @psalm-suppress PossiblyNullArgument */
             $tableRef = $schemaAlias ?? $this->finder->fullTableName($schema);
 
-            $sql and $sql .= ', ';
+            if ($sql !== '') {
+                $sql .= ', ';
+            }
             if ($isColumnAll) {
                 $sql .= "`{$tableRef}`.*";
                 continue;
             }
 
-            $sql .= ($isRaw && !$isRawSchema) ? $colRealName : "`{$tableRef}`.`{$colRealName}`";
+            $sql .= ($isRaw && !$isRawSchema)
+                ? $colRealName
+                : "`{$tableRef}`.`{$colRealName}`";
             $colAlias = $alias ?? $colAlias;
             if (($colAlias !== null) && ($colAlias !== '')) {
                 $sql .= " AS `{$colAlias}`";
@@ -921,7 +995,8 @@ class Select extends BaseSelect
 
     /**
      * @param string $sql
-     * @return array{string, int|null, array<int, array>|null}
+     *
+     * @return array{string, int|null, array<int, array<mixed>>|null}
      */
     private function cacheFor(string $sql): array
     {
@@ -945,7 +1020,7 @@ class Select extends BaseSelect
 
         $cached = $this->cache->get($fullKey);
         if (is_array($cached) && isset($cached[0]) && isset($cached[1])) {
-            /** @var array<int, array> $rows */
+            /** @var array<int, array<mixed>> $rows */
             $rows = $cached[1];
 
             return [$fullKey, (int) $cached[0], $rows];

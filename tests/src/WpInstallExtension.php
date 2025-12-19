@@ -74,6 +74,8 @@ final class WpInstallExtension implements BeforeFirstTestHook, AfterLastTestHook
 
     /**
      * @return void
+     *
+     * phpcs:disable WordPress.WP.AlternativeFunctions.unlink_unlink
      */
     public function executeAfterLastTest(): void
     {

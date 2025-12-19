@@ -116,6 +116,7 @@ final class Column
     private string $type;
     private string $name;
     private string $format;
+    /** @var array<string, mixed> */
     private array $attributes;
 
     /**
@@ -695,6 +696,8 @@ final class Column
     /**
      * @param string $definition
      * @return static|null
+     *
+     * phpcs:disable SlevomatCodingStandard.Complexity.Cognitive.ComplexityTooHigh
      */
     public static function parseRawDefinition(string $definition): ?Column
     {
@@ -731,10 +734,16 @@ final class Column
             ($realNumber || in_array($type, self::PRECISION_BASED, true))
             && preg_match(self::DEF_SIZE_REGXP, $specs, $matches)
         ) {
+            /** @phpstan-ignore nullCoalesce.offset */
             $precision = $matches[1] ?? null;
             $scale = $realNumber ? ($matches[2] ?? null) : null;
-            ($precision !== null) and $attributes[self::ATTR_PRECISION] = (int) $precision;
-            ($scale !== null) and $attributes[self::ATTR_SCALE] = (int) $scale;
+            /** @phpstan-ignore notIdentical.alwaysTrue */
+            if ($precision !== null) {
+                $attributes[self::ATTR_PRECISION] = (int) $precision;
+            }
+            if ($scale !== null) {
+                $attributes[self::ATTR_SCALE] = (int) $scale;
+            }
         }
 
         if (in_array($type, [self::ENUM, self::SET], true)) {
@@ -789,7 +798,7 @@ final class Column
     /**
      * @param string $name
      * @param string $type
-     * @param array $attributes
+     * @param array<string, mixed> $attributes
      */
     private function __construct(string $name, string $type, array $attributes)
     {
@@ -899,8 +908,12 @@ final class Column
             );
         }
 
-        $onCreate and $this->attributes[self::ATTR_DEFAULT_CREATE_TO_NOW] = true;
-        $onUpdate and $this->attributes[self::ATTR_DEFAULT_UPDATE_TO_NOW] = true;
+        if ($onCreate) {
+            $this->attributes[self::ATTR_DEFAULT_CREATE_TO_NOW] = true;
+        }
+        if ($onUpdate) {
+            $this->attributes[self::ATTR_DEFAULT_UPDATE_TO_NOW] = true;
+        }
 
         return $this;
     }
@@ -917,7 +930,9 @@ final class Column
             );
         }
 
-        $zone and $this->useDefaultTimeZone($zone);
+        if ($zone !== null) {
+            $this->useDefaultTimeZone($zone);
+        }
         $this->attributes[self::ATTR_RETRIEVE_AS_DATETIME] = true;
 
         return $this;
@@ -991,7 +1006,10 @@ final class Column
     /**
      * @param string|null $charset
      * @param string|null $collation
+     *
      * @return static
+     *
+     * phpcs:disable SlevomatCodingStandard.Complexity.Cognitive.ComplexityTooHigh
      */
     public function useCharsetCollation(?string $charset = null, ?string $collation = null): Column
     {
@@ -1141,7 +1159,7 @@ final class Column
     {
         return in_array(
             $this->type(),
-            [Column::TIMESTAMP, Column::DATETIME, Column::DATE, Column::YEAR, Column::TIME],
+            [self::TIMESTAMP, self::DATETIME, self::DATE, self::YEAR, self::TIME],
             true
         );
     }
@@ -1211,6 +1229,7 @@ final class Column
 
     /**
      * @return mixed
+     * phpcs:disable Syde.Functions.ReturnTypeDeclaration.NoReturnType
      */
     public function default()
     {
@@ -1251,10 +1270,18 @@ final class Column
         $autoIncrement = (bool) ($this->attributes[self::ATTR_AUTO_INCREMENT] ?? false);
 
         $def = $this->type;
-        is_int($size) and $def .= sprintf('(%d)', $size);
-        $unsigned and $def .= ' UNSIGNED';
-        $zerofill and $def .= ' ZEROFILL';
-        $autoIncrement and $def .= " AUTO_INCREMENT";
+        if (is_int($size)) {
+            $def .= sprintf('(%d)', $size);
+        }
+        if ($unsigned) {
+            $def .= ' UNSIGNED';
+        }
+        if ($zerofill) {
+            $def .= ' ZEROFILL';
+        }
+        if ($autoIncrement) {
+            $def .= " AUTO_INCREMENT";
+        }
 
         return $def . $this->notNullDefinition() . $this->defaultDefinition();
     }
@@ -1276,10 +1303,14 @@ final class Column
         $def = $this->type;
         if (is_int($precision)) {
             $attr = sprintf('%d', $precision);
-            is_int($scale) and $attr .= sprintf(',%d', $scale);
+            if (is_int($scale)) {
+                $attr .= sprintf(',%d', $scale);
+            }
             $def .= "({$attr})";
         }
-        $unsigned and $def .= ' UNSIGNED';
+        if ($unsigned) {
+            $def .= ' UNSIGNED';
+        }
 
         return $def . $this->notNullDefinition() . $this->defaultDefinition();
     }
@@ -1314,7 +1345,9 @@ final class Column
 
         $def = $this->type . $this->notNullDefinition();
         $def .= $defaultOnCreate ? ' DEFAULT CURRENT_TIMESTAMP' : $this->defaultDefinition();
-        $defaultOnUpdate and $def .= ' ON UPDATE CURRENT_TIMESTAMP';
+        if ($defaultOnUpdate) {
+            $def .= ' ON UPDATE CURRENT_TIMESTAMP';
+        }
 
         return $def;
     }
@@ -1392,8 +1425,12 @@ final class Column
 
         if ($charset !== null || $collation !== null) {
             $def = '';
-            ($charset !== null) and $def .= " CHARACTER SET {$charset}";
-            ($collation !== null) and $def .= " COLLATE {$collation}";
+            if ($charset !== null) {
+                $def .= " CHARACTER SET {$charset}";
+            }
+            if ($collation !== null) {
+                $def .= " COLLATE {$collation}";
+            }
 
             return $def;
         }
