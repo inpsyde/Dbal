@@ -67,23 +67,6 @@ services:
             - type: bind
               source: ../../
               target: /app
-    php74:
-        profiles: ["php74"]
-        build:
-            context: ./php74
-        container_name: dbal-php-74
-        depends_on:
-            mysql:
-                condition: service_healthy
-        environment:
-            WORDPRESS_DB_HOST: dbal-mysql
-            WORDPRESS_DB_NAME: wordpress
-            WORDPRESS_DB_USER: wordpress
-            WORDPRESS_DB_PASSWORD: wordpress
-        volumes:
-            -   type: bind
-                source: ../../
-                target: /app
 
     mysql:
         image: mysql:5.7
