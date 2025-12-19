@@ -45,7 +45,7 @@ jobs:
             -   name: Adjust Composer Dependencies
                 run: |
                     composer config --unset repositories.0
-                    composer remove syde/phpcs inpsyde/wp-stubs-versions roots/wordpress-no-content vimeo/psalm --dev --no-update
+                    composer remove syde/phpcs inpsyde/wp-stubs-versions roots/wordpress-no-content --dev --no-update
                     composer require "roots/wordpress-no-content:${{ matrix.wp-version }}.*" --no-update
 
             -   name: Install Composer Dependencies
