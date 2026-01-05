@@ -7,41 +7,23 @@ namespace Inpsyde\Dbal\Query;
 use Inpsyde\Dbal\Error;
 use Inpsyde\Dbal\Result;
 
+/**
+ * @template-implements \IteratorAggregate<int, array>
+ */
 class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
 {
-    /**
-     * @var Select|null
-     */
-    private $select;
+    private ?Select $select;
+    private ?Pagination $pagination;
+    private ?ResultsParser $results;
+    private ?Error $error = null;
 
-    /**
-     * @var Pagination|null
-     */
-    private $pagination;
+    /** @var string[] */
+    private array $rows;
 
-    /**
-     * @var ResultsParser|null
-     */
-    private $results;
-
-    /**
-     * @var array<array>|null
-     */
-    private $rows;
-
-    /**
-     * @var Error|null
-     */
-    private $error;
-
-    /**
-     * @var callable|null
-     */
+    /** @var callable|null */
     private $map;
 
-    /**
-     * @var callable|null
-     */
+    /** @var callable|null */
     private $filter;
 
     /**
@@ -59,7 +41,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
     /**
      * @param Select $select
      * @param ResultsParser $results
-     * @param array $row
+     * @param string[] $row
      * @return ResultSet
      */
     public static function singleRow(
@@ -83,7 +65,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
      * @param Select $select
      * @param ResultsParser $results
      * @param Pagination $pagination
-     * @param array ...$rows
+     * @param string[] ...$rows
      * @return ResultSet
      */
     public static function new(
@@ -100,7 +82,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
      * @param Select|null $select
      * @param ResultsParser|null $results
      * @param Pagination|null $pagination
-     * @param array ...$rows
+     * @param list<string> ...$rows
      */
     private function __construct(
         ?Select $select = null,
@@ -112,21 +94,12 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
         $this->select = $select;
         $this->pagination = $pagination;
         $this->results = $results;
-        $this->rows = $rows;
+        /** @phpstan-ignore assign.propertyType */
+        $this->rows = array_values($rows);
     }
 
     private function __clone()
     {
-    }
-
-    public function __sleep()
-    {
-        throw new \Exception(__CLASS__ . ' does not support serialization.');
-    }
-
-    public function __wakeup()
-    {
-        throw new \Exception(__CLASS__ . ' does not support serialization.');
     }
 
     /**
@@ -157,7 +130,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
      */
     public function isValid(): bool
     {
-        return !$this->hasErrors() && $this->rows && $this->results;
+        return !$this->hasErrors() && ($this->rows !== []) && $this->results;
     }
 
     /**
@@ -170,6 +143,8 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
 
     /**
      * @return mixed
+     *
+     * phpcs:disable Syde.Functions.ReturnTypeDeclaration.NoReturnType
      */
     public function first()
     {
@@ -241,7 +216,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
     }
 
     /**
-     * @return \Traversable
+     * @return \Traversable<int, array<mixed>>
      */
     public function getIterator(): \Traversable
     {
@@ -253,7 +228,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
     }
 
     /**
-     * @return \Traversable
+     * @return \Traversable<int, array<mixed>>
      */
     public function autoPaginationIterator(): \Traversable
     {
@@ -283,11 +258,11 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
             return 0;
         }
 
-        return $this->rows ? count($this->rows) : 0;
+        return count($this->rows);
     }
 
     /**
-     * @return array
+     * @return array<mixed>
      */
     public function toArray(): array
     {
@@ -306,7 +281,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
 
     /**
      * @param string $column
-     * @return array
+     * @return array<string>
      */
     public function toColumnArray(string $column): array
     {
@@ -316,7 +291,7 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
     }
 
     /**
-     * @return array
+     * @return array<string, mixed>
      */
     public function jsonSerialize(): array
     {
@@ -332,18 +307,18 @@ class ResultSet implements \IteratorAggregate, \Countable, \JsonSerializable
      */
     private function yieldResults(): \Generator
     {
-        /** @var array<array> $rows */
         $rows = $this->rows;
         /** @var ResultsParser $results */
         $results = $this->results;
 
         foreach ($rows as $row) {
+            /** @phpstan-ignore-next-line */
             $parsed = $results->parse($row);
-            if ($this->filter && !($this->filter)($parsed)) {
+            if (($this->filter !== null) && !($this->filter)($parsed)) {
                 continue;
             }
 
-            yield ($this->map ? ($this->map)($parsed) : $parsed);
+            yield (($this->map !== null) ? ($this->map)($parsed) : $parsed);
         }
     }
 }

@@ -4,29 +4,39 @@ declare(strict_types=1);
 
 namespace Inpsyde\Dbal\Schema;
 
+/** @template-implements \IteratorAggregate<int, Schema>  */
 class Schemas implements \Countable, \IteratorAggregate
 {
-    /**
-     * @var Schema[]
-     */
-    private $schemas;
-
-    /**
-     * @var int
-     */
-    private $count = 0;
+    /**  @var list<Schema> */
+    private array $schemas;
+    private int $count = 0;
 
     /**
      * @param string $name
      * @return bool
      */
-    public static function validateSchemaName(string $name): bool
+    public static function validateIdentifierName(string $name): bool
     {
-        return (trim($name) === $name) && (esc_sql($name) === $name);
+        if (($name === '') || (rtrim($name) !== $name)) {
+            return false;
+        }
+
+        return preg_match("~^[\u{0001}-\u{007F}\u{0080}-\u{FFFF}]+$~u", $name) === 1;
     }
 
     /**
-     * @param Schema $schema
+     * @param string $name
+     * @return bool
+     * @deprecated
+     */
+    public static function validateSchemaName(string $name): bool
+    {
+        return static::validateIdentifierName($name);
+    }
+
+    /**
+     * @param Schema ...$schemas
+     *
      * @return Schemas
      */
     public static function new(Schema ...$schemas): Schemas
@@ -44,7 +54,7 @@ class Schemas implements \Countable, \IteratorAggregate
 
         foreach ($schemas as $schema) {
             $name = $schema->name();
-            if (!empty($done[$name])) {
+            if (isset($done[$name])) {
                 continue;
             }
 
@@ -56,7 +66,7 @@ class Schemas implements \Countable, \IteratorAggregate
     }
 
     /**
-     * @return \Traversable<Schema>
+     * @return \Traversable<int, Schema>
      */
     public function getIterator(): \Traversable
     {

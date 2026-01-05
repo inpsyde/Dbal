@@ -6,45 +6,37 @@ namespace Inpsyde\Dbal;
 
 use Inpsyde\Dbal\Schema\SchemaFinder;
 
+/**
+ * @psalm-consistent-constructor
+ */
 class Cache
 {
     private const GROUP = 'dbal';
     private const TABLES_GROUP = 'dbal_t';
     private const OVERALL_KEY = '_dbal_cache';
 
-    /**
-     * @var array<string, mixed>
-     */
-    private static $fallback = [];
+    /** @var array<string, mixed> */
+    protected static array $fallback = [];
 
-    /**
-     * @var array<string, string>
-     */
-    private static $tableKeys = [];
+    /** @var array<string, string> */
+    protected static array $tableKeys = [];
 
-    /**
-     * @var bool
-     */
-    private $initialized = false;
-
-    /**
-     * @var SchemaFinder
-     */
-    private $finder;
+    protected bool $initialized = false;
+    protected SchemaFinder $finder;
 
     /**
      * @param SchemaFinder $finder
-     * @return Cache
+     * @return static
      */
     public static function new(SchemaFinder $finder): Cache
     {
-        return new self($finder);
+        return new static($finder);
     }
 
     /**
      * @param SchemaFinder $finder
      */
-    private function __construct(SchemaFinder $finder)
+    protected function __construct(SchemaFinder $finder)
     {
         $this->finder = $finder;
     }
@@ -64,6 +56,8 @@ class Cache
     /**
      * @param string $key
      * @return mixed
+     *
+     * phpcs:disable Syde.Functions.ReturnTypeDeclaration.NoReturnType
      */
     public function get(string $key)
     {
@@ -75,7 +69,9 @@ class Cache
             return self::$fallback[$key];
         }
 
-        return wp_cache_get($key, self::GROUP) ?: null;
+        $value = wp_cache_get($key, self::GROUP);
+
+        return ($value === false) ? null : $value;
     }
 
     /**
@@ -83,14 +79,14 @@ class Cache
      * @param mixed $value
      * @return void
      */
-    public function set(string $key, $value): void
+    public function set(string $key, mixed $value): void
     {
         if (is_resource($value)) {
             return;
         }
 
-        /** @var string|object|array $strValue */
-        $strValue = is_scalar($value) ? (string)$value : ($value ?? '');
+        /** @var string|object|array<mixed> $strValue */
+        $strValue = is_scalar($value) ? (string) $value : ($value ?? '');
 
         /*
          * When using external object cache, do not store values bigger than 1Mb, and use a static
@@ -99,7 +95,7 @@ class Cache
         if (
             ($value !== null)
             && wp_using_ext_object_cache()
-            && ((strlen((string)maybe_serialize($strValue))) > 1024000)
+            && ((strlen((string) maybe_serialize($strValue))) > 1024000)
         ) {
             self::$fallback[$key] = $value;
 
@@ -131,6 +127,8 @@ class Cache
      * @param string $tableName
      * @param string ...$tables
      * @return string
+     *
+     * phpcs:disable SlevomatCodingStandard.Complexity.Cognitive.ComplexityTooHigh
      */
     public function buildCacheKeyForTables(string $tableName, string ...$tables): string
     {
@@ -168,16 +166,16 @@ class Cache
 
             $key = $this->finder->fullTableName($schema);
             $lastTableUpdate = wp_cache_get($key, self::TABLES_GROUP);
-            if (!$lastTableUpdate) {
+            if ($lastTableUpdate === false) {
                 $lastTableUpdate = microtime();
                 wp_cache_set($key, $lastTableUpdate, self::TABLES_GROUP);
             }
 
-            $keys .= (string)$lastTableUpdate;
+            $keys .= (string) $lastTableUpdate;
         }
 
         if (!$keys) {
-            return (string)microtime();
+            return (string) microtime();
         }
 
         $key = $allNetwork ? md5($netPrefix . $keys) : md5($sitePrefix . $keys);
@@ -229,21 +227,10 @@ class Cache
      */
     private function siteCachePrefixes(): array
     {
-        $overallNetKey = $this->networkKey();
-        $overallNet = (string)(wp_cache_get($overallNetKey, self::GROUP) ?: '');
-        if (!$overallNet) {
-            $overallNet = (string)microtime();
-            wp_cache_set($overallNetKey, $overallNet, self::GROUP);
-        }
-
-        $overallSiteKey = $this->siteKey();
-        $overallSite = (string)(wp_cache_get($overallSiteKey, self::GROUP) ? : '');
-        if (!$overallSite) {
-            $overallSite = (string)microtime();
-            wp_cache_set($overallSiteKey, $overallSite, self::GROUP);
-        }
-
-        return [$overallNet, $overallSite];
+        return [
+            $this->cacheKeyValue($this->networkKey()),
+            $this->cacheKeyValue($this->siteKey()),
+        ];
     }
 
     /**
@@ -251,7 +238,7 @@ class Cache
      */
     private function networkKey(): string
     {
-        return sprintf('%s_%s', self::OVERALL_KEY, (string)get_current_network_id());
+        return sprintf('%s_%s', self::OVERALL_KEY, (string) get_current_network_id());
     }
 
     /**
@@ -259,17 +246,32 @@ class Cache
      */
     private function siteKey(): string
     {
-        return sprintf('%s_%s', $this->networkKey(), (string)get_current_blog_id());
+        return sprintf('%s_%s', $this->networkKey(), (string) get_current_blog_id());
+    }
+
+    /**
+     * @param string $key
+     * @return non-falsy-string
+     */
+    private function cacheKeyValue(string $key): string
+    {
+        $cached = wp_cache_get($key, self::GROUP);
+
+        $value = (($cached === false) || !is_scalar($cached)) ? null : (string) $cached;
+        if (($value === null) || ($value === '') || ($value === '0')) {
+            $value = (string) microtime();
+            wp_cache_set($key, $value, self::GROUP);
+        }
+        /** @var non-falsy-string $value */
+        return $value;
     }
 
     /**
      * @return void
      *
-     * phpcs:disable Inpsyde.CodeQuality.FunctionLength
-     *
-     * @psalm-suppress DocblockTypeContradiction
+     * phpcs:disable Syde.Functions.FunctionLength.TooLong
      */
-    private function addCleanCacheHooks()
+    private function addCleanCacheHooks(): void
     {
         // phpcs:enable Inpsyde.CodeQuality.FunctionLength
 
@@ -318,7 +320,7 @@ class Cache
         $cleanMeta = function (string $type) use ($wpdb): callable {
             return function () use ($type, $wpdb): void {
                 $table = "{$type}meta";
-                $this->cleanCacheForTables((string)$wpdb->{$table});
+                $this->cleanCacheForTables((string) $wpdb->{$table});
             };
         };
 

@@ -1,10 +1,8 @@
-# Inpsyde Dbal
+# Syde Dbal
 
 _Database abstraction layer for WordPress, on top of wpdb and dbDelta._
 
-[![Code Style](https://github.com/inpsyde/Dbal/actions/workflows/code-style.yml/badge.svg)](https://github.com/inpsyde/Dbal/actions/workflows/code-style.yml)
-[![Static Analysis](https://github.com/inpsyde/Dbal/actions/workflows/static-analysis.yml/badge.svg)](https://github.com/inpsyde/Dbal/actions/workflows/static-analysis.yml)
-[![Unit Tests](https://github.com/inpsyde/Dbal/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/inpsyde/Dbal/actions/workflows/unit-tests.yml)
+[![Static Analysis + Unit tests](https://github.com/inpsyde/Dbal/actions/workflows/php-qa.yml/badge.svg)](https://github.com/inpsyde/Dbal/actions/workflows/php-qa.yml)
 [![Integration Tests](https://github.com/inpsyde/Dbal/actions/workflows/integration-tests.yml/badge.svg)](https://github.com/inpsyde/Dbal/actions/workflows/integration-tests.yml)
 
 ## Copyright and License

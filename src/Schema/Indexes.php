@@ -9,12 +9,9 @@ final class Indexes
     /**
      * @var list<Index>
      */
-    private $keys;
+    private array $keys;
 
-    /**
-     * @var Index|null
-     */
-    private $primary;
+    private ?Index $primary = null;
 
     /**
      * @param Index $key
@@ -28,9 +25,9 @@ final class Indexes
 
     /**
      * @param Index $key
-     * @param list<Index> $keys
+     * @param Index ...$keys
      */
-    private function __construct(Index $key, Index ...$keys)
+    protected function __construct(Index $key, Index ...$keys)
     {
         array_unshift($keys, $key);
 

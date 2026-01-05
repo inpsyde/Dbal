@@ -6,17 +6,18 @@ namespace Inpsyde\Dbal\Query;
 
 use Inpsyde\Dbal\Cache;
 use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\ErrorCollector;
 use Inpsyde\Dbal\Error;
+use Inpsyde\Dbal\ErrorCollector;
 use Inpsyde\Dbal\PhpErrors;
 use Inpsyde\Dbal\Result;
+use Inpsyde\Dbal\Schema\Columns;
 use Inpsyde\Dbal\Schema\ColumnValueEncoder;
 use Inpsyde\Dbal\Schema\Index;
 use Inpsyde\Dbal\Schema\Schema;
 use Inpsyde\Dbal\Schema\SchemaFinder;
 
 /**
- * @psalm-suppress DeprecatedConstant
+ * @phpstan-import-type ColumnsData from Columns
  */
 class Write
 {
@@ -24,28 +25,10 @@ class Write
 
     private const CREATE = 'create';
     private const UPDATE = 'update';
-    /** @deprecated */
-    private const DELETE = 'delete';
-
-    /**
-     * @var Schema|null
-     */
-    private $schema;
-
-    /**
-     * @var Cache|null
-     */
-    private $cache;
-
-    /**
-     * @var SchemaFinder
-     */
-    private $finder;
-
-    /**
-     * @var ErrorCollector
-     */
-    private $errors;
+    private ?Schema $schema;
+    private ?Cache $cache;
+    private SchemaFinder $finder;
+    private ErrorCollector $errors;
 
     /**
      * @param string $tableName
@@ -83,7 +66,7 @@ class Write
     }
 
     /**
-     * @param array $insertData
+     * @param ColumnsData $insertData
      * @return Result
      */
     public function insert(array $insertData): Result
@@ -94,7 +77,7 @@ class Write
 
         try {
             [$data, $dataFormats] = $this->prepareInsertData($insertData);
-        } catch (\Exception $exception) {
+        } catch (\Throwable $exception) {
             return Result::new($exception);
         }
 
@@ -107,9 +90,9 @@ class Write
     }
 
     /**
-     * @param array $firstRow
-     * @param array $secondRow
-     * @param array[] $rows
+     * @param ColumnsData $firstRow
+     * @param ColumnsData $secondRow
+     * @param ColumnsData[] ...$rows
      * @return Result
      */
     public function insertMany(array $firstRow, array $secondRow, array ...$rows): Result
@@ -160,13 +143,15 @@ class Write
                 $rowsData[$i] = $data;
                 $rowsFormats[$i] = $formats;
             }
-        } catch (\Exception $exception) {
+        } catch (\Throwable $exception) {
             return Result::new($exception);
         }
 
         $valuesSql = '';
         foreach ($rowsData as $i => $rowData) {
-            $valuesSql and $valuesSql .= ",\n";
+            if ($valuesSql !== '') {
+                $valuesSql .= ",\n";
+            }
             $valueSql = $this->buildFieldsSql($rowData, $rowsFormats[$i], false);
             $valuesSql .= "\t({$valueSql})";
         }
@@ -178,8 +163,8 @@ class Write
     }
 
     /**
-     * @param array $updateData
-     * @param array $whereData
+     * @param ColumnsData $updateData
+     * @param ColumnsData $whereData
      * @return Result
      */
     public function update(array $updateData, array $whereData): Result
@@ -216,11 +201,11 @@ class Write
     }
 
     /**
-     * @param array $data
+     * @param ColumnsData $data
      * @param mixed $primaryValue
      * @return Result
      */
-    public function updateOnPrimary(array $data, $primaryValue): Result
+    public function updateOnPrimary(array $data, mixed $primaryValue): Result
     {
         if (!$this->errors->isEmpty()) {
             return Result::new($this->errors);
@@ -235,7 +220,7 @@ class Write
     }
 
     /**
-     * @param array $data
+     * @param ColumnsData $data
      * @param Where $where
      * @return Result
      */
@@ -283,85 +268,7 @@ class Write
     }
 
     /**
-     * @deprecated
-     *
-     * @param array $whereData
-     * @return Result
-     */
-    public function delete(array $whereData): Result
-    {
-        if (!$this->errors->isEmpty()) {
-            return Result::new($this->errors);
-        }
-
-        /** @var Schema $schema */
-        $schema = $this->schema;
-        $columns = $schema->columns();
-        [$whereValues, $whereDataFormats] = $columns->columnsInfoForDataRead($whereData);
-
-        $where = [];
-        $whereFormats = [];
-
-        foreach ($columns as $column) {
-            $name = $column->name();
-
-            if (array_key_exists($name, $whereValues)) {
-                $where[$name] = ColumnValueEncoder::for($column)->encode($whereValues[$name]);
-                $whereFormats[] = $whereDataFormats[$name] ?? '%s';
-            }
-        }
-
-        return $this->execute(self::DELETE, [], [], $where, $whereFormats);
-    }
-
-    /**
-     * @param Where $where
-     * @return Result
-     *
-     * @deprecated
-     */
-    public function deleteWhere(Where $where): Result
-    {
-        if (!$this->errors->isEmpty()) {
-            return Result::new($this->errors);
-        }
-
-        /** @var Schema $schema */
-        $schema = $this->schema;
-        $table = $this->finder->fullTableName($schema);
-
-        if (!$where->hasClauses()) {
-            return Result::new(new \Error("Can't update {$table} without WHERE clauses."));
-        }
-
-        $whereClause = rtrim($where->clause($schema, $this->finder, Aliases::new($this->finder)));
-
-        return $this->executeQuery("DELETE FROM `{$table}` WHERE {$whereClause};", self::DELETE);
-    }
-
-    /**
-     * @deprecated
-     *
-     * @param mixed $primaryValue
-     * @return Result
-     */
-    public function deleteOnPrimary($primaryValue): Result
-    {
-        if (!$this->errors->isEmpty()) {
-            return Result::new($this->errors);
-        }
-
-        return $this->findPrimary($this->schema, $this->finder)
-            ->bind(
-                function (Index $index) use ($primaryValue): Result {
-                    /** @psalm-suppress DeprecatedMethod */
-                    return $this->delete([$index->name() => $primaryValue]);
-                }
-            );
-    }
-
-    /**
-     * @param array $data
+     * @param ColumnsData $data
      * @return array{array<string, mixed>, array<string, string>}
      */
     private function prepareInsertData(array $data): array
@@ -375,7 +282,9 @@ class Write
         static::assertNotMissing($missing, $tableName, false);
 
         if (!$data) {
-            throw new \Exception("Error inserting row in {$tableName} table, no data.");
+            throw new \Exception(
+                sprintf('Error inserting row in %s table, no data.', esc_html($tableName))
+            );
         }
 
         $toPrepare = [];
@@ -395,13 +304,13 @@ class Write
      * @param string $tableName
      * @param bool $isUpdate
      */
-    private static function assertNotMissing(
+    protected static function assertNotMissing(
         ?array $missing,
         string $tableName,
         bool $isUpdate
     ): void {
 
-        if (!$missing) {
+        if (($missing === null) || ($missing === [])) {
             return;
         }
 
@@ -415,7 +324,7 @@ class Write
             : "{$missingStr} {$be} missing or null";
 
         throw new \Exception(
-            sprintf('Error %s row in %s table, %s.', $task, $tableName, $reason)
+            esc_html(sprintf('Error %s row in %s table, %s.', $task, $tableName, $reason))
         );
     }
 
@@ -435,15 +344,15 @@ class Write
             $escParams[] = $value;
         }
 
-        return (string)(Dbal::wpdb()->prepare(implode(', ', $valuesSql), $escParams) ?? '');
+        return (string) (Dbal::wpdb()->prepare(implode(', ', $valuesSql), $escParams) ?? '');
     }
 
     /**
      * @param string $type
-     * @param array $data
-     * @param array $formats
-     * @param array $whereData
-     * @param array $whereFormats
+     * @param ColumnsData $data
+     * @param array<string> $formats
+     * @param ColumnsData $whereData
+     * @param array<string> $whereFormats
      * @return Result
      */
     private function execute(
@@ -455,10 +364,6 @@ class Write
     ): Result {
 
         switch ($type) {
-            case self::DELETE:
-                $func = 'delete';
-                $args = [$whereData, $whereFormats];
-                break;
             case self::CREATE:
                 $func = 'insert';
                 $args = [$data, $formats];
@@ -477,7 +382,7 @@ class Write
             /** @var callable $method */
             $method = [$wpdb, $func];
 
-            return (int)$method($finder->fullTableName($schema), ...$args);
+            return (int) $method($finder->fullTableName($schema), ...$args);
         };
 
         return $this->safeExecute($execute, $type);
@@ -491,7 +396,7 @@ class Write
     private function executeQuery(string $query, string $type): Result
     {
         $execute = static function (\wpdb $wpdb) use ($query): int {
-            return (int)$wpdb->query($query);
+            return (int) $wpdb->query($query);
         };
 
         return $this->safeExecute($execute, $type);
@@ -518,9 +423,6 @@ class Write
                 case self::CREATE:
                     $error = new Error("Failed inserting row(s) into {$table}.");
                     break;
-                case self::DELETE:
-                    $error = new Error("Failed deleting row(s) from {$table}.");
-                    break;
                 case self::UPDATE:
                 default:
                     $error = new Error("Failed updating row(s) of {$table}.");
@@ -529,7 +431,9 @@ class Write
 
             $result = $callback($wpdb, $schema);
             $error = Error::withMerged($error, "Errored query: {$wpdb->last_query}.");
-            $this->cache and $this->cache->cleanCacheForTables($schema->name());
+            if ($this->cache !== null) {
+                $this->cache->cleanCacheForTables($schema->name());
+            }
 
             if ($result === false || $wpdb->last_error) {
                 $value = $wpdb->last_error ? new Error($wpdb->last_error) : null;
@@ -537,9 +441,9 @@ class Write
                 return Result::new($value)->mergeError($error);
             }
 
-            $data = (object)['rows' => (int)$result];
+            $data = (object) ['rows' => (int) $result];
             if ($operation === self::CREATE) {
-                $data->insertId = (int)$wpdb->insert_id;
+                $data->insertId = (int) $wpdb->insert_id;
             }
 
             return Result::new($data);

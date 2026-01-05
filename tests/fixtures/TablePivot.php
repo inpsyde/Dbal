@@ -6,9 +6,9 @@ namespace Inpsyde\Dbal\Tests;
 
 use Inpsyde\Dbal\Schema\Column;
 use Inpsyde\Dbal\Schema\Columns;
-use Inpsyde\Dbal\Schema\InstallableSchema;
 use Inpsyde\Dbal\Schema\Index;
 use Inpsyde\Dbal\Schema\Indexes;
+use Inpsyde\Dbal\Schema\InstallableSchema;
 
 class TablePivot implements InstallableSchema
 {

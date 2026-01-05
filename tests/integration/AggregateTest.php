@@ -10,6 +10,9 @@ use Inpsyde\Dbal\Tests\TableOne;
 use Inpsyde\Dbal\Tests\TablePivot;
 use Inpsyde\Dbal\Tests\TableTwo;
 
+/**
+ * @runTestsInSeparateProcesses
+ */
 class AggregateTest extends QueriesTestCase
 {
     /**
@@ -32,7 +35,7 @@ class AggregateTest extends QueriesTestCase
                 ->extract()
                 ->insertId;
 
-           $writeOnPivot->insert([TablePivot::ONE => $oneId, TablePivot::TWO => $twoId])->assert();
+            $writeOnPivot->insert([TablePivot::ONE => $oneId, TablePivot::TWO => $twoId])->assert();
         }
 
         $result = Dbal::select(TableTwo::NAME, 'two')
@@ -43,8 +46,8 @@ class AggregateTest extends QueriesTestCase
             ->andWhere('two.' . TableTwo::DECIMAL, 2, '>')
             ->pickFirst()
             ->map(
-                static function (array $row) {
-                    $row['countTwo'] = (int)$row['countTwo'];
+                static function (array $row): array {
+                    $row['countTwo'] = (int) $row['countTwo'];
 
                     return $row;
                 }
@@ -52,6 +55,6 @@ class AggregateTest extends QueriesTestCase
 
         $result->assert();
 
-        static::assertSame(['text' => 'Foo', 'countTwo' => 2], $result->first());
+        static::assertSame(['countTwo' => 2, 'text' => 'Foo'], $result->first());
     }
 }

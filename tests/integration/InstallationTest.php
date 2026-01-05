@@ -14,6 +14,9 @@ use Inpsyde\Dbal\Tests\TableOne;
 use Inpsyde\Dbal\Tests\TablePivot;
 use Inpsyde\Dbal\Tests\TableTwo;
 
+/**
+ * @runTestsInSeparateProcesses
+ */
 class InstallationTest extends IntegrationTestCase
 {
     /**
@@ -55,8 +58,6 @@ class InstallationTest extends IntegrationTestCase
         static::assertContains(TableOne::NAME, $schemaNames);
         static::assertContains(TableTwo::NAME, $schemaNames);
         static::assertContains(TablePivot::NAME, $schemaNames);
-
-        $this->resetDb();
     }
 
     /**
@@ -91,13 +92,21 @@ class InstallationTest extends IntegrationTestCase
 
         Dbal::initialize();
 
-        global $wpdb;
+        $wpdb = Dbal::wpdb();
+
         $table = Dbal::schemaFinder()->wpdbTableName(TableOne::NAME);
-        $actualColumns = $wpdb->get_results("SHOW COLUMNS FROM {$table}", ARRAY_A);
+        $actualColumns = (array) $wpdb->get_results("SHOW COLUMNS FROM {$table}", ARRAY_A);
+        /** @var array<string, string> $actualTypes */
         $actualTypes = array_column($actualColumns, 'Type', 'Field');
+        /** @var array<string, string> $actualNullable */
         $actualNullable = array_column($actualColumns, 'Null', 'Field');
 
-        $expectedColumns = Dbal::schemaFinder()->findSchema(TableOne::NAME)->columns();
+        $table = Dbal::schemaFinder()->findSchema(TableOne::NAME);
+        static::assertNotNull($table);
+        $expectedColumns = $table->columns();
+
+        static::assertSame(1, $countInstalled);
+        static::assertSame(0, $countUpdated);
 
         /** @var Column $expectedColumn */
         foreach ($expectedColumns as $expectedColumn) {
@@ -120,14 +129,13 @@ class InstallationTest extends IntegrationTestCase
         $this->resetDbal();
         Dbal::initialize();
 
-        global $wpdb;
         $table = Dbal::schemaFinder()->wpdbTableName(TableOne::NAME);
-        $actualColumns = $wpdb->get_results("SHOW COLUMNS FROM {$table}", ARRAY_A);
+        $actualColumns = (array) $wpdb->get_results("SHOW COLUMNS FROM {$table}", ARRAY_A);
         $actualTypes = array_column($actualColumns, 'Type', 'Field');
 
         static::assertArrayNotHasKey(TableOne::ENUM, $actualTypes);
 
-        static::assertSame(1, $countUpdated);
+        static::assertSame(1, $countInstalled);
         static::assertSame(1, $countUpdated);
 
         // Nothing should be done if version is the same
@@ -139,9 +147,6 @@ class InstallationTest extends IntegrationTestCase
 
         static::assertSame($actualColumns, $actualColumnsAgain);
         static::assertSame(1, $countUpdated);
-        static::assertSame(1, $countUpdated);
-
-        // Cleanup
-        $this->resetDb();
+        static::assertSame(1, $countInstalled);
     }
 }

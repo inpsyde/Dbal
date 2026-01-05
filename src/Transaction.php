@@ -15,18 +15,12 @@ class Transaction
     public const CONSISTENT_SNAPSHOT = 256;
     public const DEFAULT = 0;
 
-    /**
-     * @var string
-     */
-    private $mode;
-
-    /**
-     * @var string
-     */
-    private $isolation;
+    private string $mode;
+    private string $isolation;
 
     /**
      * @param int $flags
+     *
      * @return Transaction
      */
     public static function new(int $flags = self::DEFAULT): Transaction
@@ -83,6 +77,7 @@ class Transaction
     /**
      * @param callable $callback
      * @param callable ...$callbacks
+     *
      * @return Result
      */
     public function __invoke(callable $callback, callable ...$callbacks): Result
@@ -99,12 +94,16 @@ class Transaction
             $result = $this->prepareTransaction($result);
             if (!$result->isErrored()) {
                 $result = $this->startTransaction($result);
-                $result->isErrored() and $rollback = true;
+                if ($result->isErrored()) {
+                    $rollback = true;
+                }
             }
 
             if (!$result->isErrored()) {
                 $result = $this->applyCallback($callback, ...$callbacks);
-                $result->isErrored() and $rollback = true;
+                if ($result->isErrored()) {
+                    $rollback = true;
+                }
             }
         } catch (Error $error) {
             $result = $result->mergeError($error);
@@ -113,8 +112,9 @@ class Transaction
             $result = $result->mergeError(Error::fromThrowable($throwable));
             $rollback = true;
         } finally {
-            /** @psalm-suppress PossiblyInvalidArgument */
-            $rollback and $result = $this->executeQuery('ROLLBACK;', $result);
+            if ($rollback) {
+                $result = $this->executeQuery('ROLLBACK;', $result);
+            }
             $phpErrors->restoreHandler();
             $wpdb->suppress_errors($suppressErrors);
 
@@ -124,6 +124,7 @@ class Transaction
 
     /**
      * @param Result $result
+     *
      * @return Result
      */
     private function prepareTransaction(Result $result): Result
@@ -140,11 +141,14 @@ class Transaction
 
     /**
      * @param Result $result
+     *
      * @return Result
      */
     private function startTransaction(Result $result): Result
     {
-        $startQuery = $this->mode ? "START TRANSACTION {$this->mode};" : 'START TRANSACTION;';
+        $startQuery = $this->mode
+            ? "START TRANSACTION {$this->mode};"
+            : 'START TRANSACTION;';
 
         return $this->executeQuery($startQuery, $result);
     }
@@ -152,6 +156,7 @@ class Transaction
     /**
      * @param callable $callback
      * @param callable ...$callbacks
+     *
      * @return Result
      */
     private function applyCallback(callable $callback, callable ...$callbacks): Result
@@ -169,14 +174,16 @@ class Transaction
             $result = $result->mergeError(new Error($wpdb->last_error));
         }
 
-        /** @psalm-suppress PossiblyInvalidArgument */
-        return $result->isErrored() ? $result : $this->executeQuery('COMMIT;', $result);
+        return $result->isErrored()
+            ? $result
+            : $this->executeQuery('COMMIT;', $result);
     }
 
     /**
      * @param string $query
      * @param Result $result
-     * @return Result
+     *
+     * @return Result<Error>|Result
      */
     private function executeQuery(string $query, Result $result): Result
     {

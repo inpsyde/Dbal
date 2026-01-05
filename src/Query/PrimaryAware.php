@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Inpsyde\Dbal\Query;
 
 use Inpsyde\Dbal\Result;
-use Inpsyde\Dbal\Schema\Index;
 use Inpsyde\Dbal\Schema\Schema;
 use Inpsyde\Dbal\Schema\SchemaFinder;
 

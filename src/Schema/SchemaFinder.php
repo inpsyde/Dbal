@@ -6,33 +6,29 @@ namespace Inpsyde\Dbal\Schema;
 
 use Inpsyde\Dbal\Dbal;
 
+/**
+ * @psalm-consistent-constructor
+ */
 class SchemaFinder
 {
-    /**
-     * @var WpSchemas
-     */
-    private $wpSchema;
-
-    /**
-     * @var SchemasRegister
-     */
-    private $register;
+    private WpSchemas $wpSchema;
+    private SchemasRegister $register;
 
     /**
      * @param WpSchemas $wpSchema
      * @param SchemasRegister $schemas
-     * @return SchemaFinder
+     * @return static
      */
     public static function new(WpSchemas $wpSchema, SchemasRegister $schemas): SchemaFinder
     {
-        return new self($wpSchema, $schemas);
+        return new static($wpSchema, $schemas);
     }
 
     /**
      * @param WpSchemas $wpSchema
      * @param SchemasRegister $schemas
      */
-    private function __construct(WpSchemas $wpSchema, SchemasRegister $schemas)
+    protected function __construct(WpSchemas $wpSchema, SchemasRegister $schemas)
     {
         $this->wpSchema = $wpSchema;
         $this->register = $schemas;
@@ -67,13 +63,16 @@ class SchemaFinder
     public function findSchema(string $tableName): ?Schema
     {
         $core = $this->findCoreSchema($tableName);
-        if ($core) {
+        if ($core !== null) {
             return $core;
         }
 
         $noPrefixName = $this->stripPrefix($tableName);
+        if (($noPrefixName === '') || ($noPrefixName === null)) {
+            return null;
+        }
 
-        return $noPrefixName ? $this->register->find($noPrefixName) : null;
+        return $this->register->find($noPrefixName);
     }
 
     /**
@@ -84,14 +83,14 @@ class SchemaFinder
     {
         $wpdb = Dbal::wpdb();
 
-        $noPrefixName = $this->stripPrefix($tableName);
-        if (!$noPrefixName) {
+        $noPrefixName = $this->stripPrefix($tableName) ?? '';
+        if ($noPrefixName === '') {
             return null;
         }
 
         $fullTableName = $wpdb->{$noPrefixName} ?? null;
 
-        $columns = ($fullTableName && is_string($fullTableName))
+        $columns = (($fullTableName !== '') && is_string($fullTableName))
             ? $this->wpSchema->loadTableColumns($fullTableName)
             : null;
 
@@ -115,6 +114,8 @@ class SchemaFinder
 
         $regex = "~^{$wpdb->base_prefix}(?<nobase>(?:(?<siteid>[0-9]+)_)?(?<nopref>.+))$~";
 
+        /** @var array{siteid?: string, nopref?: string} $matches */
+        $matches = [];
         if (!preg_match($regex, $tableName, $matches)) {
             return $tableName;
         }
@@ -123,15 +124,15 @@ class SchemaFinder
             return $matches['nobase'] ?? null;
         }
 
-        $site = (int)($matches['siteid'] ?? 0);
-        $validId = $site === (int)$wpdb->siteid;
+        /** @phpstan-ignore nullCoalesce.offset */
+        $site = (int) ($matches['siteid'] ?? 0);
+        $validId = $site === (int) $wpdb->siteid;
         $noPrefix = $matches['nopref'] ?? '';
         if (!$noPrefix) {
             return null;
         }
 
-        if (!$validId && is_multisite() && $site > 1) {
-            /** @psalm-suppress InvalidGlobal */
+        if (!$validId && is_multisite() && ($site > 1)) {
             global $_wp_switched_stack;
             $ids = is_array($_wp_switched_stack) ? $_wp_switched_stack : [];
 

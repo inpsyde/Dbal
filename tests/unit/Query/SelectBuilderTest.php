@@ -38,7 +38,7 @@ class SelectBuilderTest extends UnitTestCase
         static::assertFalse(Dbal::isReady());
 
         Monkey\Actions\expectDone(Dbal::ACTION_READY)
-            ->whenHappen(static function () {
+            ->whenHappen(static function (): void {
                 $schemas = Dbal::schemas();
                 $schemas->registerForInstall(new TableOne(), new TableTwo(), new TablePivot());
             });
@@ -68,7 +68,7 @@ QUERY;
 
         Monkey\Actions\expectDone(Dbal::ACTION_READY)
             ->zeroOrMoreTimes()
-            ->whenHappen(static function () {
+            ->whenHappen(static function (): void {
                 Dbal::schemas()->registerForInstall(new TableOne());
             });
 

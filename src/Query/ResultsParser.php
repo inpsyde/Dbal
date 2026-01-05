@@ -8,10 +8,8 @@ use Inpsyde\Dbal\Schema\Schemas;
 
 class ResultsParser
 {
-    /**
-     * @var ColumnsResultParser[]
-     */
-    private $parsers;
+    /** @var list<ColumnsResultParser> */
+    private array $parsers;
 
     /**
      * @param Schemas $tables
@@ -34,6 +32,8 @@ class ResultsParser
 
     /**
      * @param ColumnsResultParser ...$parsers
+     *
+     * @no-named-arguments
      */
     private function __construct(ColumnsResultParser ...$parsers)
     {
@@ -41,8 +41,8 @@ class ResultsParser
     }
 
     /**
-     * @param array $data
-     * @return array
+     * @param array<mixed> $data
+     * @return array<mixed>
      */
     public function parse(array $data): array
     {

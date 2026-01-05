@@ -6,20 +6,9 @@ namespace Inpsyde\Dbal\Schema;
 
 final class WpSchema implements Schema
 {
-    /**
-     * @var string
-     */
-    private $name;
-
-    /**
-     * @var bool
-     */
-    private $global;
-
-    /**
-     * @var Columns
-     */
-    private $columns;
+    private string $name;
+    private bool $global;
+    private Columns $columns;
 
     /**
      * @param string $name

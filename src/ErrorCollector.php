@@ -6,10 +6,7 @@ namespace Inpsyde\Dbal;
 
 final class ErrorCollector
 {
-    /**
-     * @var Error|null
-     */
-    private $error;
+    private ?Error $error = null;
 
     /**
      * @return bool

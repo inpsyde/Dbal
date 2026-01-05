@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Inpsyde\Dbal\Query;
 
 use Inpsyde\Dbal\ErrorCollector;
-use Inpsyde\Dbal\Schema\SchemaFinder;
 use Inpsyde\Dbal\Schema\Schema;
+use Inpsyde\Dbal\Schema\SchemaFinder;
 
 final class Compare
 {
@@ -30,35 +30,16 @@ final class Compare
     private const LEFT = 'LX';
     private const RIGHT = 'RX';
 
-    /**
-     * @var string|null
-     */
-    private $leftCol;
+    private ?string $leftCol;
+    private ?string $rightCol;
+    private string $operator;
+    private ErrorCollector $errors;
 
-    /**
-     * @var string|null
-     */
-    private $rightCol;
+    /** @var list{string|null, string|null} */
+    private array $casts = [null, null];
 
-    /**
-     * @var string
-     */
-    private $operator;
-
-    /**
-     * @var array{string|null, string|null}
-     */
-    private $casts = [null, null];
-
-    /**
-     * @var array{mixed, bool}
-     */
-    private $value = [null, false];
-
-    /**
-     * @var ErrorCollector
-     */
-    private $errors;
+    /** @var list{mixed, bool} */
+    private array $value = [null, false];
 
     /**
      * @param string $leftColumn
@@ -81,7 +62,7 @@ final class Compare
      * @param string|null $operator
      * @return Compare
      */
-    public static function columnValue(string $column, $value, ?string $operator = null): Compare
+    public static function columnValue(string $column, mixed $value, ?string $operator = null): Compare
     {
         $instance = new static($column, null, $operator);
 
@@ -94,7 +75,7 @@ final class Compare
      * @param string|null $operator
      * @return Compare
      */
-    public static function columnRawValue(string $column, $value, ?string $operator = null): Compare
+    public static function columnRawValue(string $column, mixed $value, ?string $operator = null): Compare
     {
         $instance = new static($column, null, $operator);
 
@@ -104,9 +85,7 @@ final class Compare
     /**
      * @param string|null $leftCol
      * @param string|null $rightCol
-     * @param string $operator
-     * @param string|null $tableLeft
-     * @param string|null $tableRight
+     * @param string|null $operator
      */
     private function __construct(?string $leftCol, ?string $rightCol, ?string $operator)
     {
@@ -118,7 +97,7 @@ final class Compare
 
     /**
      * @param string $type
-     * @return Compare
+     * @return static
      */
     public function castLeft(string $type): Compare
     {
@@ -129,7 +108,7 @@ final class Compare
 
     /**
      * @param string $type
-     * @return Compare
+     * @return static
      */
     public function castRight(string $type): Compare
     {
@@ -158,7 +137,7 @@ final class Compare
      * @param Schema $defaultSchema
      * @param SchemaFinder $finder
      * @param Aliases $aliases
-     * @return array{string|null, mixed, string|null, string|null}
+     * @return list{string|null, mixed, string|null, string|null}
      */
     public function clauseParams(
         Schema $defaultSchema,
@@ -167,7 +146,7 @@ final class Compare
     ): array {
 
         if (!$this->errors->isEmpty()) {
-            return [null, null, null, null, null];
+            return [null, null, null, null];
         }
 
         [$castLeft, $castRight] = $this->casts;
@@ -184,14 +163,14 @@ final class Compare
         if ($leftCol === null || $rightColOrValue === null) {
             $this->errors->withError('Could not resolve compare column names.');
 
-            return [null, null, null, null, null];
+            return [null, null, null, null];
         }
 
-        if ($castLeft) {
+        if (($castLeft !== null) && ($castLeft !== '')) {
             $leftCol = "CAST({$leftCol} AS {$castLeft})";
         }
 
-        if ($castRight) {
+        if (($castRight !== null) && ($castRight !== '')) {
             $rightColOrValue = "CAST({$rightColOrValue} AS {$castRight})";
         }
 
@@ -212,7 +191,7 @@ final class Compare
      * @param ErrorCollector $collector
      * @return void
      */
-    public function mergeError(ErrorCollector $collector)
+    public function mergeError(ErrorCollector $collector): void
     {
         $collector->pushFrom($this->errors);
     }
@@ -250,14 +229,14 @@ final class Compare
             $table ?? $colTableName ?? $defaultSchema->name()
         );
 
+        $colTableName ??= '';
+        $tableAlias ??= '';
         if (
-            $table
-            && ($colTableName || $tableAlias)
+            ($table !== null)
+            && (($colTableName !== '') || ($tableAlias !== ''))
             && !in_array($table, [$colTableName, $tableAlias], true)
         ) {
-            $this->errors->withError(
-                "Table '{$table}' is unknown alias."
-            );
+            $this->errors->withError("Table '{$table}' is unknown alias.");
 
             return null;
         }
@@ -267,7 +246,7 @@ final class Compare
             return null;
         }
 
-        $colTableAlias = $tableAlias ?? $finder->fullTableName($schema);
+        $colTableAlias = ($tableAlias !== '') ? $tableAlias : $finder->fullTableName($schema);
 
         return "`{$colTableAlias}`.`{$columnName}`";
     }
@@ -280,7 +259,7 @@ final class Compare
      * @return array{mixed, string|null}
      */
     private function colValue(
-        $rawValue,
+        mixed $rawValue,
         Schema $defaultSchema,
         SchemaFinder $finder,
         Aliases $aliases
@@ -292,17 +271,20 @@ final class Compare
         }
 
         $realSchemaName = null;
-        if ($schemaName) {
+        if ($schemaName !== null) {
             [$realSchemaName] = $aliases->resolveSchema($schemaName);
+            if ($realSchemaName === '') {
+                $realSchemaName = null;
+            }
             $aliases->mergeErrors($this->errors);
             if (!$this->errors->isEmpty()) {
                 return [null, null];
             }
         }
 
-        $realSchemaName or $realSchemaName = $defaultSchema->name();
-        $schema = $realSchemaName ? $finder->findSchema($realSchemaName) : null;
-        if (!$schema) {
+        $realSchemaName ??= $defaultSchema->name();
+        $schema = ($realSchemaName !== '') ? $finder->findSchema($realSchemaName) : null;
+        if ($schema === null) {
             $this->errors->withError("Table '{$schemaName}' not found.");
 
             return [null, null];
@@ -317,8 +299,9 @@ final class Compare
             return [null, null];
         }
 
-        if ($this->casts[0]) {
-            $format = self::CASTS[$this->casts[0]];
+        $cast = $this->casts[0] ?? '';
+        if ($cast !== '') {
+            $format = self::CASTS[$cast];
         }
 
         return [$value, $format];
@@ -338,7 +321,7 @@ final class Compare
         }
 
         $type = strtoupper($type);
-        if (empty(self::CASTS[$type])) {
+        if (!isset(self::CASTS[$type])) {
             $this->errors->withError("Invalid cast '{$type}'.");
 
             return '';
@@ -350,9 +333,9 @@ final class Compare
     /**
      * @param mixed $value
      * @param bool $raw
-     * @return Compare
+     * @return static
      */
-    private function checkValue($value, bool $raw): Compare
+    private function checkValue(mixed $value, bool $raw): Compare
     {
         if ($value === null) {
             $this->errors->withError("Can't use null values as compare argument.");

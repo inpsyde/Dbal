@@ -105,40 +105,24 @@ final class Column
 
     private const DEF_SIZE_REGXP = '~^\((?:\s?([0-9]+)(?:\s?,\s?([0-9]+)\s?)?)\)~';
     private const DEF_CHOICES_REGXP = '~^\(([^\)]+)\)~';
-    private const DEF_DEFAULT_REGXP = '~(?: |^)default (\'|")?(.+?)(?:\'|")?(?: |$)~';
+    private const DEF_DEFAULT_REGXP = '~(?: |^)default ([\'"])?(.+?)[\'"]?(?: |$)~';
     private const DEF_NOT_NULL_REGXP = '~(?: |^)not null(?: |$)~';
     private const DEF_UNSIGNED_REGXP = '~(?: |^)unsigned(?: |$)~';
     private const DEF_AUTO_INCREMENT_REGXP = '~(?: |^)auto_increment(?: |$)~';
 
-    /**
-     * @var array<string,string>|null
-     */
-    private static $characterSets = null;
+    /** @var array<string,string>|null */
+    private static ?array $characterSets = null;
 
-    /**
-     * @var string
-     */
-    private $type;
-
-    /**
-     * @var string
-     */
-    private $name;
-
-    /**
-     * @var string
-     */
-    private $format;
-
-    /**
-     * @var array
-     */
-    private $attributes;
+    private string $type;
+    private string $name;
+    private string $format;
+    /** @var array<string, mixed> */
+    private array $attributes;
 
     /**
      * @param string $name
      * @param int|null $default
-     * @return Column
+     * @return static
      */
     public static function tinyInt(string $name, ?int $default = null): Column
     {
@@ -148,7 +132,7 @@ final class Column
     /**
      * @param string $name
      * @param int|null $default
-     * @return Column
+     * @return static
      */
     public static function smallInt(string $name, ?int $default = null): Column
     {
@@ -158,7 +142,7 @@ final class Column
     /**
      * @param string $name
      * @param int|null $default
-     * @return Column
+     * @return static
      */
     public static function mediumInt(string $name, ?int $default = null): Column
     {
@@ -168,7 +152,7 @@ final class Column
     /**
      * @param string $name
      * @param int|null $default
-     * @return Column
+     * @return static
      */
     public static function int(string $name, ?int $default = null): Column
     {
@@ -178,7 +162,7 @@ final class Column
     /**
      * @param string $name
      * @param int|null $default
-     * @return Column
+     * @return static
      */
     public static function bigInt(string $name, ?int $default = null): Column
     {
@@ -189,7 +173,7 @@ final class Column
      * @param string $name
      * @param int $size
      * @param int|null $default
-     * @return Column
+     * @return static
      */
     public static function bit(string $name, int $size = 1, ?int $default = null): Column
     {
@@ -210,9 +194,8 @@ final class Column
 
     /**
      * @param string $name
-     * @param int $size
      * @param bool|null $default
-     * @return Column
+     * @return static
      */
     public static function bool(string $name, ?bool $default = null): Column
     {
@@ -227,7 +210,7 @@ final class Column
 
     /**
      * @param string $name
-     * @return Column
+     * @return static
      */
     public static function entityId(string $name): Column
     {
@@ -236,7 +219,7 @@ final class Column
 
     /**
      * @param string $name
-     * @return Column
+     * @return static
      */
     public static function foreignId(string $name): Column
     {
@@ -248,7 +231,7 @@ final class Column
      * @param int $precision
      * @param int $scale
      * @param float|null $default
-     * @return Column
+     * @return static
      */
     public static function decimal(
         string $name,
@@ -279,7 +262,7 @@ final class Column
      * @param int|null $precision
      * @param int|null $scale
      * @param float|null $default
-     * @return Column
+     * @return static
      */
     public static function float(
         string $name,
@@ -324,7 +307,7 @@ final class Column
      * @param int|null $precision
      * @param int|null $scale
      * @param float|null $default
-     * @return Column
+     * @return static
      */
     public static function double(
         string $name,
@@ -367,7 +350,7 @@ final class Column
     /**
      * @param string $name
      * @param string|null $default
-     * @return Column
+     * @return static
      */
     public static function datetime(string $name, ?string $default = null): Column
     {
@@ -382,7 +365,7 @@ final class Column
     /**
      * @param string $name
      * @param string|null $default
-     * @return Column
+     * @return static
      */
     public static function timestamp(string $name, ?string $default = null): Column
     {
@@ -397,14 +380,19 @@ final class Column
     /**
      * @param string $name
      * @param string|null $default
-     * @return Column
+     * @return static
      */
     public static function date(string $name, ?string $default = null): Column
     {
         if ($default !== null) {
             $date = \DateTime::createFromFormat('Y-m-d', $default);
             if (!$date) {
-                throw new \Exception("'{$default}' has no the correct format for a DATE column.");
+                throw new \Exception(
+                    sprintf(
+                        '"%s" has no the correct format for a DATE column.',
+                        esc_html($default)
+                    )
+                );
             }
         }
 
@@ -414,7 +402,7 @@ final class Column
     /**
      * @param string $name
      * @param string|null $default
-     * @return Column
+     * @return static
      */
     public static function time(string $name, ?string $default = null): Column
     {
@@ -422,7 +410,12 @@ final class Column
             $default !== null
             && !preg_match('~^-?[0-9]{2,3}:[0-9]{2}:[0-9]{2}(?:\.[0-9]{6})?$~', $default)
         ) {
-            throw new \Exception("'{$default}' has no the correct format for a TIME column.");
+            throw new \Exception(
+                sprintf(
+                    '"%s" has no the correct format for a TIME column.',
+                    esc_html($default)
+                )
+            );
         }
 
         return new static($name, self::TIME, [self::ATTR_DEFAULT => $default]);
@@ -431,16 +424,21 @@ final class Column
     /**
      * @param string $name
      * @param string|null $default
-     * @return Column
+     * @return static
      */
     public static function year(string $name, ?string $default = null): Column
     {
         if ($default !== null) {
             if (!is_numeric($default)) {
-                throw new \Exception("'{$default}' is not a valid default for a YEAR column.");
+                throw new \Exception(
+                    sprintf(
+                        '"%s" is not a valid default for a YEAR column.',
+                        esc_html($default)
+                    )
+                );
             }
 
-            $default = (string)((int)$default);
+            $default = (string) ((int) $default);
         }
 
         return new static($name, self::YEAR, [self::ATTR_DEFAULT => $default]);
@@ -450,12 +448,17 @@ final class Column
      * @param string $name
      * @param int $size
      * @param string|null $default
-     * @return Column
+     * @return static
      */
     public static function char(string $name, int $size, ?string $default = null): Column
     {
-        if ($size < 0 || $size > 255) {
-            throw new \Exception("CHAR column size must be between 0 and 255, {$size} provided.");
+        if (($size < 0) || ($size > 255)) {
+            throw new \Exception(
+                sprintf(
+                    "CHAR column size must be between 0 and 255, %s provided.",
+                    esc_html((string) $size)
+                )
+            );
         }
 
         if ($default !== null && strlen($default) > $size) {
@@ -475,13 +478,16 @@ final class Column
      * @param string $name
      * @param int $size
      * @param string|null $default
-     * @return Column
+     * @return static
      */
     public static function varChar(string $name, int $size, ?string $default = null): Column
     {
-        if ($size < 0 || $size > 65535) {
+        if (($size < 0) || ($size > 65535)) {
             throw new \Exception(
-                "VARCHAR column size must be between 0 and 65.535, {$size} provided."
+                sprintf(
+                    'VARCHAR column size must be between 0 and 65.535, "%s" provided.',
+                    esc_html((string) $size)
+                )
             );
         }
 
@@ -502,12 +508,17 @@ final class Column
      * @param string $name
      * @param int $size
      * @param string|null $default
-     * @return Column
+     * @return static
      */
     public static function binary(string $name, int $size, ?string $default = null): Column
     {
-        if ($size < 0 || $size > 255) {
-            throw new \Exception("BINARY column size must be between 0 and 255, {$size} provided.");
+        if (($size < 0) || ($size > 255)) {
+            throw new \Exception(
+                sprintf(
+                    'BINARY column size must be between 0 and 255, %s provided.',
+                    esc_html((string) $size)
+                )
+            );
         }
 
         if ($default !== null && strlen($default) > $size) {
@@ -527,13 +538,16 @@ final class Column
      * @param string $name
      * @param int $size
      * @param string|null $default
-     * @return Column
+     * @return static
      */
     public static function varBinary(string $name, int $size, ?string $default = null): Column
     {
         if ($size < 0 || $size > 65535) {
             throw new \Exception(
-                "VARBINARY column size must be between 0 and 65.535, {$size} provided."
+                sprintf(
+                    'VARBINARY column size must be between 0 and 65.535, %s provided.',
+                    esc_html((string) $size)
+                )
             );
         }
 
@@ -552,7 +566,7 @@ final class Column
 
     /**
      * @param string $name
-     * @return Column
+     * @return static
      */
     public static function tinyBlob(string $name): Column
     {
@@ -561,7 +575,7 @@ final class Column
 
     /**
      * @param string $name
-     * @return Column
+     * @return static
      */
     public static function blob(string $name): Column
     {
@@ -570,7 +584,7 @@ final class Column
 
     /**
      * @param string $name
-     * @return Column
+     * @return static
      */
     public static function mediumBlob(string $name): Column
     {
@@ -579,7 +593,7 @@ final class Column
 
     /**
      * @param string $name
-     * @return Column
+     * @return static
      */
     public static function longBlob(string $name): Column
     {
@@ -589,7 +603,7 @@ final class Column
     /**
      * @param string $name
      * @param string|null $default
-     * @return Column
+     * @return static
      */
     public static function tinyText(string $name, ?string $default = null): Column
     {
@@ -599,7 +613,7 @@ final class Column
     /**
      * @param string $name
      * @param string|null $default
-     * @return Column
+     * @return static
      */
     public static function text(string $name, ?string $default = null): Column
     {
@@ -609,7 +623,7 @@ final class Column
     /**
      * @param string $name
      * @param string|null $default
-     * @return Column
+     * @return static
      */
     public static function mediumText(string $name, ?string $default = null): Column
     {
@@ -619,7 +633,7 @@ final class Column
     /**
      * @param string $name
      * @param string|null $default
-     * @return Column
+     * @return static
      */
     public static function longText(string $name, ?string $default = null): Column
     {
@@ -630,7 +644,7 @@ final class Column
      * @param string $name
      * @param string $first
      * @param string ...$choices
-     * @return Column
+     * @return static
      */
     public static function enum(string $name, string $first, string ...$choices): Column
     {
@@ -640,7 +654,7 @@ final class Column
 
         if (count($choices) > 63) {
             /**
-             * Theoretic limit is 65535, but for practical reasons and limit imposed by .frm file
+             * Theoretic limit is 65535, but for practical reasons and limits imposed by .frm file
              * we decided to have the same limitation of SET columns.
              * @see https://dev.mysql.com/doc/refman/5.7/en/create-table-files.html#limits-frm-file
              */
@@ -655,7 +669,7 @@ final class Column
      * @param string $name
      * @param string $first
      * @param string ...$choices
-     * @return Column
+     * @return static
      */
     public static function set(string $name, string $first, string ...$choices): Column
     {
@@ -672,7 +686,7 @@ final class Column
 
     /**
      * @param string $name
-     * @return Column
+     * @return static
      */
     public static function json(string $name): Column
     {
@@ -680,13 +694,15 @@ final class Column
     }
 
     /**
-     * @param string $specs
-     * @return Column|null
+     * @param string $definition
+     * @return static|null
+     *
+     * phpcs:disable SlevomatCodingStandard.Complexity.Cognitive.ComplexityTooHigh
      */
     public static function parseRawDefinition(string $definition): ?Column
     {
         [$name, $type, $specs] = static::normalizeRawDefinition($definition);
-        if (!$name || !$type) {
+        if (($name === null) || ($type === null)) {
             return null;
         }
 
@@ -696,20 +712,20 @@ final class Column
         }
 
         $realNumber = in_array($type, self::REAL_NUMBERS, true);
-        $attributes[self::ATTR_NOT_NULL] = (bool)preg_match(self::DEF_NOT_NULL_REGXP, $specs);
+        $attributes[self::ATTR_NOT_NULL] = (bool) preg_match(self::DEF_NOT_NULL_REGXP, $specs);
 
         if (preg_match(self::DEF_DEFAULT_REGXP, $specs, $matches)) {
-            $default = $matches[1] ? $matches[2] : (int)$matches[2];
+            $default = ($matches[1] !== '') ? $matches[2] : (int) $matches[2];
             if ($default === '"' || $default === "'") {
                 $default = '';
             }
 
-            $attributes[self::ATTR_DEFAULT] = $realNumber ? (float)$default : $default;
+            $attributes[self::ATTR_DEFAULT] = $realNumber ? (float) $default : $default;
         }
 
         if ($realNumber || in_array($type, self::INTEGERS, true)) {
-            $unsigned = (bool)preg_match(self::DEF_UNSIGNED_REGXP, $specs);
-            $autoIncr = (bool)preg_match(self::DEF_AUTO_INCREMENT_REGXP, $specs);
+            $unsigned = preg_match(self::DEF_UNSIGNED_REGXP, $specs) === 1;
+            $autoIncr = preg_match(self::DEF_AUTO_INCREMENT_REGXP, $specs) === 1;
             $attributes[self::ATTR_UNSIGNED] = $unsigned;
             $attributes[self::ATTR_AUTO_INCREMENT] = $autoIncr;
         }
@@ -718,10 +734,16 @@ final class Column
             ($realNumber || in_array($type, self::PRECISION_BASED, true))
             && preg_match(self::DEF_SIZE_REGXP, $specs, $matches)
         ) {
+            /** @phpstan-ignore nullCoalesce.offset */
             $precision = $matches[1] ?? null;
             $scale = $realNumber ? ($matches[2] ?? null) : null;
-            ($precision !== null) and $attributes[self::ATTR_PRECISION] = (int)$precision;
-            ($scale !== null) and $attributes[self::ATTR_SCALE] = (int)$scale;
+            /** @phpstan-ignore notIdentical.alwaysTrue */
+            if ($precision !== null) {
+                $attributes[self::ATTR_PRECISION] = (int) $precision;
+            }
+            if ($scale !== null) {
+                $attributes[self::ATTR_SCALE] = (int) $scale;
+            }
         }
 
         if (in_array($type, [self::ENUM, self::SET], true)) {
@@ -751,17 +773,17 @@ final class Column
         }
 
         $definition = preg_replace('/\s+/', ' ', rtrim(trim($definition), ','));
-        $parts = explode(' ', (string)$definition, 3);
-        $name = empty($parts[0]) ? null : $parts[0];
-        $type = empty($parts[1]) ? null : strtoupper(trim($parts[1]));
-        $specs = empty($parts[2]) ? null : strtolower(trim($parts[2]));
-        if (!$name || !$type) {
+        $parts = explode(' ', (string) $definition, 3);
+        $name = ($parts[0] === '') ? null : $parts[0];
+        $type = (!isset($parts[1]) || ($parts[1] === '')) ? null : strtoupper(trim($parts[1]));
+        $specs = (!isset($parts[2]) || ($parts[2] === '')) ? null : strtolower(trim($parts[2]));
+        if (($name === null) || ($type === null) || ($type === '')) {
             return [null, null, null];
         }
 
         if (preg_match("~^([A-Z]+)\(([^\)]+)\)~", $type, $matches)) {
             $type = $matches[1];
-            $specs = $specs ? '(' . trim($matches[2]) . ") {$specs}" : null;
+            $specs = ($specs !== null) ? '(' . trim($matches[2]) . ") {$specs}" : null;
         }
 
         // phpcs:disable WordPressVIPMinimum.Constants.ConstantString
@@ -776,12 +798,17 @@ final class Column
     /**
      * @param string $name
      * @param string $type
-     * @param array $attributes
+     * @param array<string, mixed> $attributes
      */
     private function __construct(string $name, string $type, array $attributes)
     {
-        if (!SchemasRegister::validateColumnName($name)) {
-            throw new \Exception("'{$name}' is not a valid column name.");
+        if (!Schemas::validateIdentifierName($name)) {
+            throw new \Exception(
+                sprintf(
+                    '"%s" is not a valid column name.',
+                    esc_html($name)
+                )
+            );
         }
 
         $this->name = $name;
@@ -791,7 +818,7 @@ final class Column
     }
 
     /**
-     * @return Column
+     * @return static
      */
     public function makeUnsigned(): Column
     {
@@ -816,7 +843,7 @@ final class Column
 
     /**
      * @param int $displaySize
-     * @return Column
+     * @return static
      */
     public function makeZeroFill(int $displaySize): Column
     {
@@ -834,7 +861,7 @@ final class Column
     }
 
     /**
-     * @return Column
+     * @return static
      */
     public function makeAutoIncrement(): Column
     {
@@ -862,7 +889,7 @@ final class Column
     /**
      * @param bool $onCreate
      * @param bool $onUpdate
-     * @return Column
+     * @return static
      */
     public function useCurrentTimestampAsDefault(
         bool $onCreate = true,
@@ -881,15 +908,19 @@ final class Column
             );
         }
 
-        $onCreate and $this->attributes[self::ATTR_DEFAULT_CREATE_TO_NOW] = true;
-        $onUpdate and $this->attributes[self::ATTR_DEFAULT_UPDATE_TO_NOW] = true;
+        if ($onCreate) {
+            $this->attributes[self::ATTR_DEFAULT_CREATE_TO_NOW] = true;
+        }
+        if ($onUpdate) {
+            $this->attributes[self::ATTR_DEFAULT_UPDATE_TO_NOW] = true;
+        }
 
         return $this;
     }
 
     /**
      * @param \DateTimeZone|null $zone
-     * @return Column
+     * @return static
      */
     public function retrieveAsDateTime(?\DateTimeZone $zone = null): Column
     {
@@ -899,7 +930,9 @@ final class Column
             );
         }
 
-        $zone and $this->useDefaultTimeZone($zone);
+        if ($zone !== null) {
+            $this->useDefaultTimeZone($zone);
+        }
         $this->attributes[self::ATTR_RETRIEVE_AS_DATETIME] = true;
 
         return $this;
@@ -907,7 +940,7 @@ final class Column
 
     /**
      * @param \DateTimeZone $zone
-     * @return Column
+     * @return static
      */
     public function useDefaultTimeZone(\DateTimeZone $zone): Column
     {
@@ -915,10 +948,11 @@ final class Column
             throw new \Exception('Only DATETIME AND TIMESTAMP columns can use a default timezone.');
         }
 
-        if (
-            ($this->attributes[self::ATTR_RETRIEVE_AS_DATETIME_ZONE] ?? null)
-            && ($this->attributes[self::ATTR_RETRIEVE_AS_DATETIME] ?? null)
-        ) {
+        /** @var \DateTimeZone|null $asTimezone */
+        $asTimezone = $this->attributes[self::ATTR_RETRIEVE_AS_DATETIME_ZONE] ?? null;
+        $asDatetime = (bool) ($this->attributes[self::ATTR_RETRIEVE_AS_DATETIME] ?? false);
+
+        if ($asTimezone && $asDatetime) {
             throw new \Exception('Timezone for the column was set via "retrieveAsDateTime".');
         }
 
@@ -928,7 +962,7 @@ final class Column
     }
 
     /**
-     * @return Column
+     * @return static
      */
     public function makeNotNull(): Column
     {
@@ -938,7 +972,7 @@ final class Column
     }
 
     /**
-     * @return Column
+     * @return static
      */
     public function storeSerialized(): Column
     {
@@ -950,10 +984,13 @@ final class Column
 
         if (
             ($this->type === self::CHAR || $this->type === self::VARCHAR)
-            && ((int)($this->attributes[self::ATTR_PRECISION] ?? 0) < 255)
+            && ((int) ($this->attributes[self::ATTR_PRECISION] ?? 0) < 255)
         ) {
             throw new \Exception(
-                "{$this->type} column size must be 255 bytes or more to store serialized values."
+                sprintf(
+                    '%s column size must be 255 bytes or more to store serialized values.',
+                    esc_html($this->type)
+                )
             );
         }
 
@@ -969,25 +1006,33 @@ final class Column
     /**
      * @param string|null $charset
      * @param string|null $collation
-     * @return Column
+     *
+     * @return static
+     *
+     * phpcs:disable SlevomatCodingStandard.Complexity.Cognitive.ComplexityTooHigh
      */
     public function useCharsetCollation(?string $charset = null, ?string $collation = null): Column
     {
         if (!in_array($this->type, self::STRINGS, true)) {
-            throw new \Exception("{$this->type} columns do not support CHARSET/COLLATE attribute.");
+            throw new \Exception(
+                sprintf(
+                    '%s columns do not support CHARSET/COLLATE attribute.',
+                    esc_html($this->type)
+                )
+            );
         }
 
-        if ($collation) {
+        if (($collation !== null) && ($collation !== '')) {
             $collationParts = explode('_', $collation, 2);
-            if (empty($collationParts[1])) {
+            if (!isset($collationParts[1]) || ($collationParts[1] === '')) {
                 $collation = null;
             }
-            if ($charset === null && !empty($collationParts[0])) {
+            if (($charset === null) && ($collationParts[0] !== '')) {
                 $charset = $collationParts[0];
             }
         }
 
-        if (!$charset) {
+        if (($charset === null) || ($charset === '')) {
             return $this;
         }
 
@@ -1114,7 +1159,7 @@ final class Column
     {
         return in_array(
             $this->type(),
-            [Column::TIMESTAMP, Column::DATETIME, Column::DATE, Column::YEAR, Column::TIME],
+            [self::TIMESTAMP, self::DATETIME, self::DATE, self::YEAR, self::TIME],
             true
         );
     }
@@ -1124,7 +1169,11 @@ final class Column
      */
     public function isBoolean(): bool
     {
-        return $this->isBit() && ($this->attributes[self::ATTR_IS_BOOL] ?? false);
+        if (!$this->isBit()) {
+            return false;
+        }
+
+        return (bool) ($this->attributes[self::ATTR_IS_BOOL] ?? false);
     }
 
     /**
@@ -1180,6 +1229,7 @@ final class Column
 
     /**
      * @return mixed
+     * phpcs:disable Syde.Functions.ReturnTypeDeclaration.NoReturnType
      */
     public function default()
     {
@@ -1215,15 +1265,23 @@ final class Column
         }
 
         $size = $this->attributes[self::ATTR_DISPLAY_SIZE] ?? null;
-        $unsigned = $this->attributes[self::ATTR_UNSIGNED] ?? null;
-        $zerofill = $this->attributes[self::ATTR_ZERO_FILL] ?? false;
-        $autoIncrement = $this->attributes[self::ATTR_AUTO_INCREMENT] ?? false;
+        $unsigned = (bool) ($this->attributes[self::ATTR_UNSIGNED] ?? false);
+        $zerofill = (bool) ($this->attributes[self::ATTR_ZERO_FILL] ?? false);
+        $autoIncrement = (bool) ($this->attributes[self::ATTR_AUTO_INCREMENT] ?? false);
 
         $def = $this->type;
-        $size and $def .= "({$size})";
-        $unsigned and $def .= ' UNSIGNED';
-        $zerofill and $def .= ' ZEROFILL';
-        $autoIncrement and $def .= " AUTO_INCREMENT";
+        if (is_int($size)) {
+            $def .= sprintf('(%d)', $size);
+        }
+        if ($unsigned) {
+            $def .= ' UNSIGNED';
+        }
+        if ($zerofill) {
+            $def .= ' ZEROFILL';
+        }
+        if ($autoIncrement) {
+            $def .= " AUTO_INCREMENT";
+        }
 
         return $def . $this->notNullDefinition() . $this->defaultDefinition();
     }
@@ -1237,19 +1295,22 @@ final class Column
             return null;
         }
 
-        /** @var int|null $precision */
         $precision = $this->attributes[self::ATTR_PRECISION] ?? null;
         /** @var int|null $scale */
         $scale = $this->attributes[self::ATTR_SCALE] ?? null;
-        $unsigned = $this->attributes[self::ATTR_UNSIGNED] ?? null;
+        $unsigned = (bool) ($this->attributes[self::ATTR_UNSIGNED] ?? false);
 
         $def = $this->type;
-        if ($precision !== null) {
+        if (is_int($precision)) {
             $attr = sprintf('%d', $precision);
-            ($scale !== null) and $attr .= sprintf(',%d', $scale);
+            if (is_int($scale)) {
+                $attr .= sprintf(',%d', $scale);
+            }
             $def .= "({$attr})";
         }
-        $unsigned and $def .= ' UNSIGNED';
+        if ($unsigned) {
+            $def .= ' UNSIGNED';
+        }
 
         return $def . $this->notNullDefinition() . $this->defaultDefinition();
     }
@@ -1279,12 +1340,14 @@ final class Column
             return null;
         }
 
-        $defaultOnCreate = $this->attributes[self::ATTR_DEFAULT_CREATE_TO_NOW] ?? false;
-        $defaultOnUpdate = $this->attributes[self::ATTR_DEFAULT_UPDATE_TO_NOW] ?? false;
+        $defaultOnCreate = (bool) ($this->attributes[self::ATTR_DEFAULT_CREATE_TO_NOW] ?? false);
+        $defaultOnUpdate = (bool) ($this->attributes[self::ATTR_DEFAULT_UPDATE_TO_NOW] ?? false);
 
         $def = $this->type . $this->notNullDefinition();
         $def .= $defaultOnCreate ? ' DEFAULT CURRENT_TIMESTAMP' : $this->defaultDefinition();
-        $defaultOnUpdate and $def .= ' ON UPDATE CURRENT_TIMESTAMP';
+        if ($defaultOnUpdate) {
+            $def .= ' ON UPDATE CURRENT_TIMESTAMP';
+        }
 
         return $def;
     }
@@ -1298,9 +1361,9 @@ final class Column
             return null;
         }
 
-        $notNull = $this->attributes[self::ATTR_NOT_NULL] ?? false;
+        $notNull = (bool) ($this->attributes[self::ATTR_NOT_NULL] ?? false);
         /** @var list<string> $choices */
-        $choices = (array)($this->attributes[self::ATTR_CHOICES] ?? ['']);
+        $choices = (array) ($this->attributes[self::ATTR_CHOICES] ?? ['']);
 
         $def = "{$this->type}('" . implode("','", $choices) . "')";
         if ($notNull) {
@@ -1327,7 +1390,7 @@ final class Column
      */
     private function notNullDefinition(): string
     {
-        if ($this->attributes[self::ATTR_NOT_NULL] ?? false) {
+        if ((bool) ($this->attributes[self::ATTR_NOT_NULL] ?? false)) {
             return ' NOT NULL';
         }
 
@@ -1349,7 +1412,7 @@ final class Column
 
         $wpdb = Dbal::wpdb();
 
-        return (string)$wpdb->prepare(" DEFAULT {$format}", $default);
+        return (string) $wpdb->prepare(" DEFAULT {$format}", $default);
     }
 
     /**
@@ -1362,8 +1425,12 @@ final class Column
 
         if ($charset !== null || $collation !== null) {
             $def = '';
-            ($charset !== null) and $def .= " CHARACTER SET {$charset}";
-            ($collation !== null) and $def .= " COLLATE {$collation}";
+            if ($charset !== null) {
+                $def .= " CHARACTER SET {$charset}";
+            }
+            if ($collation !== null) {
+                $def .= " COLLATE {$collation}";
+            }
 
             return $def;
         }
@@ -1373,7 +1440,6 @@ final class Column
 
     /**
      * @param string $datetime
-     * @param string $type
      * @return string
      */
     private function ensureDateTimeFitsFormat(string $datetime): string
@@ -1382,7 +1448,13 @@ final class Column
             ?: \DateTime::createFromFormat($datetime, 'Y-m-d');
 
         if (!$date) {
-            throw new \Exception("Invalid default '{$datetime}' for {$this->type} column.");
+            throw new \Exception(
+                sprintf(
+                    'Invalid default "%s" for "%s" column.',
+                    esc_html($datetime),
+                    esc_html($this->type)
+                )
+            );
         }
 
         return $datetime;
@@ -1399,12 +1471,12 @@ final class Column
 
         $raw = Dbal::wpdb()->get_results("SHOW CHARACTER SET", ARRAY_A);
 
-        /** @var array<string, string>|null $characterSets */
-        $characterSets = ($raw && is_array($raw))
+        /** @var array<string, string> $characterSets */
+        $characterSets = (($raw !== []) && is_array($raw))
             ? array_column($raw, 'Default collation', 'Charset')
-            : null;
+            : [];
 
-        static::$characterSets = $characterSets
+        static::$characterSets = ($characterSets !== [])
             ? array_change_key_case($characterSets, CASE_LOWER)
             : [];
 

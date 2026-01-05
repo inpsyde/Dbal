@@ -162,6 +162,8 @@ class CompareTest extends UnitTestCase
 
     /**
      * @return array{Schema, SchemaFinder, Aliases, string, string}
+     *
+     * phpcs:disable WordPress.WP.AlternativeFunctions.rand_rand
      */
     private function prepareDependencies(): array
     {

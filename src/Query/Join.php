@@ -13,58 +13,27 @@ final class Join
     public const LEFT = 'left';
     public const INNER = 'inner';
 
-    /**
-     * @var string|null
-     */
-    private $type;
+    private ErrorCollector $errors;
+    private ?string $type = null;
+    private ?Schema $targetSchema = null;
+    private ?Schema $sourceSchema = null;
+    private ?string $columnOnSource = null;
+    private ?string $columnOnTarget = null;
+    private ?Where $where = null;
 
-    /**
-     * @var Schema|null
-     */
-    private $targetSchema;
+    /** @var non-empty-string|null */
+    private ?string $alias = null;
 
-    /**
-     * @var Schema|null
-     */
-    private $sourceSchema;
-
-    /**
-     * @var string|null
-     */
-    private $columnOnSource;
-
-    /**
-     * @var string|null
-     */
-    private $columnOnTarget;
-
-    /**
-     * @var ErrorCollector
-     */
-    private $errors;
-
-    /**
-     * @var string|null
-     */
-    private $alias;
-
-    /**
-     * @var Where|null
-     */
-    private $where;
-
-    /**
-     * @var string|null
-     */
-    private $raw;
+    /** @var non-empty-string|null */
+    private ?string $raw = null;
 
     /**
      * @param Schema $sourceSchema
      * @param Schema $targetSchema
-     * @param Aliases $aliases
-     * @param string|null  $columnNameOnSource
-     * @param string|null  $columnNameOnJoined
+     * @param string|null $columnNameOnSource
+     * @param string|null $columnNameOnJoined
      * @param string|null $alias
+     *
      * @return Join
      */
     public static function left(
@@ -90,6 +59,7 @@ final class Join
      * @param Schema $targetSchema
      * @param Where $where
      * @param string|null $alias
+     *
      * @return Join
      */
     public static function leftWhere(
@@ -108,6 +78,7 @@ final class Join
      * @param string $alias
      * @param string|null $columnNameOnSource
      * @param string|null $columnNameOnClause
+     *
      * @return Join
      */
     public static function leftRaw(
@@ -133,10 +104,10 @@ final class Join
     /**
      * @param Schema $sourceSchema
      * @param Schema $targetSchema
-     * @param Aliases $aliases
      * @param string|null $columnNameOnSource
      * @param string|null $columnNameOnJoined
      * @param string|null $alias
+     *
      * @return Join
      */
     public static function inner(
@@ -162,6 +133,7 @@ final class Join
      * @param Schema $targetSchema
      * @param Where $where
      * @param string|null $alias
+     *
      * @return Join
      */
     public static function innerWhere(
@@ -180,6 +152,7 @@ final class Join
      * @param string $alias
      * @param string|null $columnNameOnSource
      * @param string|null $columnNameOnClause
+     *
      * @return Join
      */
     public static function innerRaw(
@@ -230,14 +203,22 @@ final class Join
             $this->sourceSchema = $sourceSchema;
             $this->targetSchema = $targetSchema;
             $this->where = $where;
-            $this->alias = $alias;
+            $this->alias = ($alias === '')
+                ? null
+                : $alias;
 
             return;
         }
 
-        if ($raw && (!$alias || $targetSchema)) {
-            $alias or $this->errors->withError('Alias is required for raw JOINs.');
-            $targetSchema and $this->errors->withError('Target schema not allowed for raw JOINs.');
+        $hasRaw = ($raw !== null) && ($raw !== '');
+        $hasNoAlias = ($alias === null) && ($raw === '');
+        if ($hasRaw && ($hasNoAlias || $targetSchema)) {
+            if ($hasNoAlias) {
+                $this->errors->withError('Alias is required for raw JOINs.');
+            }
+            if ($targetSchema) {
+                $this->errors->withError('Target schema not allowed for raw JOINs.');
+            }
 
             return;
         }
@@ -249,26 +230,7 @@ final class Join
             $columnOnJoined
         );
 
-        if (!$sourceCol || !$targetCol) {
-            $targetName = $targetSchema
-                ? sprintf("'%s'", $targetSchema->name())
-                : 'target expression';
-            $sourceName = $sourceSchema->name();
-            $sourceCol or $this->errors->withError(
-                sprintf(
-                    "Could not find a column on '%s' to be used to JOIN %s.",
-                    $sourceName,
-                    $targetName
-                )
-            );
-            $targetCol or $this->errors->withError(
-                sprintf(
-                    "Could not find a column on %s to be used to JOIN '%s'.",
-                    $targetName,
-                    $sourceName
-                )
-            );
-
+        if (!$this->checkColumns($sourceCol, $targetCol, $sourceSchema, $targetSchema)) {
             return;
         }
 
@@ -277,8 +239,12 @@ final class Join
         $this->targetSchema = $targetSchema;
         $this->columnOnSource = $sourceCol;
         $this->columnOnTarget = $targetCol;
-        $this->alias = $alias;
-        $this->raw = $raw;
+        $this->alias = ($alias === '')
+            ? null
+            : $alias;
+        $this->raw = ($raw === '')
+            ? null
+            : $raw;
     }
 
     /**
@@ -292,6 +258,7 @@ final class Join
     /**
      * @param SchemaFinder $finder
      * @param Aliases $aliases
+     *
      * @return string
      */
     public function clause(SchemaFinder $finder, Aliases $aliases): string
@@ -308,9 +275,11 @@ final class Join
             return '';
         }
 
-        $clause = $this->type === self::INNER ? 'INNER JOIN ' : 'LEFT JOIN ';
-        if ($this->raw) {
-            return $clause . "($this->raw) AS `{$this->alias}` {$on}";
+        $clause = $this->type === self::INNER
+            ? 'INNER JOIN '
+            : 'LEFT JOIN ';
+        if ($this->raw !== null) {
+            return $clause . "({$this->raw}) AS `{$this->alias}` {$on}";
         }
 
         /** @var Schema $targetSchema */
@@ -318,7 +287,7 @@ final class Join
         $targetName = $finder->fullTableName($targetSchema);
 
         $clause .= "`{$targetName}`";
-        if ($this->alias) {
+        if ($this->alias !== null) {
             $clause .= " AS `{$this->alias}`";
         }
 
@@ -329,6 +298,7 @@ final class Join
      * @param string $column
      * @param Schema $schema
      * @param Aliases $aliases
+     *
      * @return string
      */
     private function resolveColumn(string $column, Schema $schema, Aliases $aliases): string
@@ -340,21 +310,20 @@ final class Join
 
         [$columnName, , , $columnTableName] = $aliases->resolveColumn($column);
         $aliases->mergeErrors($this->errors);
-        if (!$this->errors->isEmpty() || !$columnName) {
+        if (!$this->errors->isEmpty() || ($columnName === null)) {
             return '';
         }
 
         $tableName = $table ?? $columnTableName ?? $schema->name();
         [, , $tableAlias] = $aliases->resolveSchema($tableName);
+        $tableAlias ??= '';
 
         if (
-            $table
-            && ($columnTableName || $tableAlias)
+            ($table !== null)
+            && (($columnTableName !== null) || ($tableAlias !== ''))
             && !in_array($table, [$columnTableName, $tableAlias], true)
         ) {
-            $this->errors->withError(
-                "Table '{$table}' is unknown alias."
-            );
+            $this->errors->withError("Table '{$table}' is unknown alias.");
 
             return '';
         }
@@ -372,6 +341,7 @@ final class Join
 
     /**
      * @param ErrorCollector $collector
+     *
      * @return void
      */
     public function mergeErrors(ErrorCollector $collector): void
@@ -380,11 +350,61 @@ final class Join
     }
 
     /**
+     * @param non-empty-string|null $sourceCol
+     * @param non-empty-string|null $targetCol
+     * @param Schema $sourceSchema
+     * @param Schema|null $targetSchema
+     *
+     * @return bool
+     */
+    private function checkColumns(
+        ?string $sourceCol,
+        ?string $targetCol,
+        Schema $sourceSchema,
+        ?Schema $targetSchema
+    ): bool {
+
+        if (($sourceCol !== null) && ($targetCol !== null)) {
+            return true;
+        }
+
+        $targetName = $targetSchema
+            ? sprintf("'%s'", $targetSchema->name())
+            : 'target expression';
+        $sourceName = $sourceSchema->name();
+
+        if ($sourceCol === null) {
+            $this->errors->withError(
+                sprintf(
+                    "Could not find a column on '%s' to be used to JOIN %s.",
+                    $sourceName,
+                    $targetName
+                )
+            );
+        }
+
+        if ($targetCol === null) {
+            $this->errors->withError(
+                sprintf(
+                    "Could not find a column on %s to be used to JOIN '%s'.",
+                    $targetName,
+                    $sourceName
+                )
+            );
+        }
+
+        return false;
+    }
+
+    /**
      * @param Schema $sourceSchema
      * @param Schema|null $targetSchema
      * @param string|null $columnNameOnSource
      * @param string|null $columnNameOnJoined
-     * @return array{string|null, string|null}
+     *
+     * @return list{non-empty-string|null, non-empty-string|null}
+     *
+     * phpcs:disable SlevomatCodingStandard.Complexity.Cognitive.ComplexityTooHigh
      */
     private function resolveColumns(
         Schema $sourceSchema,
@@ -396,30 +416,47 @@ final class Join
         $sourceUsePrimary = false;
         $joinedUsePrimary = false;
 
-        if (!$columnNameOnSource) {
+        if (($columnNameOnSource === '') || ($columnNameOnSource === null)) {
             $columnNameOnSource = $this->findPrimaryColName($sourceSchema);
-            $sourceUsePrimary = (bool)$columnNameOnSource;
+            $sourceUsePrimary = (bool) $columnNameOnSource;
         }
 
-        if (!$targetSchema) {
+        if ($targetSchema === null) {
+            if ($columnNameOnSource === '') {
+                $columnNameOnSource = null;
+            }
+            if ($columnNameOnJoined === '') {
+                $columnNameOnJoined = null;
+            }
+
             return [$columnNameOnSource, $columnNameOnJoined ?? $columnNameOnSource];
         }
 
-        if (!$columnNameOnJoined) {
+        if (($columnNameOnJoined === '') || ($columnNameOnJoined === null)) {
             $columnNameOnJoined = $this->findPrimaryColName($targetSchema);
-            $joinedUsePrimary = (bool)$columnNameOnJoined;
+            $joinedUsePrimary = (bool) $columnNameOnJoined;
         }
 
-        if (!$columnNameOnSource && !$columnNameOnJoined) {
+        $columnNameOnSource ??= '';
+        $columnNameOnJoined ??= '';
+
+        if (($columnNameOnSource === '') && ($columnNameOnJoined === '')) {
             return [null, null];
         }
 
-        if (!$columnNameOnJoined && !$sourceUsePrimary) {
+        if (($columnNameOnJoined === '') && !$sourceUsePrimary) {
             return [$columnNameOnSource, $columnNameOnSource];
         }
 
-        if (!$columnNameOnSource && !$joinedUsePrimary) {
+        if (($columnNameOnSource === '') && !$joinedUsePrimary) {
             return [$columnNameOnJoined, $columnNameOnJoined];
+        }
+
+        if ($columnNameOnSource === '') {
+            $columnNameOnSource = null;
+        }
+        if ($columnNameOnJoined === '') {
+            $columnNameOnJoined = null;
         }
 
         return [$columnNameOnSource, $columnNameOnJoined];
@@ -427,19 +464,25 @@ final class Join
 
     /**
      * @param Schema $schema
+     *
      * @return string|null
      */
     private function findPrimaryColName(Schema $schema): ?string
     {
         $keys = $schema->indexes();
-        $primary = $keys ? $keys->primary() : null;
+        $primary = $keys
+            ? $keys->primary()
+            : null;
 
-        return $primary ? $primary->name() : null;
+        return $primary
+            ? $primary->name()
+            : null;
     }
 
     /**
      * @param SchemaFinder $finder
      * @param Aliases $aliases
+     *
      * @return string
      */
     private function onClauseByColumns(SchemaFinder $finder, Aliases $aliases): string
@@ -458,20 +501,22 @@ final class Join
         $sourceColName = $this->resolveColumn($this->columnOnSource ?? '', $sourceSchema, $aliases);
 
         $targetColName = '';
-        if (!$this->raw) {
+        if ($this->raw === null) {
             $targetSearch = $this->columnOnTarget ?? '';
             /** @var Schema $targetSchema */
             $targetColName = $this->resolveColumn($targetSearch, $targetSchema, $aliases);
         }
 
-        if (!$sourceColName || (!$targetColName && !$this->raw)) {
+        if (($sourceColName === '') || (($targetColName === '') && ($this->raw === null))) {
             return '';
         }
 
         $clause = "ON `{$sourceRef}`.`{$sourceColName}` = ";
         /** @var Schema $targetSchema */
         $targetRef = $this->alias ?? $finder->fullTableName($targetSchema);
-        $targetColName = $this->raw ? $this->columnOnTarget : $targetColName;
+        $targetColName = ($this->raw !== null)
+            ? $this->columnOnTarget
+            : $targetColName;
         $clause .= "`{$targetRef}`.`{$targetColName}`";
 
         return $clause;
@@ -480,6 +525,7 @@ final class Join
     /**
      * @param SchemaFinder $finder
      * @param Aliases $aliases
+     *
      * @return string
      */
     private function onClauseByWhere(SchemaFinder $finder, Aliases $aliases): string
@@ -494,7 +540,7 @@ final class Join
         $targetSchema = $this->targetSchema;
 
         $whereAliases = $aliases;
-        if ($this->alias) {
+        if ($this->alias !== null) {
             $whereAliases = clone $aliases;
             $whereAliases = $whereAliases->forSchema($targetSchema->name(), $this->alias);
         }

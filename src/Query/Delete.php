@@ -19,13 +19,10 @@ class Delete extends BaseSelect
     public const DELETE = 'delete';
     public const FILTER_QUERY_PART = 'dbal.delete-query-part';
 
-    /** @var Cache|null */
-    private $cache;
+    private ?Cache $cache;
 
-    /**
-     * @var list<Schema>
-     */
-    private $tablesOnly = [];
+    /** @var list<Schema> */
+    private array $tablesOnly = [];
 
     /**
      * @param string $tableName
@@ -115,7 +112,7 @@ class Delete extends BaseSelect
      * @param string|null $operator
      * @return Result
      */
-    public function delOnPrimary($primaryValue, ?string $operator = null): Result
+    public function delOnPrimary(mixed $primaryValue, ?string $operator = null): Result
     {
         if (!$this->errors->isEmpty()) {
             return Result::new($this->errors);
@@ -172,7 +169,7 @@ class Delete extends BaseSelect
             if (is_numeric($rows)) {
                 $this->flushCache(...$allSchemas);
 
-                return Result::new((int)$rows);
+                return Result::new((int) $rows);
             }
 
             $this->errors->withError('Failed deleting rows');
@@ -234,8 +231,9 @@ class Delete extends BaseSelect
         ?string $raw = null
     ): BaseSelect {
 
-        if ($alias || ($this->limit[0] !== null)) {
-            if ($alias) {
+        $alias ??= '';
+        if (($alias !== '') || ($this->limit[0] !== null)) {
+            if (($alias !== '')) {
                 $this->pushError('Aliases are not allowed in DELETE queries');
             }
 

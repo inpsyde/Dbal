@@ -132,10 +132,14 @@ SQL;
         $finder = $this->initializeSampleTablesFinder();
 
         $select = Select::from(TableOne::NAME, 'm', $finder)
-            ->innerJoinWhere(TableTwo::NAME, Where::new()->withCompare(
-                Compare::columns('m.' . TableOne::ID, 's.' . TableTwo::ID, Where::EQ)
-            ),
-                's')
+            ->innerJoinWhere(
+                TableTwo::NAME,
+                Where::new()
+                ->withCompare(
+                    Compare::columns('m.' . TableOne::ID, 's.' . TableTwo::ID, Where::EQ)
+                ),
+                's'
+            )
             ->andCol('m.' . TableOne::ID, 'Table One Id');
 
 
@@ -156,7 +160,7 @@ QUERY;
         $finder = $this->initializeSampleTablesFinder();
 
         $select = Select::from(TableOne::NAME, 'm', $finder)
-            ->innerJoin(TableTwo::NAME, 'm.' . TableOne::ID, 's.' . TableTwo::ID,'s')
+            ->innerJoin(TableTwo::NAME, 'm.' . TableOne::ID, 's.' . TableTwo::ID, 's')
             ->andCol('m.' . TableOne::ID, 'Table One Id');
 
 
@@ -177,7 +181,7 @@ QUERY;
         $finder = $this->initializeSampleTablesFinder();
 
         $select = Select::from(TableOne::NAME, 'm', $finder)
-            ->innerJoin(TableTwo::NAME, 'm.' . TableOne::ID, 's.' . TableTwo::ID,'s')
+            ->innerJoin(TableTwo::NAME, 'm.' . TableOne::ID, 's.' . TableTwo::ID, 's')
             ->andCol('m.id', 'Table One Id')
             ->andCol('s.id', 'Table Two Id');
 

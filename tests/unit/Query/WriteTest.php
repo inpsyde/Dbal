@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\Dbal\Tests\Unit\Query;
 
-use Inpsyde\Dbal\Query\Compare;
 use Inpsyde\Dbal\Query\Where;
 use Inpsyde\Dbal\Query\Write;
 use Inpsyde\Dbal\Tests\TableOne;
@@ -139,57 +138,6 @@ UPDATE `wp_1_tests_sample_table` SET `text` = 'one', `can_be_null` = NULL, `inte
 WHERE `id` = 1 AND `double` = '1.123'
 SQL;
 
-        global $wpdb;
-        $this->assertSameQuery($expectedQuery, $wpdb->last_query);
-    }
-
-    /**
-     * @test
-     */
-    public function testDeleteWhere(): void
-    {
-        $finder = $this->initializeSampleTablesFinder();
-        $where = Where::new()->withCompare(Compare::columnValue(TableOne::POST_ID, 1, '>='));
-        $result = Write::on(TableOne::NAME, $finder)->deleteWhere($where);
-
-        static::assertFalse($result->isErrored());
-
-        $expectedQuery = <<<SQL
-DELETE FROM `wp_1_tests_sample_table` WHERE `wp_1_tests_sample_table`.`post_id` >= 1;
-SQL;
-
-        global $wpdb;
-        $this->assertSameQuery($expectedQuery, $wpdb->last_query);
-    }
-
-    /**
-     * @test
-     */
-    public function testDelete(): void
-    {
-        $finder = $this->initializeSampleTablesFinder();
-        $result = Write::on(TableOne::NAME, $finder)->delete([TableOne::POST_ID => 1]);
-
-        $result->extract();
-
-        $expectedQuery = <<<SQL
-DELETE FROM `wp_1_tests_sample_table` WHERE `post_id` = 1
-SQL;
-
-        global $wpdb;
-        $this->assertSameQuery($expectedQuery, $wpdb->last_query);
-    }
-
-    /**
-     * @test
-     */
-    public function testDeleteOnPrimary(): void
-    {
-        $finder = $this->initializeSampleTablesFinder();
-        $result = Write::on(TableOne::NAME, $finder)->deleteOnPrimary(1);
-        $result->extract();
-
-        $expectedQuery = "DELETE FROM `wp_1_tests_sample_table` WHERE `id` = 1";
         global $wpdb;
         $this->assertSameQuery($expectedQuery, $wpdb->last_query);
     }

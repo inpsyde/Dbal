@@ -5,15 +5,9 @@
     "license": "GPL-2.0-or-later",
     "authors": [
         {
-            "name": "Syde GmbH",
-            "homepage": "https://syde.com/",
-            "email": "hello@syde.com",
-            "role": "Company"
-        },
-        {
-            "name": "Giuseppe Mazzapica",
-            "homepage": "https://gmazzap.me",
-            "role": "developer"
+            "name": "Syde",
+            "homepage": "https://syde.com",
+            "role": "company"
         }
     ],
     "minimum-stability": "dev",
@@ -28,19 +22,23 @@
         }
     ],
     "require": {
-        "php": ">=7.2",
+        "php": ">=8.0",
         "ext-json": "*"
     },
     "require-dev": {
-        "inpsyde/php-coding-standards": "^1",
-        "phpunit/phpunit": "^8.5.26",
+        "syde/phpcs": "~1.0.1",
+        "phpunit/phpunit": "^9.6.17",
         "brain/monkey": "^2.6.1",
-        "roots/wordpress": ">=6.3.1",
-        "vimeo/psalm": "^4.23.0",
+        "roots/wordpress-no-content": ">=6.7",
         "inpsyde/wp-stubs-versions": "dev-latest",
+        "phpstan/phpstan": "^2.1.1",
+        "phpstan/phpstan-deprecation-rules": "^2.0.1",
+        "phpstan/phpstan-mockery": "^2.0.0",
+        "phpstan/phpstan-phpunit": "^2.0.4",
+        "swissspidy/phpstan-no-private": "^v1.0.0",
         "globalis/wp-cli-bin": "^2.8.1",
-        "symfony/process": "^v5.4.8",
-        "symfony/dotenv": "^v5.4.5"
+        "symfony/process": "^v5.4.36",
+        "symfony/dotenv": "^v5.4.36"
     },
     "autoload": {
         "psr-4": {
@@ -52,24 +50,27 @@
             "Inpsyde\\Dbal\\Tests\\": "tests/src/",
             "Inpsyde\\Dbal\\Tests\\Unit\\": "tests/unit/",
             "Inpsyde\\Dbal\\Tests\\Integration\\": "tests/integration/"
-        }
+        },
+        "classmap": [
+            "tests/fixtures/"
+        ]
     },
     "scripts": {
         "cs": "@php ./vendor/squizlabs/php_codesniffer/bin/phpcs",
-        "psalm": "@php ./vendor/vimeo/psalm/psalm --no-cache --no-diff --find-unused-psalm-suppress --output-format=compact",
-        "tests:unit": "@php ./vendor/phpunit/phpunit/phpunit --testsuite=unit",
-        "tests:unit:no-cov": "@php ./vendor/phpunit/phpunit/phpunit --testsuite=unit --no-coverage",
+        "phpstan": "@php ./vendor/bin/phpstan analyse --memory-limit=1G",
+        "tests:unit:cov": "@php ./vendor/phpunit/phpunit/phpunit --testsuite=unit",
+        "tests:unit": "@php ./vendor/phpunit/phpunit/phpunit --testsuite=unit --no-coverage",
         "tests:integration": "@php ./vendor/phpunit/phpunit/phpunit --testsuite=integration --no-coverage",
         "tests": [
             "@tests:integration",
             "@tests:unit"
         ],
-        "tests:no-cov": [
+        "tests:cov": [
             "@tests:integration",
-            "@tests:unit:no-cov"
+            "@tests:unit:cov"
         ],
         "qa": [
-            "@tests:unit:no-cov",
+            "@tests:unit",
             "@cs",
             "@psalm"
         ]

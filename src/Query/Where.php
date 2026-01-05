@@ -7,11 +7,14 @@ namespace Inpsyde\Dbal\Query;
 use Inpsyde\Dbal\Dbal;
 use Inpsyde\Dbal\ErrorCollector;
 use Inpsyde\Dbal\Schema\Column;
-use Inpsyde\Dbal\Schema\ColumnValueEncoder;
 use Inpsyde\Dbal\Schema\Columns;
-use Inpsyde\Dbal\Schema\SchemaFinder;
+use Inpsyde\Dbal\Schema\ColumnValueEncoder;
 use Inpsyde\Dbal\Schema\Schema;
+use Inpsyde\Dbal\Schema\SchemaFinder;
 
+/**
+ * @phpstan-type Clauses array{bool, string, string, mixed, string|null}
+ */
 class Where
 {
     public const AND = 'AND';
@@ -54,19 +57,16 @@ class Where
     ];
 
     /**
-     * @var array<array>
+     * @var list<Clauses>
      */
-    private $clauses = [];
-
-    /**
-     * @var ErrorCollector
-     */
-    private $errors;
+    private array $clauses = [];
+    private ErrorCollector $errors;
 
     /**
      * @param string $column
      * @param ErrorCollector $collector
-     * @return array{string, string|null}
+     *
+     * @return array{string, non-empty-string|null}
      */
     public static function maybeSplitTableName(string $column, ErrorCollector $collector): array
     {
@@ -76,11 +76,16 @@ class Where
         $table = null;
 
         if ($colPartsCount === 2) {
-            $column = $colParts[1];
-            $table = $colParts[0] ?: null;
+            [$table, $column] = $colParts;
+            if ($table === '') {
+                $table = null;
+            }
+            if ($column === '') {
+                $column = null;
+            }
         }
 
-        if (!$column || ($colPartsCount > 2)) {
+        if (($column === null) || ($column === '') || ($colPartsCount > 2)) {
             $collector->withError("Invalid column name '{$origCol}'.");
 
             return ['', null];
@@ -105,10 +110,11 @@ class Where
     /**
      * @param string $column
      * @param mixed $value
-     * @param string $operator
+     * @param string|null $operator
+     *
      * @return Where
      */
-    public function with(string $column, $value, ?string $operator = null): Where
+    public function with(string $column, mixed $value, ?string $operator = null): Where
     {
         if (!$this->errors->isEmpty()) {
             return $this;
@@ -128,6 +134,7 @@ class Where
      * @param string $clause
      * @param string|null $column
      * @param string|null $operator
+     *
      * @return Where
      */
     public function withRaw(string $clause, ?string $column = null, ?string $operator = null): Where
@@ -158,9 +165,10 @@ class Where
      * @param string $column
      * @param mixed $value
      * @param string|null $operator
+     *
      * @return Where
      */
-    public function and(string $column, $value, ?string $operator = null): Where
+    public function and(string $column, mixed $value, ?string $operator = null): Where
     {
         if (!$this->errors->isEmpty()) {
             return $this;
@@ -180,6 +188,7 @@ class Where
      * @param string $clause
      * @param string|null $column
      * @param string|null $operator
+     *
      * @return Where
      */
     public function andRaw(string $clause, ?string $column = null, ?string $operator = null): Where
@@ -212,9 +221,10 @@ class Where
      * @param string $column
      * @param mixed $value
      * @param string|null $operator
+     *
      * @return Where
      */
-    public function or(string $column, $value, ?string $operator = null): Where
+    public function or(string $column, mixed $value, ?string $operator = null): Where
     {
         if (!$this->errors->isEmpty()) {
             return $this;
@@ -234,6 +244,7 @@ class Where
      * @param string $clause
      * @param string|null $column
      * @param string|null $operator
+     *
      * @return Where
      */
     public function orRaw(string $clause, ?string $column = null, ?string $operator = null): Where
@@ -263,6 +274,7 @@ class Where
     /**
      * @param Compare $compare
      * @param Compare ...$compares
+     *
      * @return Where
      */
     public function withCompare(Compare $compare, Compare ...$compares): Where
@@ -279,6 +291,7 @@ class Where
     /**
      * @param Compare $compare
      * @param Compare ...$compares
+     *
      * @return Where
      */
     public function andCompare(Compare $compare, Compare ...$compares): Where
@@ -299,6 +312,7 @@ class Where
     /**
      * @param Compare $compare
      * @param Compare ...$compares
+     *
      * @return Where
      */
     public function orCompare(Compare $compare, Compare ...$compares): Where
@@ -319,6 +333,7 @@ class Where
     /**
      * @param Where $where
      * @param Where ...$wheres
+     *
      * @return Where
      */
     public function andWhere(Where $where, Where ...$wheres): Where
@@ -343,6 +358,7 @@ class Where
     /**
      * @param Where $where
      * @param Where ...$wheres
+     *
      * @return Where
      */
     public function orWhere(Where $where, Where ...$wheres): Where
@@ -369,13 +385,14 @@ class Where
      */
     public function hasClauses(): bool
     {
-        return (bool)$this->clauses;
+        return (bool) $this->clauses;
     }
 
     /**
      * @param Schema $defaultSchema
      * @param SchemaFinder $finder
      * @param Aliases $aliases
+     *
      * @return string
      */
     public function clause(Schema $defaultSchema, SchemaFinder $finder, Aliases $aliases): string
@@ -389,6 +406,7 @@ class Where
 
     /**
      * @param ErrorCollector $collector
+     *
      * @return void
      */
     public function pushErrorTo(ErrorCollector $collector): void
@@ -401,7 +419,10 @@ class Where
      * @param Schema $defaultSchema
      * @param SchemaFinder $finder
      * @param Aliases $aliases
+     *
      * @return string
+     *
+     * phpcs:disable SlevomatCodingStandard.Complexity.Cognitive.ComplexityTooHigh
      */
     private function buildClause(
         array $columns,
@@ -460,7 +481,7 @@ class Where
             }
 
             $schemaName = $schema->name();
-            if (empty($columns[$schemaName])) {
+            if (!isset($columns[$schemaName])) {
                 $columns[$schemaName] = $schema->columns();
             }
 
@@ -488,6 +509,7 @@ class Where
      * @param Schema $defaultSchema
      * @param SchemaFinder $finder
      * @param Aliases $aliases
+     *
      * @return array{string, Schema, string}|null
      */
     private function columnAndSchemaInfo(
@@ -497,26 +519,25 @@ class Where
         Aliases $aliases
     ): ?array {
 
-        [$column, $table] = Where::maybeSplitTableName($rawColumn, $this->errors);
+        [$column, $table] = self::maybeSplitTableName($rawColumn, $this->errors);
         if (!$this->errors->isEmpty()) {
             return null;
         }
 
         [$realColumn, , , $colTable] = $aliases->resolveColumn($column);
         $aliases->mergeErrors($this->errors);
-        if (!$this->errors->isEmpty() || !$realColumn) {
+        if (!$this->errors->isEmpty() || ($realColumn === null)) {
             return null;
         }
 
         $tableName = $table ?? $defaultSchema->name();
         [$tableRealName, $schema, $tableAlias] = $aliases->resolveSchema($tableName);
         $aliases->mergeErrors($this->errors);
-        /** @psalm-suppress ParadoxicalCondition */
         if (!$this->errors->isEmpty() || !$schema) {
             return null;
         }
 
-        if ($colTable && ($colTable !== $tableRealName)) {
+        if (($colTable !== null) && ($colTable !== '') && ($colTable !== $tableRealName)) {
             $this->errors->withError(
                 "Table '{$colTable}' used in column alias for '{$realColumn}' does not match "
                 . "{$tableRealName} used for same column in WHERE clause."
@@ -536,6 +557,7 @@ class Where
      * @param string $value
      * @param string|null $operator
      * @param string|null $columnName
+     *
      * @return string
      */
     private function buildRawClause(
@@ -546,9 +568,15 @@ class Where
         ?string $columnName = null
     ): string {
 
-        $clause and $clause .= " {$type} ";
-        $columnName and $clause .= "{$columnName} ";
-        $operator and $clause .= "{$operator} ";
+        if ($clause !== '') {
+            $clause .= " {$type} ";
+        }
+        if (($columnName !== null) && ($columnName !== '')) {
+            $clause .= "{$columnName} ";
+        }
+        if (($operator !== null) && ($operator !== '')) {
+            $clause .= "{$operator} ";
+        }
         $clause .= $value;
 
         return $clause;
@@ -559,6 +587,7 @@ class Where
      * @param string $type
      * @param string $columnName
      * @param string|null $operator
+     *
      * @return string
      */
     private function buildNullClause(
@@ -568,8 +597,12 @@ class Where
         ?string $operator
     ): string {
 
-        $is = $operator === self::IS_NOT ? 'IS NOT NULL' : 'IS NULL';
-        $clause and $clause .= " {$type} ";
+        $is = $operator === self::IS_NOT
+            ? 'IS NOT NULL'
+            : 'IS NULL';
+        if ($clause !== '') {
+            $clause .= " {$type} ";
+        }
         $clause .= "{$columnName} {$is}";
 
         return $clause;
@@ -583,36 +616,38 @@ class Where
      * @param string|null $format
      * @param string|null $operator
      * @param Column|null $valueColumnObject
+     *
      * @return string
      */
     private function buildParsedClause(
         string $clause,
         string $type,
         string $column,
-        $columnValue,
+        mixed $columnValue,
         ?string $format,
         ?string $operator,
         ?Column $valueColumnObject = null
     ): string {
 
         $wpdb = Dbal::wpdb();
-
-        if (!$format) {
-            $format = '%s';
-        }
+        $format ??= '%s';
 
         $multiValue = is_array($columnValue)
             && in_array($operator, [self::IN, self::NOT_IN], true);
 
         if (!$multiValue) {
             if ($operator === null) {
-                $operator = ($columnValue === null) ? self::IS : self::EQ;
+                $operator = ($columnValue === null)
+                    ? self::IS
+                    : self::EQ;
             }
-            $clause and $clause .= " {$type} ";
+            if ($clause !== '') {
+                $clause .= " {$type} ";
+            }
             $columnClause = "{$column} {$operator} {$format}";
             $columnValue = $this->encodeValue($columnValue, $valueColumnObject);
 
-            return $clause . (string)$wpdb->prepare($columnClause, $columnValue);
+            return $clause . (string) $wpdb->prepare($columnClause, $columnValue);
         }
 
         $parsedValue = [];
@@ -621,10 +656,12 @@ class Where
         }
 
         $inFormat = rtrim(str_repeat("{$format},", count($parsedValue)), ',');
-        $clause and $clause .= " {$type} ";
+        if ($clause !== '') {
+            $clause .= " {$type} ";
+        }
         $columnClause = "{$column} {$operator} ({$inFormat}) ";
 
-        return $clause . (string)$wpdb->prepare($columnClause, ...$parsedValue);
+        return $clause . (string) $wpdb->prepare($columnClause, ...$parsedValue);
     }
 
     /**
@@ -634,6 +671,7 @@ class Where
      * @param Schema $defaultSchema
      * @param SchemaFinder $finder
      * @param Aliases $aliases
+     *
      * @return string
      */
     private function buildCompareClause(
@@ -656,7 +694,7 @@ class Where
             return $clause;
         }
 
-        if (!$leftCol || ($rightColOrValue === null) || !$operator) {
+        if (($leftCol === null) || ($leftCol === '') || ($rightColOrValue === null)) {
             return $clause;
         }
 
@@ -666,7 +704,9 @@ class Where
                 return $clause;
             }
 
-            $clause and $clause .= " {$type} ";
+            if ($clause !== '') {
+                $clause .= " {$type} ";
+            }
             $clause .= "{$leftCol} {$operator} {$rightColOrValue}";
 
             return $clause;
@@ -688,7 +728,9 @@ class Where
             return $clause;
         }
 
-        $clause and $clause .= " {$type} ";
+        if ($clause !== '') {
+            $clause .= " {$type} ";
+        }
         $clause .= "{$leftCol} {$operator} {$rightColOrValue}";
 
         return $clause;
@@ -702,6 +744,7 @@ class Where
      * @param Schema $defaultSchema
      * @param SchemaFinder $finder
      * @param Aliases $aliases
+     *
      * @return string
      */
     private function buildInnerClause(
@@ -715,17 +758,20 @@ class Where
     ): string {
 
         $inner = $value->buildClause($columns, $defaultSchema, $finder, $aliases);
-        $clause .= $clause ? " {$type} ({$inner})" : $inner;
+        $clause .= $clause
+            ? " {$type} ({$inner})"
+            : $inner;
 
         return $clause;
     }
 
     /**
-     * @param string $operator
-     * @param mixed|null $value
+     * @param string|null $operator
+     * @param mixed $value
+     *
      * @return void
      */
-    private function checkOperator(?string $operator, $value): void
+    private function checkOperator(?string $operator, mixed $value): void
     {
         if ($operator === null) {
             // null means default operator, which will be fine.
@@ -770,13 +816,14 @@ class Where
     /**
      * @param string|null $operator
      * @param string|null $column
+     *
      * @return array{string|null, string|null}
      */
     private function checkRawParams(?string $operator, ?string $column): array
     {
         if ($operator !== null) {
             $operator = strtoupper($operator);
-            if (empty(self::OPERATORS[$operator])) {
+            if (!isset(self::OPERATORS[$operator])) {
                 $this->errors->withError("Invalid WHERE operator '{$operator}'.");
 
                 return [null, null];
@@ -789,16 +836,19 @@ class Where
     /**
      * @param mixed $value
      * @param Column|null $column
+     *
      * @return mixed
+     *
+     * phpcs:disable Syde.Functions.ReturnTypeDeclaration.NoReturnType
      */
-    private function encodeValue($value, ?Column $column)
+    private function encodeValue(mixed $value, ?Column $column)
     {
         if ($column) {
             $value = ColumnValueEncoder::for($column)->encode($value);
         }
 
         if (is_array($value) || $value instanceof \stdClass) {
-            $value = serialize((array)$value);
+            $value = serialize((array) $value);
         } elseif ($value instanceof \DateTimeInterface) {
             $value = $value->format('Y-m-d H:i:s');
         }

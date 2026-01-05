@@ -33,7 +33,7 @@ class WriteBuilderTest extends UnitTestCase
         static::assertFalse(Dbal::isReady());
 
         Monkey\Actions\expectDone(Dbal::ACTION_READY)
-            ->whenHappen(static function () {
+            ->whenHappen(static function (): void {
                 Dbal::schemas()->registerForInstall(new TableOne());
             });
 
@@ -45,16 +45,16 @@ SQL;
 
         do_action('setup_theme');
 
-        $data =  [
+        $data = [
             'post_id' => 1,
             'double' => 1.123,
             'text' => 'two',
             'integer' => 12,
-            'can_be_null' => 'not null'
+            'can_be_null' => 'not null',
         ];
         $builder->insert($data)->assert();
 
-        $data =  ['text' => 'one', 'integer' => '11', 'can_be_null' => null];
+        $data = ['text' => 'one', 'integer' => '11', 'can_be_null' => null];
         $where = Where::new()->with('id', 1, '>=')->and('double', [1.123, 2.456, 3.789], 'IN');
         $builder->updateWhere($data, $where)->assert();
 
@@ -71,19 +71,20 @@ SQL;
 
         Monkey\Actions\expectDone(Dbal::ACTION_READY)
             ->zeroOrMoreTimes()
-            ->whenHappen(static function () {
+            ->whenHappen(static function (): void {
                 Dbal::schemas()->registerForInstall(new TableOne());
             });
 
-        $data =  [
+        $data = [
             'post_id' => 1,
             'double' => 1.123,
             'text' => 'two',
             'integer' => 12,
         ];
 
-        $errors = $builder->insert($data)->error()->allMessages();
-
+        $error = $builder->insert($data)->error();
+        static::assertNotNull($error);
+        $errors = $error->allMessages();
         static::assertSame(1, preg_match('~could not execute Write::insert~i', $errors[0]));
         static::assertSame(1, preg_match('~before DBAL is ready~i', $errors[1]));
     }

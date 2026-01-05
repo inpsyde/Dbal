@@ -7,14 +7,10 @@ namespace Inpsyde\Dbal\Query;
 use Inpsyde\Dbal\Dbal;
 use Inpsyde\Dbal\Error;
 use Inpsyde\Dbal\Result;
-use Inpsyde\Dbal\Schema\Schema;
 
 final class WriteBuilder
 {
-    /**
-     * @var string
-     */
-    private $tableName;
+    private string $tableName;
 
     /**
      * @param string $tableName
@@ -50,7 +46,7 @@ final class WriteBuilder
     }
 
     /**
-     * @param array $insertData
+     * @param list<mixed> $insertData
      * @return Result
      */
     public function insert(array $insertData): Result
@@ -59,9 +55,9 @@ final class WriteBuilder
     }
 
     /**
-     * @param array $firstRow
-     * @param array $secondRow
-     * @param array[] $rows
+     * @param array<string, mixed> $firstRow
+     * @param array<string, mixed> $secondRow
+     * @param array<array<mixed>> $rows
      * @return Result
      */
     public function insertMany(array $firstRow, array $secondRow, array ...$rows): Result
@@ -70,8 +66,8 @@ final class WriteBuilder
     }
 
     /**
-     * @param array $updateData
-     * @param array $whereData
+     * @param array<string, mixed> $updateData
+     * @param array<string, mixed> $whereData
      * @return Result
      */
     public function update(array $updateData, array $whereData): Result
@@ -80,18 +76,17 @@ final class WriteBuilder
     }
 
     /**
-     * @param array $data
+     * @param array<string, mixed> $data
      * @param mixed $primaryValue
      * @return Result
      */
-    public function updateOnPrimary(array $data, $primaryValue): Result
+    public function updateOnPrimary(array $data, mixed $primaryValue): Result
     {
         return $this->execute(__FUNCTION__, func_get_args());
     }
 
     /**
-     * @param Schema $schema
-     * @param array $data
+     * @param array<string, mixed> $data
      * @param Where $where
      * @return Result
      */
@@ -101,7 +96,7 @@ final class WriteBuilder
     }
 
     /**
-     * @param array $whereData
+     * @param array<string, mixed> $whereData
      * @return Result
      */
     public function delete(array $whereData): Result
@@ -122,14 +117,14 @@ final class WriteBuilder
      * @param mixed $primaryValue
      * @return Result
      */
-    public function deleteOnPrimary($primaryValue): Result
+    public function deleteOnPrimary(mixed $primaryValue): Result
     {
         return $this->execute(__FUNCTION__, func_get_args());
     }
 
     /**
      * @param string $method
-     * @param array $args
+     * @param array<string, mixed>|array<mixed> $args
      * @return Result
      */
     private function execute(string $method, array $args): Result

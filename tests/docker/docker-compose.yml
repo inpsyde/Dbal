@@ -1,4 +1,21 @@
 services:
+    php83:
+        profiles: [ "php83" ]
+        build:
+            context: ./php83
+        container_name: dbal-php-83
+        depends_on:
+            mysql:
+                condition: service_healthy
+        environment:
+            WORDPRESS_DB_HOST: dbal-mysql
+            WORDPRESS_DB_NAME: wordpress
+            WORDPRESS_DB_USER: wordpress
+            WORDPRESS_DB_PASSWORD: wordpress
+        volumes:
+            - type: bind
+              source: ../../
+              target: /app
     php82:
         profiles: ["php82"]
         build:
@@ -50,57 +67,7 @@ services:
             - type: bind
               source: ../../
               target: /app
-    php74:
-        profiles: ["php74"]
-        build:
-            context: ./php74
-        container_name: dbal-php-74
-        depends_on:
-            mysql:
-                condition: service_healthy
-        environment:
-            WORDPRESS_DB_HOST: dbal-mysql
-            WORDPRESS_DB_NAME: wordpress
-            WORDPRESS_DB_USER: wordpress
-            WORDPRESS_DB_PASSWORD: wordpress
-        volumes:
-            -   type: bind
-                source: ../../
-                target: /app
-    php73:
-        profiles: ["php73"]
-        build:
-            context: ./php73
-        container_name: dbal-php-73
-        depends_on:
-            mysql:
-                condition: service_healthy
-        environment:
-            WORDPRESS_DB_HOST: dbal-mysql
-            WORDPRESS_DB_NAME: wordpress
-            WORDPRESS_DB_USER: wordpress
-            WORDPRESS_DB_PASSWORD: wordpress
-        volumes:
-            -   type: bind
-                source: ../../
-                target: /app
-    php72:
-        profiles: ["php72"]
-        build:
-            context: ./php72
-        container_name: dbal-php-72
-        depends_on:
-            mysql:
-                condition: service_healthy
-        environment:
-            WORDPRESS_DB_HOST: dbal-mysql
-            WORDPRESS_DB_NAME: wordpress
-            WORDPRESS_DB_USER: wordpress
-            WORDPRESS_DB_PASSWORD: wordpress
-        volumes:
-            -   type: bind
-                source: ../../
-                target: /app
+
     mysql:
         image: mysql:5.7
         container_name: dbal-mysql

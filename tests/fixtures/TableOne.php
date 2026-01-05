@@ -6,9 +6,9 @@ namespace Inpsyde\Dbal\Tests;
 
 use Inpsyde\Dbal\Schema\Column;
 use Inpsyde\Dbal\Schema\Columns;
-use Inpsyde\Dbal\Schema\InstallableSchema;
 use Inpsyde\Dbal\Schema\Index;
 use Inpsyde\Dbal\Schema\Indexes;
+use Inpsyde\Dbal\Schema\InstallableSchema;
 
 class TableOne implements InstallableSchema
 {
@@ -23,10 +23,7 @@ class TableOne implements InstallableSchema
     public const ENUM = 'enum';
     public const CAN_BE_NULL = 'can_be_null';
 
-    /**
-     * @var string
-     */
-    private $version;
+    private string $version;
 
     /**
      * @param string $version

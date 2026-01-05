@@ -91,12 +91,12 @@ class ResultTest extends UnitTestCase
     public function testBindSuccess(): void
     {
         $result = Result::new(123)->bind(
-            function (int $value): int {
+            static function (int $value): int {
                 static::assertSame(123, $value);
 
                 return 456;
             },
-            function (): void {
+            static function (): void {
                 static::fail();
             }
         );
@@ -116,7 +116,7 @@ class ResultTest extends UnitTestCase
             static function (): void {
                 static::fail();
             },
-            static function (): \Exception {
+            static function (): \Throwable {
                 return new \Exception('Meh meh!');
             }
         );
@@ -260,11 +260,13 @@ class ResultTest extends UnitTestCase
      */
     public function testExtractWith(): void
     {
-        $id = Result::new((object)['id' => '2'])->extractWith(function (\stdClass $data): int {
-            return (int)($data->id ?? 0);
-        });
+        $id = Result::new((object) ['id' => '2'])
+            ->extractWith(
+                static function (\stdClass $data): int {
+                    return (int) ($data->id ?? 0);
+                }
+            );
 
         static::assertSame(2, $id);
-
     }
 }
