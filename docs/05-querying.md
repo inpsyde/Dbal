@@ -6,66 +6,54 @@ Normally, in WordPress, creating queries happens through `$wpdb->prepare($sql, $
 
 For `SELECT` queries you start with invoking the `select()` method.
 
-:negative_squared_cross_mark: **WordPress core:**
-```php
-$sql = $wpdb->prepare('SELECT * FROM events');
-$wpdb->get_results($sql);
-```
-
-:white_check_mark: **dbal:**
 ```php
 use Inpsyde\Dbal\Dbal;
 
 Dbal::select('events');
+
+// vs WordPress core:
+$sql = $wpdb->prepare('SELECT * FROM events');
+$wpdb->get_results($sql);
 ```
 
 ### Table alias
 The `select()` method takes an optional second parameter with which a table alias can be specified.
 
-:negative_squared_cross_mark: **WordPress core:**
-```php
-$sql = $wpdb->prepare('SELECT * FROM events AS my-custom-alias');
-$wpdb->get_results($sql);
-```
-
-:white_check_mark: **dbal:**
 ```php
 use Inpsyde\Dbal\Dbal;
 
 Dbal::select('events', 'my-custom-alias');
+
+// vs WordPress core:
+$sql = $wpdb->prepare('SELECT * FROM events AS my-custom-alias');
+$wpdb->get_results($sql);
 ```
 
 ### Limit columns returned
 
 By default, the `Dbal::select()` calls `SELECT *`, if we want to limit this, we can use the `col()` method.
 
-:negative_squared_cross_mark: **WordPress core:**
-```php
-$sql = $wpdb->prepare('SELECT uuid, title, type FROM events');
-$wpdb->get_results($sql);
-```
-
-:white_check_mark: **dbal:**
 ```php
 use Inpsyde\Dbal\Dbal;
 
 Dbal::select('events')->cols('uuid', 'title', 'type');
+
+// vs WordPress core:
+$sql = $wpdb->prepare('SELECT uuid, title, type FROM events');
+$wpdb->get_results($sql);
 ```
 
 ### WHERE clause
 
-:negative_squared_cross_mark: **WordPress core:**
-```php
-$sql = $wpdb->prepare('SELECT * FROM events WHERE post_id = %d', [5]);
-$wpdb->get_results($sql);
-```
-
-:white_check_mark: **dbal:**
 ```php
 use Inpsyde\Dbal\Dbal;
 use Inpsyde\Dbal\Query\Where;
 
 Dbal::select('events')->where('post_id', 5, Where::EQ);
+
+// vs WordPress core:
+$sql = $wpdb->prepare('SELECT * FROM events WHERE post_id = %d', [5]);
+$wpdb->get_results($sql);
 ```
 
 The following operators are supported:
@@ -88,35 +76,28 @@ The following operators are supported:
 ### GROUP BY clause
 The `SELECT` statement can be specified with `GROUP BY` clause.
 
-:negative_squared_cross_mark: **WordPress core:**
-```php
-$sql = $wpdb->prepare('SELECT * FROM events GROUP BY post_id');
-$wpdb->get_results($sql);
-```
-
-:white_check_mark: **dbal:**
 ```php
 use Inpsyde\Dbal\Dbal;
 
 Dbal::select('events')->groupBy('post_id')
+
+// vs WordPress core:
+$sql = $wpdb->prepare('SELECT * FROM events GROUP BY post_id');
+$wpdb->get_results($sql);
 ```
 
 ### Join clauses
 
 For `SELECT` clauses you can generate different types of joins: `INNER` and `LEFT`. 
 
-:negative_squared_cross_mark: **WordPress core:**
 ```php
-$sql = $wpdb->prepare('SELECT * FROM events INNER JOIN wp_posts ON events.post_id = wp_posts.ID');
-$wpdb->get_results($sql);
-```
-
-:white_check_mark: **dbal:**
-```php
-
 use Inpsyde\Dbal\Dbal;
 
 Dbal::select('events', 'my-custom-alias')->innerJoin('posts', 'post_id', 'ID');
+
+// vs WordPress core:
+$sql = $wpdb->prepare('SELECT * FROM events INNER JOIN wp_posts ON events.post_id = wp_posts.ID');
+$wpdb->get_results($sql);
 ```
 
 Additionally, `inpsyde/dbal` also provides: `innerJoinWhere`, `innerJoinWith`, `joinViaPivot`, `leftJoin`, `leftJoinWhere`, `leftJoinWith`.
@@ -125,43 +106,49 @@ Additionally, `inpsyde/dbal` also provides: `innerJoinWhere`, `innerJoinWith`, `
 
 The `orderBy()` method adds an expression to the `ORDER BY` clause.
 
-:negative_squared_cross_mark: **WordPress core:**
-```php
-$sql = $wpdb->prepare('SELECT * FROM events ORDER BY start_date ASC');
-$wpdb->get_results($sql);
-```
-
-:white_check_mark: **dbal:**
 ```php
 use Inpsyde\Dbal\Dbal;
 use Inpsyde\Dbal\Query\Select;
 
 Dbal::select('events')->orderBy('start_date', Select::ASC);
+
+// vs WordPress core:
+$sql = $wpdb->prepare('SELECT * FROM events ORDER BY start_date ASC');
+$wpdb->get_results($sql);
 ```
 
 ### Limit clause
 The `LIMIT` can be used to paginate through your database table or limit the result to a specific amount of results.
 
-:negative_squared_cross_mark: **WordPress core:**
-```php
-$sql = $wpdb->prepare('SELECT * FROM events LIMIT 5, 0');
-$wpdb->get_results($sql);
-```
-
-:white_check_mark: **dbal:**
 ```php
 use Inpsyde\Dbal\Dbal;
 $limit = 5;
 $offset = 0;
 Dbal::select('events')->limit($limit, $offset);
+
+// vs WordPress core:
+$sql = $wpdb->prepare('SELECT * FROM events LIMIT %d, %d', [$limit, $offset]);
+$wpdb->get_results($sql);
 ```
 
 ## Update
 
 For `UPDATE` queries you start with invoking the `writeOn()` method.
 
-:negative_squared_cross_mark: **WordPress core:**
 ```php
+use Inpsyde\Dbal\Dbal;
+
+$result = Dbal::writeOn('events')->update(
+    [
+        'post_id' => 5,
+        'title' => 'My Party',
+        'status' => 'SCHEDULED',
+        'type' => 'event'
+    ],
+    [ 'id' => 1 ]
+);
+
+// vs WordPress core:
 $wpdb->update(
     'events', 
     [
@@ -176,40 +163,10 @@ $wpdb->update(
 );
 ```
 
-:white_check_mark: **dbal:**
-```php
-use Inpsyde\Dbal\Dbal;
-
-$result = Dbal::writeOn('events')->update(
-    [
-        'post_id' => 5,
-        'title' => 'My Party',
-        'status' => 'SCHEDULED',
-        'type' => 'event'
-    ],
-    [ 'id' => 1 ]
-);
-```
-
 ## Create
 
 For `CREATE` queries you start with invoking the `writeOn()` method.
 
-:negative_squared_cross_mark: **WordPress core:**
-```php
-$wpdb->insert(
-    'events', 
-    [
-        'post_id' => 1,
-        'title' => 'My Party',
-        'status' => 'SCHEDULED',
-        'type' => 'event'
-    ]
-    [ "%d", "%s", "%s", "%s" ],
-);
-```
-
-:white_check_mark: **dbal:**
 ```php
 use Inpsyde\Dbal\Dbal;
 
@@ -224,6 +181,18 @@ $result = Dbal::writeOn('events')->insert(
 
 $data = $result->extract();
 $data->inserted_id; // 1
+
+// vs WordPress core:
+$wpdb->insert(
+    'events', 
+    [
+        'post_id' => 1,
+        'title' => 'My Party',
+        'status' => 'SCHEDULED',
+        'type' => 'event'
+    ]
+    [ "%d", "%s", "%s", "%s" ],
+);
 ```
 
 
@@ -231,18 +200,14 @@ $data->inserted_id; // 1
 
 For `DELETE` queries you start with invoking the `deleteFrom()` method.
 
-:negative_squared_cross_mark: **WordPress core:**
-```php
-$wpdb->delete('events',['id' => 1]);
-```
-
-:white_check_mark: **dbal:**
 ```php
 use Inpsyde\Dbal\Dbal;
 
 $result = Dbal::deleteFrom('events')
     ->where(['id' => 1]);
 
+// vs WordPress core:
+$wpdb->delete('events',['id' => 1]);
 ```
 
 ## Transactions
