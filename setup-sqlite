@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Added as part of the dirty solution.
+
+mkdir -p vendor/roots/wordpress-no-content/wp-content/plugins/
+
+curl -o sqlite-database-integration.zip https://downloads.wordpress.org/plugin/sqlite-database-integration.zip
+unzip -o sqlite-database-integration.zip -d vendor/roots/wordpress-no-content/wp-content/plugins
+
+cp vendor/roots/wordpress-no-content/wp-content/plugins/sqlite-database-integration/db.copy vendor/roots/wordpress-no-content/wp-content/db.php
+cp wp-config-sample.php vendor/roots/wordpress-no-content/wp-config.php
+
+rm sqlite-database-integration.zip
+

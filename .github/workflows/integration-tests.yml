@@ -5,14 +5,12 @@ on:
     pull_request:
         paths:
             - '**/integration-tests*'
-            - '**/docker/**'
             - '**.php'
             - 'phpunit*'
             - 'composer.*'
     push:
         paths:
             - '**/integration-tests*'
-            - '**/docker/**'
             - '**.php'
             - 'phpunit*'
             - 'composer.*'
@@ -53,8 +51,8 @@ jobs:
             -   name: Install Composer Dependencies
                 uses: ramsey/composer-install@v3
 
+            -   name: Temp setup integration tests
+                run: ./setup-sqlite
+
             -   name: Run integration tests
-                working-directory: ./tests
-                run: |
-                    chmod u+x ./integration-tests.sh
-                    ./integration-tests.sh ${{ matrix.php-version }}
+                run:  ./vendor/bin/phpunit --testsuite=integration --no-coverage

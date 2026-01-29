@@ -6,7 +6,6 @@ namespace Inpsyde\Dbal\Tests;
 
 use PHPUnit\Runner\AfterLastTestHook;
 use PHPUnit\Runner\BeforeFirstTestHook;
-use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Component\Process\Process;
 
 final class WpInstallExtension implements BeforeFirstTestHook, AfterLastTestHook
@@ -23,7 +22,6 @@ final class WpInstallExtension implements BeforeFirstTestHook, AfterLastTestHook
         }
 
         $instance = new static();
-        $instance->loadEnvVars();
         $instance->installDb();
     }
 
@@ -83,8 +81,7 @@ final class WpInstallExtension implements BeforeFirstTestHook, AfterLastTestHook
             return;
         }
 
-        $this->runWpCliCommand(['db', 'drop', '--yes']);
-        @unlink(ABSPATH . 'wp-config.php');
+        @unlink(ABSPATH . 'wp-content/database/.ht.sqlite');
     }
 
     /**
@@ -92,59 +89,7 @@ final class WpInstallExtension implements BeforeFirstTestHook, AfterLastTestHook
      */
     private function initializeWp(): void
     {
-        [$dbHost, $dbName, $dbUser, $dbPwd] = $this->loadEnvVars();
-
-        $this->runWpCliCommand(
-            [
-                'config',
-                'create',
-                "--dbname={$dbName}",
-                "--dbuser={$dbUser}",
-                "--dbpass={$dbPwd}",
-                "--dbhost={$dbHost}",
-                '--force',
-            ]
-        );
-
-        $this->runWpCliCommand(['config', 'set', 'WP_DEBUG', 'true']);
-        $this->runWpCliCommand(['config', 'set', 'WP_DEBUG_LOG', 'false']);
-        $this->runWpCliCommand(['config', 'set', 'WP_DEBUG_DISPLAY', 'true']);
-        $this->runWpCliCommand(['config', 'set', 'SAVEQUERIES', 'true']);
-
         $this->installDb();
-    }
-
-    /**
-     * @return list{non-empty-string, non-empty-string, non-empty-string, string}
-     */
-    private function loadEnvVars(): array
-    {
-        $testsDir = getenv('TESTS_DIR');
-        assert(is_string($testsDir) && is_dir($testsDir), new \Exception('Please set TESTS_DIR.'));
-
-        $testsEnv = "{$testsDir}/.env";
-        if (file_exists($testsEnv) && (getenv('WORDPRESS_DB_NAME') === false)) {
-            (new Dotenv())->load($testsEnv);
-        }
-
-        $dbHost = getenv('WORDPRESS_DB_HOST');
-        $dbName = getenv('WORDPRESS_DB_NAME');
-        $dbUser = getenv('WORDPRESS_DB_USER');
-        $dbPwd = getenv('WORDPRESS_DB_PASSWORD');
-
-        if (
-            ($dbHost === '')
-            || ($dbName === '')
-            || ($dbUser === '')
-            || !is_string($dbHost)
-            || !is_string($dbName)
-            || !is_string($dbUser)
-            || !is_string($dbPwd)
-        ) {
-            throw new \Exception('Could not initialize WP: missing env vars.');
-        }
-
-        return [$dbHost, $dbName, $dbUser, $dbPwd];
     }
 
     /**
@@ -152,7 +97,7 @@ final class WpInstallExtension implements BeforeFirstTestHook, AfterLastTestHook
      */
     private function installDb(): void
     {
-        $this->runWpCliCommand(['db', 'reset', '--yes']);
+        @unlink(ABSPATH . 'wp-content/database/.ht.sqlite');
 
         $this->runWpCliCommand(
             [
@@ -181,22 +126,14 @@ final class WpInstallExtension implements BeforeFirstTestHook, AfterLastTestHook
         }
         /** @var non-falsy-string $cliPath */
 
-        array_unshift($command, 'wp');
+        array_unshift($command, './wp');
         $command[] = "--path=" . str_replace('\\', '/', ABSPATH);
         $command[] = "--quiet";
         $command[] = "--skip-plugins";
         $command[] = "--skip-themes";
         $command[] = "--allow-root";
 
-        [$dbHost, $dbName, $dbUser, $dbPwd] = $this->loadEnvVars();
-        $env = [
-            'WORDPRESS_DB_HOST' => $dbHost,
-            'WORDPRESS_DB_NAME' => $dbName,
-            'WORDPRESS_DB_USER' => $dbUser,
-            'WORDPRESS_DB_PASSWORD' => $dbPwd,
-        ];
-
-        $process = new Process($command, (string) $cliPath, $env);
+        $process = new Process($command, (string) $cliPath);
         $process->run();
         if (!$process->isSuccessful()) {
             throw new \Exception($process->getErrorOutput());
