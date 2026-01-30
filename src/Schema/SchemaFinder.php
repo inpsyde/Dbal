@@ -133,10 +133,7 @@ class SchemaFinder
         }
 
         if (!$validId && is_multisite() && ($site > 1)) {
-            global $_wp_switched_stack;
-            $ids = is_array($_wp_switched_stack) ? $_wp_switched_stack : [];
-
-            $validId = $ids && in_array($site, array_map('intval', $ids), true);
+            $validId = get_site($site) === null;
         }
 
         return $validId ? ($matches['nopref'] ?? null) : $matches['nobase'] ?? null;
