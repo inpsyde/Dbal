@@ -113,21 +113,24 @@ class SchemaFinder
         $wpdb = Dbal::wpdb();
 
         $regex = "~^{$wpdb->base_prefix}(?<nobase>(?:(?<siteid>[0-9]+)_)?(?<nopref>.+))$~";
-
         /** @var array{siteid?: string, nopref?: string} $matches */
         $matches = [];
+
         if (!preg_match($regex, $tableName, $matches)) {
             return $tableName;
         }
 
+        $noBase = $matches['nobase'] ?? null;
+
         if (($matches['siteid'] ?? '') === '') {
-            return $matches['nobase'] ?? null;
+            return $noBase;
         }
 
         /** @phpstan-ignore nullCoalesce.offset */
         $site = (int) ($matches['siteid'] ?? 0);
         $validId = $site === (int) $wpdb->siteid;
-        $noPrefix = $matches['nopref'] ?? '';
+        $noPrefix = $matches['nopref'] ?? null;
+
         if (!$noPrefix) {
             return null;
         }
@@ -136,6 +139,6 @@ class SchemaFinder
             $validId = get_site($site) === null;
         }
 
-        return $validId ? ($matches['nopref'] ?? null) : $matches['nobase'] ?? null;
+        return $validId ? $noPrefix : $noBase;
     }
 }
