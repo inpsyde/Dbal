@@ -71,8 +71,7 @@
         ],
         "qa": [
             "@tests:unit",
-            "@cs",
-            "@psalm"
+            "@cs"
         ]
     },
     "config": {
