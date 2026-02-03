@@ -136,7 +136,7 @@ class SchemaFinder
         }
 
         if (!$validId && is_multisite() && ($site > 1)) {
-            $validId = get_site($site) === null;
+            $validId = get_site($site) !== null;
         }
 
         return $validId ? $noPrefix : $noBase;
