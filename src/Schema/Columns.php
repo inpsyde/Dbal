@@ -294,13 +294,13 @@ final class Columns implements \IteratorAggregate, \Countable
 
         switch (true) {
             case is_array($value):
-                $error = !((!$forEdit && $this->isNumericArray($value)) || $column->isSerialized());
+                $error = !((!$forEdit && $this->isNumericArray($value)) || $column->isSerialized() || $column->isJson());
                 break;
             case ($value instanceof \DateTimeInterface):
                 $error = !$column->isDateOrTimeInfo();
                 break;
             case ($value instanceof \stdClass):
-                $error = !$column->isSerialized();
+                $error = !($column->isSerialized() || $column->isJson());
                 break;
             default:
                 $error = !is_scalar($value);
