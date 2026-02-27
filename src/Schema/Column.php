@@ -1202,6 +1202,14 @@ final class Column
     }
 
     /**
+     * @return bool
+     */
+    public function isJson(): bool
+    {
+        return $this->type === self::JSON;
+    }
+
+    /**
      * @return array{bool, \DateTimeZone|null}
      */
     public function shouldRetrieveAsDatetime(): array
