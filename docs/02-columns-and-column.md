@@ -16,7 +16,7 @@ $columns = Columns::new(
 
 ## Column
 
-`inpsyde/dbal` brings an implementation for columns which are used in a Schema to create a database table. The main class for this is `Inpsyde\Dbal\Schema\Column` which provides a wide rage of methods:
+`inpsyde/dbal` brings an implementation for columns which are used in a Schema to create a database table. The main class for this is `Inpsyde\Dbal\Schema\Column` which provides a wide range of methods:
 
 ### Default data types
 
@@ -27,11 +27,13 @@ Types that map numeric data without fractions.
 Integers consists of: TINYINT, SMALLINT, MEDIUMINT, INT, BIGINT. All of them allow a second parameter "defaultValue".
 
 ```php
-Inpsyde\Dbal\Schema\Column::tinyInt('my_tinyInt', 1); // with default "1"
-Inpsyde\Dbal\Schema\Column::smallInt('my_smallInt');
-Inpsyde\Dbal\Schema\Column::mediumInt('my_mediumInt');
-Inpsyde\Dbal\Schema\Column::int('my_int');
-Inpsyde\Dbal\Schema\Column::bigInt('my_bitInt');
+use Inpsyde\Dbal\Schema\Column;
+
+Column::tinyInt('my_tinyInt', 1); // with default "1"
+Column::smallInt('my_smallInt');
+Column::mediumInt('my_mediumInt');
+Column::int('my_int');
+Column::bigInt('my_bigInt');
 ```
 
 #### Real numbers
@@ -39,9 +41,11 @@ Inpsyde\Dbal\Schema\Column::bigInt('my_bitInt');
 Real numbers consists of: FLOAT, DOUBLE and DECIMAL. Each of them has additional options for "precision", "scale" and "defaultValue".
 
 ```php
-Inpsyde\Dbal\Schema\Column::float('my_float', 5, 5, 1.00034);
-Inpsyde\Dbal\Schema\Column::double('my_double');
-Inpsyde\Dbal\Schema\Column::decimal('my_decial');
+use Inpsyde\Dbal\Schema\Column;
+
+Column::float('my_float', 5, 5, 1.00034);
+Column::double('my_double');
+Column::decimal('my_decimal');
 ```
 
 #### Date and times
@@ -49,11 +53,13 @@ Inpsyde\Dbal\Schema\Column::decimal('my_decial');
 The following date and time formats are supported: DATETIME, TIMESTAMP, TIME, DATE, YEAR. All support a "defaultValue".
 
 ```php
-Inpsyde\Dbal\Schema\Column::datetime('my_datetime');
-Inpsyde\Dbal\Schema\Column::timestamp('my_timestamp', 551260979);
-Inpsyde\Dbal\Schema\Column::date('my_date');
-Inpsyde\Dbal\Schema\Column::time('my_time');
-Inpsyde\Dbal\Schema\Column::year('my_year');
+use Inpsyde\Dbal\Schema\Column;
+
+Column::datetime('my_datetime');
+Column::timestamp('my_timestamp', 551260979);
+Column::date('my_date');
+Column::time('my_time');
+Column::year('my_year');
 ```
 
 #### Strings
@@ -61,26 +67,32 @@ Inpsyde\Dbal\Schema\Column::year('my_year');
 The following string formats are supported: CHAR, VARCHAR, TINYTEXT, MEDIUMTEXT, TEXT, LONGTEXT, ENUM, SET.
 
 ```php
+use Inpsyde\Dbal\Schema\Column;
+
 // without size
-Inpsyde\Dbal\Schema\Column::tinyText('my_char');
-Inpsyde\Dbal\Schema\Column::mediumText('my_char');
-Inpsyde\Dbal\Schema\Column::text('my_char');
-Inpsyde\Dbal\Schema\Column::longText('my_char');
+Column::tinyText('my_tinyText');
+Column::mediumText('my_mediumText');
+Column::text('my_text');
+Column::longText('my_longText');
 ```
 
 The CHAR and VARCHAR are supporting a "size" additionally to the "defaultValue".
 
 ```php
+use Inpsyde\Dbal\Schema\Column;
+
 // with size
-Inpsyde\Dbal\Schema\Column::char('my_char', 254, 'lorum ipsum');
-Inpsyde\Dbal\Schema\Column::varChar('my_varchar', 254, 'lorum ipsum');
+Column::char('my_char', 254, 'lorum ipsum');
+Column::varChar('my_varchar', 254, 'lorum ipsum');
 ```
 
 ENUM and SET supporting a limited set of values, while the first one of the values is the "defaultValue".
 
 ```php
-Inpsyde\Dbal\Schema\Column::enum('my_enum', ['DEFAULT', 'FOO', 'BAR']);
-Inpsyde\Dbal\Schema\Column::set('my_set', ['DEFAULT', 'FOO', 'BAR']);
+use Inpsyde\Dbal\Schema\Column;
+
+Column::enum('my_enum', 'DEFAULT', 'FOO', 'BAR');
+Column::set('my_set', 'DEFAULT', 'FOO', 'BAR');
 ```
 
 #### Blob
@@ -88,16 +100,20 @@ Inpsyde\Dbal\Schema\Column::set('my_set', ['DEFAULT', 'FOO', 'BAR']);
 The following blob formats are supported: TINYBLOB, BLOB, MEDIUMBLOB, LONGBLOB.
 
 ```php
-Inpsyde\Dbal\Schema\Column::tinyBlob('my_tinyBlob');
-Inpsyde\Dbal\Schema\Column::blog('my_blob');
-Inpsyde\Dbal\Schema\Column::mediumBlob('my_mediumBlob');
-Inpsyde\Dbal\Schema\Column::longBlob('my_longBlob');
+use Inpsyde\Dbal\Schema\Column;
+
+Column::tinyBlob('my_tinyBlob');
+Column::blob('my_blob');
+Column::mediumBlob('my_mediumBlob');
+Column::longBlob('my_longBlob');
 ```
 
 #### JSON
 
 ```php
-Inpsyde\Dbal\Schema\Column::json('my_json');
+use Inpsyde\Dbal\Schema\Column;
+
+Column::json('my_json');
 ```
 
 #### Bit and Bool
@@ -105,8 +121,10 @@ Inpsyde\Dbal\Schema\Column::json('my_json');
 Bit and bool are two more formats which can be used. The BOOL uses BIT under the hood, while BIT allows to set a size with maximum of 63.
 
 ```php
-Inpsyde\Dbal\Schema\Column::bit('my_bit', 2);
-Inpsyde\Dbal\Schema\Column::bool('my_bool', false);
+use Inpsyde\Dbal\Schema\Column;
+
+Column::bit('my_bit', 2);
+Column::bool('my_bool', false);
 ```
 
 #### Binary
@@ -114,8 +132,10 @@ Inpsyde\Dbal\Schema\Column::bool('my_bool', false);
 VARBINARY and BINARY are two more formats which are supported. Both allow a "size" and "defaultValue".
 
 ```php
-Inpsyde\Dbal\Schema\Column::binary('my_binary', 255);
-Inpsyde\Dbal\Schema\Column::varBinary('my_varBinary', 65535);
+use Inpsyde\Dbal\Schema\Column;
+
+Column::binary('my_binary', 255);
+Column::varBinary('my_varBinary', 65535);
 ```
 
 ### Special data types
@@ -127,7 +147,9 @@ Additionally to the default formats, `Inpsyde\Dbal\Schema\Column` also provides 
 The entityId is usually a bigInt which is notNull, unsigned and an autoIncrement. In order to not manually configure these attributes through code, you can just call:
 
 ```php
-Inpsyde\Dbal\Schema\Column::entityId('my_entityId');
+use Inpsyde\Dbal\Schema\Column;
+
+Column::entityId('my_entityId');
 ```
 
 #### ForeignId
@@ -135,7 +157,9 @@ Inpsyde\Dbal\Schema\Column::entityId('my_entityId');
 The foreignId, similar to the entityId has some pre-configured attributes: notNull and unsigned.
 
 ```php
-Inpsyde\Dbal\Schema\Column::foreignId('my_foreignId');
+use Inpsyde\Dbal\Schema\Column;
+
+Column::foreignId('my_foreignId');
 ```
 
 ### Attributes
@@ -147,49 +171,94 @@ Inpsyde\Dbal\Schema\Column::foreignId('my_foreignId');
 All integer types can have an optional attribute UNSIGNED. Unsigned type can be used to permit only non-negative numbers in a column or when you need a larger upper numeric range for the column. For example, if an INT column is UNSIGNED, the size of the column's range is the same but its endpoints shift from -2147483648 and 2147483647 up to 0 and 4294967295.
 
 ```php
-Inpsyde\Dbal\Schema\Column::bigInt('my_bigInt')->makeUnsigned();
+use Inpsyde\Dbal\Schema\Column;
+
+Column::bigInt('my_bigInt')->makeUnsigned();
 ```
 
 #### Zero fill
 
+ZEROFILL pads the displayed value with leading zeros up to the column's display width. For example, a value of `42` in a column with display width `8` renders as `00000042`. The stored value is unaffected - only the display representation changes. Note that ZEROFILL implicitly applies UNSIGNED, so negative values cannot be stored in a zero-filled column.
+
 ```php
-Inpsyde\Dbal\Schema\Column::int('my_int')->makeZeroFill();
+use Inpsyde\Dbal\Schema\Column;
+
+Column::int('my_int')->makeZeroFill(8); // display width, e.g. "00000042"
 ```
 
 #### Auto increment
 
+When set, MySQL automatically assigns an incrementing integer value to this column for each new inserted row, starting from `1`. It is typically used for primary key columns to guarantee uniqueness without manual value assignment. Only one AUTO_INCREMENT column is allowed per table, and it must be part of an index.
+
 ```php
-Inpsyde\Dbal\Schema\Column::int('my_int')->makeAutoIncrement();
+use Inpsyde\Dbal\Schema\Column;
+
+Column::int('my_int')->makeAutoIncrement();
 ```
 
 #### Current timestamp as default
 
+Sets `CURRENT_TIMESTAMP` as the column's default value, so new rows automatically receive the current date and time when no explicit value is provided on insert. Applies to `TIMESTAMP` and `DATETIME` columns. Useful for `created_at`-style audit fields.
+
 ```php
-Inpsyde\Dbal\Schema\Column::timestamp('my_timestamp')->useCurrentTimestampAsDefault();
-Inpsyde\Dbal\Schema\Column::datetime('my_datetime')->useCurrentTimestampAsDefault();
+use Inpsyde\Dbal\Schema\Column;
+
+Column::timestamp('my_timestamp')->useCurrentTimestampAsDefault();
+Column::datetime('my_datetime')->useCurrentTimestampAsDefault();
 ```
 
 #### Default timeZone
 
+Sets the timezone context used when interpreting date/time values for this column. When a default timezone is configured, stored values are normalised against it on read and write, which is particularly useful in applications that operate across multiple timezones. Applies to `TIMESTAMP` and `DATETIME` columns.
+
 ```php
-Inpsyde\Dbal\Schema\Column::timestamp('my_timestamp')->useDefaultTimeZone(new DateTimeZone('utc'));
-Inpsyde\Dbal\Schema\Column::datetime('my_datetime')->useDefaultTimeZone(new DateTimeZone('utc'));
+use Inpsyde\Dbal\Schema\Column;
+
+Column::timestamp('my_timestamp')->useDefaultTimeZone(new DateTimeZone('UTC'));
+Column::datetime('my_datetime')->useDefaultTimeZone(new DateTimeZone('UTC'));
 ```
 
 #### Not null
 
+Enforces that the column must always contain a value - `NULL` is not permitted. Any `INSERT` or `UPDATE` that omits this column or explicitly sets it to `NULL` will fail at the database level. Use this for required fields where the absence of a value would be invalid.
+
 ```php
-Inpsyde\Dbal\Schema\Column::varChar('my_varChar')->makeNotNull();
+use Inpsyde\Dbal\Schema\Column;
+
+Column::varChar('my_varChar')->makeNotNull();
 ```
 
 #### Charset collation
 
+Sets the character set and collation for a string column, overriding the table or database defaults. The character set defines which characters can be stored - `utf8mb4` supports the full Unicode range including emoji and supplementary characters. The collation controls how values are compared and sorted - `utf8mb4_unicode_ci` is case-insensitive and accent-insensitive, which is the standard choice for most WordPress installations. Both parameters are optional; omitting them falls back to the table or database default.
+
 ```php
-Inpsyde\Dbal\Schema\Column::varChar('my_varChar')->useCharsetCollation('utf-8');
+use Inpsyde\Dbal\Schema\Column;
+
+Column::varChar('my_varChar')->useCharsetCollation('utf8mb4', 'utf8mb4_unicode_ci');
 ```
 
 ### Special Attributes
 
 #### Store serialized
 
+When enabled, the column value is automatically serialized before being written to the database and unserialized when read back. Useful for storing arrays or objects in a single column.
+
+```php
+use Inpsyde\Dbal\Schema\Column;
+
+Column::text('my_data')->storeSerialized();
+```
+
+`storeSerialized()` is supported by `char`, `varchar`, `tinytext`, `mediumtext`, `text` and `longtext`.
+
 #### Retrieve as DateTime
+
+When enabled, the stored string value is automatically cast to a `DateTime` instance when the column is read. Applies to date/time column types.
+
+```php
+use Inpsyde\Dbal\Schema\Column;
+
+Column::datetime('start_date')->retrieveAsDateTime();
+Column::timestamp('created_at')->retrieveAsDateTime();
+```

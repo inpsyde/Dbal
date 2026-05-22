@@ -1,23 +1,10 @@
 # Getting started
 
-`inpsyde/dbal` is a database abstraction layer for WordPress built on top of `wpdb` and `dbDelta`. It provides a structured and extensible way to define schemas, interact with database tables, and perform read/write operations in a consistent manner.
+`inpsyde/dbal` is a database abstraction layer for WordPress built on top of `wpdb` and `dbDelta`. It provides a structured and extensible way to define schemas, interact with database tables, and perform read/write operations consistently.
 
 The main entry point of the package is `Inpsyde\Dbal\Dbal`. This class exposes all relevant services through its public API and acts as the central access point for database-related functionality.
 
-Throughout this documentation, we will use a simple custom database table called `events` with the following fields:
-
-| name       | type     | note                                             |
-|------------|----------|--------------------------------------------------|
-| id         | bigInt   | primary, unsigned, autoincrement                 |
-| uuid       | varChar  | entityId                                         |
-| post_id    | bigInt   | not null, references to wp_posts                 |
-| title      | varChar  | not null,                                        |
-| start_date | datetime |                                                  |
-| end_date   | datetime |                                                  |
-| timezone   | varChar  | not null, defaults to 'UTC'                      |
-| status     | enum     | `['SCHEDULED', 'HAPPENING', 'PAST', 'CANCELED']` |
-| type       | varChar  | not null                                         |
-
+Throughout this documentation, we will use a simple custom database table called `events`. See [07-learning-by-example.md](./07-learning-by-example.md) for a full walkthrough — from defining the schema to insert, update, read, and delete operations.
 
 ## Accessing wpdb
 
@@ -34,7 +21,7 @@ To verify whether the package is properly initialized and ready for use, you can
 ```php
 use Inpsyde\Dbal\Dbal;
 
-$isReady = Dbal::isReady(); // false
+$isReady = Dbal::isReady();
 ```
 
 This is especially useful during early bootstrap phases or when working with custom initialization logic.
@@ -47,6 +34,21 @@ This is especially useful during early bootstrap phases or when working with cus
 use Inpsyde\Dbal\Dbal;
 
 $cache = Dbal::cache();
+
+// Read a cached value by key
+$value = $cache->get('my-key');
+
+// Store a value by key
+$cache->set('my-key', $data);
+
+// Delete a single cached value
+$cache->delete('my-key');
+
+// Flush all cache entries associated with one or more tables
+$cache->cleanCacheForTables('events', 'posts');
+
+// Flush all dbal cache for the current site (e.g., after bulk operations)
+$cache->cleanCacheForSite();
 ```
 
 ## Schema Finder
@@ -56,10 +58,18 @@ The `Inpsyde\Dbal\Schema\SchemaFinder` allows you to locate both WordPress core 
 ```php
 use Inpsyde\Dbal\Dbal;
 
+
 $schemaFinder = Dbal::schemaFinder();
 
 $schemaFinder->findCoreSchema('posts'); // returns a WpSchema for `wp_posts`
 $schemaFinder->findSchema('events');    // returns an InstallableSchema (used in this documentation)
+
+// Resolve the fully-qualified table name (including prefix), e.g. "wp_events"
+$schema = EventSchema::new(); // see 07-learning-by-example.md
+$schemaFinder->fullTableName($schema);
+
+// Resolve the wpdb property name for a core table, e.g. "posts" → used as $wpdb->posts
+$schemaFinder->wpdbTableName('posts');
 ```
 
 ## Querying
