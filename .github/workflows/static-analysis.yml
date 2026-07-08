@@ -46,7 +46,7 @@ jobs:
     if: ${{ (github.event_name != 'workflow_dispatch') || ((github.event.inputs.jobs == 'Run PHPCS only') || (github.event.inputs.jobs == 'Run all')) }}
     uses: inpsyde/reusable-workflows/.github/workflows/coding-standards-php.yml@main
     with:
-      PHP_VERSION: '8.1'
+      PHP_VERSION: '8.2'
 
   static-code-analysis-php:
     if: ${{ (github.event_name != 'workflow_dispatch') || ((github.event.inputs.jobs == 'Run PHPStan only') || (github.event.inputs.jobs == 'Run all')) }}
