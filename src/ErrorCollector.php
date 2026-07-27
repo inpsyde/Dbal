@@ -10,9 +10,8 @@ final class ErrorCollector
 
     /**
      * @return bool
-     *
-     * @psalm-assert-if-true null $this->error
-     * @psalm-assert-if-false Error $this->error
+     * @phpstan-impure
+     * @phpstan-ignore impureMethod.pure
      */
     public function isEmpty(): bool
     {
