@@ -4,6 +4,14 @@ _Database abstraction layer for WordPress, on top of wpdb and dbDelta._
 
 [![Static Analysis + Unit tests](https://github.com/inpsyde/Dbal/actions/workflows/static-analysis.yml/badge.svg)](https://github.com/inpsyde/Dbal/actions/workflows/static-analysis.yml) [![Integration Tests](https://github.com/inpsyde/Dbal/actions/workflows/integration-tests.yml/badge.svg)](https://github.com/inpsyde/Dbal/actions/workflows/integration-tests.yml) [![Integration Tests](https://github.com/inpsyde/Dbal/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/inpsyde/Dbal/actions/workflows/unit-tests.yml)
 
+`wpdb` gives you direct SQL access, but that comes with tradeoffs. Dbal exists to remove:
+
+- **Security by default.** WordPress queries are unescaped unless you remember to call `prepare()` yourself - an opt-in safeguard that's easy to forget. Dbal escapes automatically, so secure queries are the default, not something you have to remember to do.
+- **Typed results, not just strings.** Because Dbal knows your schema, query results come back as the type your schema declares - a column defined as `INT` returns an actual `int`, a `FLOAT` column returns a `float`. No more casting results by hand just to get the type you already told the schema to expect.
+- **Schema migrations without the pain.** Creating - and especially upgrading - custom database tables in WordPress is notoriously painful, which is exactly why so many projects give up and cram everything into `wp_posts` instead. With Dbal you define your schema programmatically; when that definition changes, Dbal handles the upgrade for you.
+
+New to Dbal? [Learning by example](docs/07-learning-by-example.md) is the fastest way to see these three things in action before going deeper into the API reference below.
+
 ## Requirements
 
 - PHP >= 8.2
