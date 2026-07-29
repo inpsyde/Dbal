@@ -91,6 +91,7 @@ final class WpInstallExtension implements BeforeFirstTestHook, AfterLastTestHook
 
     /**
      * @return void
+     * phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_mkdir
      */
     private function initializeWp(): void
     {
@@ -122,6 +123,7 @@ final class WpInstallExtension implements BeforeFirstTestHook, AfterLastTestHook
 
         // Without this dir, core's theme registration no-ops, and wp_is_block_theme()
         // trips a _doing_it_wrong() notice on every bootstrap since WP 6.8.
+        // WP itself isn't loaded in this process, so WP_Filesystem isn't an option here.
         $themesDir = ABSPATH . 'wp-content/themes';
         is_dir($themesDir) or mkdir($themesDir, 0777, true);
 
