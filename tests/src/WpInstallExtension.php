@@ -116,7 +116,9 @@ final class WpInstallExtension implements BeforeFirstTestHook, AfterLastTestHook
         $this->runWpCliCommand(['config', 'set', 'WP_DEBUG_LOG', 'false']);
         $this->runWpCliCommand(['config', 'set', 'WP_DEBUG_DISPLAY', 'true']);
         $this->runWpCliCommand(['config', 'set', 'SAVEQUERIES', 'true']);
-        $this->runWpCliCommand(['config', 'set', 'MYSQL_CLIENT_FLAGS', 'MYSQLI_CLIENT_SSL', '--raw']);
+        $this->runWpCliCommand(
+            ['config', 'set', 'MYSQL_CLIENT_FLAGS', 'MYSQLI_CLIENT_SSL', '--raw']
+        );
 
         // Without this dir, core's theme registration no-ops, and wp_is_block_theme()
         // trips a _doing_it_wrong() notice on every bootstrap since WP 6.8.
