@@ -13,6 +13,7 @@ if [[ ! "$2" == "" ]]; then
 fi
 
 cd "docker"
+./generate-certs.sh
 docker compose run --rm "php${PHP_VER}" sh -c "${COMPOSER_TESTS}"; CODE=$?
 docker compose down --volumes
 exit $CODE

@@ -13,4 +13,6 @@ RUN docker-php-ext-install zip \
     && docker-php-ext-install bcmath \
     && docker-php-ext-install mysqli
 
+RUN printf '[client]\nssl-ca=/certs/ca.pem\n' > /root/.my.cnf
+
 WORKDIR /app
