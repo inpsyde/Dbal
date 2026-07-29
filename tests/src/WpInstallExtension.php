@@ -83,12 +83,15 @@ final class WpInstallExtension implements BeforeFirstTestHook, AfterLastTestHook
             return;
         }
 
-        $this->runWpCliCommand(['db', 'drop', '--yes']);
+        // `--defaults` makes wp-cli load the mysql client's option file (`.my.cnf`),
+        // which is where the SSL CA needed to reach the TLS-only test DB lives.
+        $this->runWpCliCommand(['db', 'drop', '--yes', '--defaults']);
         @unlink(ABSPATH . 'wp-config.php');
     }
 
     /**
      * @return void
+     * phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_mkdir
      */
     private function initializeWp(): void
     {
@@ -103,6 +106,10 @@ final class WpInstallExtension implements BeforeFirstTestHook, AfterLastTestHook
                 "--dbpass={$dbPwd}",
                 "--dbhost={$dbHost}",
                 '--force',
+                // wp-cli's own connectivity check for this command shells out to
+                // `mysql --no-defaults` and has no way to pass SSL options; the
+                // `db reset` call right after this already verifies connectivity.
+                '--skip-check',
             ]
         );
 
@@ -110,6 +117,15 @@ final class WpInstallExtension implements BeforeFirstTestHook, AfterLastTestHook
         $this->runWpCliCommand(['config', 'set', 'WP_DEBUG_LOG', 'false']);
         $this->runWpCliCommand(['config', 'set', 'WP_DEBUG_DISPLAY', 'true']);
         $this->runWpCliCommand(['config', 'set', 'SAVEQUERIES', 'true']);
+        $this->runWpCliCommand(
+            ['config', 'set', 'MYSQL_CLIENT_FLAGS', 'MYSQLI_CLIENT_SSL', '--raw']
+        );
+
+        // Without this dir, core's theme registration no-ops, and wp_is_block_theme()
+        // trips a _doing_it_wrong() notice on every bootstrap since WP 6.8.
+        // WP itself isn't loaded in this process, so WP_Filesystem isn't an option here.
+        $themesDir = ABSPATH . 'wp-content/themes';
+        is_dir($themesDir) or mkdir($themesDir, 0777, true);
 
         $this->installDb();
     }
@@ -152,7 +168,7 @@ final class WpInstallExtension implements BeforeFirstTestHook, AfterLastTestHook
      */
     private function installDb(): void
     {
-        $this->runWpCliCommand(['db', 'reset', '--yes']);
+        $this->runWpCliCommand(['db', 'reset', '--yes', '--defaults']);
 
         $this->runWpCliCommand(
             [
@@ -181,7 +197,7 @@ final class WpInstallExtension implements BeforeFirstTestHook, AfterLastTestHook
         }
         /** @var non-falsy-string $cliPath */
 
-        array_unshift($command, 'wp');
+        array_unshift($command, "{$cliPath}/wp");
         $command[] = "--path=" . str_replace('\\', '/', ABSPATH);
         $command[] = "--quiet";
         $command[] = "--skip-plugins";

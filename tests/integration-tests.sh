@@ -5,7 +5,7 @@ COMPOSER_TESTS="composer tests:integration"
 
 PHP_VER=$(printf '%s' "${1/./}")
 if [[ "$PHP_VER" == "" ]]; then
-  PHP_VER="74"
+  PHP_VER="82"
 fi
 
 if [[ ! "$2" == "" ]]; then
@@ -13,6 +13,7 @@ if [[ ! "$2" == "" ]]; then
 fi
 
 cd "docker"
+./generate-certs.sh
 docker compose run --rm "php${PHP_VER}" sh -c "${COMPOSER_TESTS}"; CODE=$?
 docker compose down --volumes
 exit $CODE

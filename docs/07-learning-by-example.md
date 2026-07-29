@@ -227,8 +227,8 @@ class Event
         $data = $result->extract();
 
         return new self(
-            id:        (int) $data->id,
-            postId:    (int) $data->post_id,
+            id:        $data->id,
+            postId:    $data->post_id,
             title:     $data->title,
             startDate: $data->start_date,
             endDate:   $data->end_date,
