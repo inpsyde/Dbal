@@ -118,6 +118,11 @@ final class WpInstallExtension implements BeforeFirstTestHook, AfterLastTestHook
         $this->runWpCliCommand(['config', 'set', 'SAVEQUERIES', 'true']);
         $this->runWpCliCommand(['config', 'set', 'MYSQL_CLIENT_FLAGS', 'MYSQLI_CLIENT_SSL', '--raw']);
 
+        // Without this dir, core's theme registration no-ops, and wp_is_block_theme()
+        // trips a _doing_it_wrong() notice on every bootstrap since WP 6.8.
+        $themesDir = ABSPATH . 'wp-content/themes';
+        is_dir($themesDir) or mkdir($themesDir, 0777, true);
+
         $this->installDb();
     }
 
