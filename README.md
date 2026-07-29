@@ -6,7 +6,7 @@ _Database abstraction layer for WordPress, on top of wpdb and dbDelta._
 
 ## Requirements
 
-- PHP >= 8.0
+- PHP >= 8.2
 - WordPress (with `wpdb` available)
 
 ## Installation
