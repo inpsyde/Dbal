@@ -1144,7 +1144,7 @@ abstract class BaseSelect
 
     /**
      * @param string $rawColumn
-     * @return string
+     * @return string|null
      */
     protected function fullyQualifiedColName(string $rawColumn): ?string
     {
