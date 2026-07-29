@@ -52,4 +52,4 @@ jobs:
     if: ${{ (github.event_name != 'workflow_dispatch') || ((github.event.inputs.jobs == 'Run PHPStan only') || (github.event.inputs.jobs == 'Run all')) }}
     uses: inpsyde/reusable-workflows/.github/workflows/static-analysis-php.yml@main
     with:
-      PHP_VERSION: 8.4
+      PHP_VERSION: '8.4'
