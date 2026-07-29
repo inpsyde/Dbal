@@ -1,4 +1,25 @@
 services:
+    php84:
+        profiles: [ "php84" ]
+        build:
+            context: ./php84
+        container_name: dbal-php-84
+        depends_on:
+            mysql:
+                condition: service_healthy
+        environment:
+            WORDPRESS_DB_HOST: dbal-mysql
+            WORDPRESS_DB_NAME: wordpress
+            WORDPRESS_DB_USER: wordpress
+            WORDPRESS_DB_PASSWORD: wordpress
+        volumes:
+            - type: bind
+              source: ../../
+              target: /app
+            - type: bind
+              source: ./certs
+              target: /certs
+              read_only: true
     php83:
         profiles: [ "php83" ]
         build:
