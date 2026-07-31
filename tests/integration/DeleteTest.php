@@ -143,7 +143,9 @@ class DeleteTest extends QueriesTestCase
     {
         // MySQL's `DELETE ... ORDER BY ... LIMIT` extension has no equivalent the SQLite
         // Database Integration plugin can translate to; it fails with a plain syntax error.
-        $this->markTestSkipped('DELETE with ORDER BY/LIMIT is not supported by the SQLite test environment.');
+        $this->markTestSkipped(
+            'DELETE with ORDER BY/LIMIT is not supported by the SQLite test environment.'
+        );
 
         Dbal::writeOn(TableOne::NAME)
             ->insertMany(
