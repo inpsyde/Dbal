@@ -11,6 +11,9 @@ use Inpsyde\Dbal\Tests\QueriesTestCase;
 use Inpsyde\Dbal\Tests\TableOne;
 use Inpsyde\Dbal\Tests\TableTwo;
 
+        /**
+ * @runTestsInSeparateProcesses
+ */
 class DeleteTest extends QueriesTestCase
 {
     /**
