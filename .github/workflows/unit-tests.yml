@@ -26,7 +26,6 @@ jobs:
         strategy:
             matrix:
                 php-version: [ '8.2', '8.3', '8.4' ]
-                wp-version: [ '6.8', '6.9', '7.0' ]
         steps:
             -   name: Checkout
                 uses: actions/checkout@v4
@@ -39,8 +38,7 @@ jobs:
 
             -   name: Adjust Composer Dependencies
                 run: |
-                    composer remove syde/phpcs inpsyde/wp-stubs-versions roots/wordpress --dev --no-update
-                    composer require "roots/wordpress:${{ matrix.wp-version }}.*" --no-update
+                    composer remove syde/phpcs inpsyde/wp-stubs-versions --dev --no-update
 
             -   name: Install Composer Dependencies
                 uses: ramsey/composer-install@v3
