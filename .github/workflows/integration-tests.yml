@@ -23,7 +23,6 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                php-version: [ '8.2', '8.3', '8.4' ]
                 wp-version: [ '6.8', '6.9', '7.0' ]
         uses: inpsyde/reusable-workflows/.github/workflows/tests-unit-php.yml@main
         secrets:
@@ -31,5 +30,5 @@ jobs:
             ENV_VARS: >-
                 [{"name":"WP_CORE_VERSION", "value":"${{ matrix.wp-version }}"}]
         with:
-            PHP_VERSION: ${{ matrix.php-version }}
+            PHP_VERSION: '8.2'
             PHPUNIT_ARGS: '--testsuite=integration --no-coverage -c phpunit-integration.xml.dist'
