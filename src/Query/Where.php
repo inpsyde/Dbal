@@ -13,7 +13,7 @@ use Inpsyde\Dbal\Schema\Schema;
 use Inpsyde\Dbal\Schema\SchemaFinder;
 
 /**
- * @phpstan-type Clauses array{bool, string, string, mixed, string|null}
+ * @phpstan-type Clauses array{bool, string, string|null, mixed, string|null}
  */
 class Where
 {
