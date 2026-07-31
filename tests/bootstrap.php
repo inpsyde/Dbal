@@ -18,7 +18,7 @@ putenv('LIB_DIR=' . $libDir);
 error_reporting(E_ALL);
 
 if (!defined('ABSPATH')) {
-    define('ABSPATH', "{$vendorDir}/roots/wordpress-no-content/");
+    define('ABSPATH', "{$vendorDir}/wordpress/wordpress/");
 }
 
 if (!defined('PHPUNIT_COMPOSER_INSTALL')) {
