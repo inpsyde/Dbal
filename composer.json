@@ -15,6 +15,13 @@
     "repositories": [
         {
             "type": "composer",
+            "url": "https://repo.packagist.com/inpsyde/"
+        },
+        {
+            "packagist.org": false
+        },
+        {
+            "type": "composer",
             "url": "https://raw.githubusercontent.com/inpsyde/wp-stubs/main",
             "only": [
                 "inpsyde/wp-stubs-versions"
@@ -29,16 +36,14 @@
         "syde/phpcs": "~1.0.1",
         "phpunit/phpunit": "^9.6.17",
         "brain/monkey": "^2.6.1",
-        "roots/wordpress-no-content": ">=6.7",
         "inpsyde/wp-stubs-versions": "dev-latest",
         "phpstan/phpstan": "^2.1.1",
         "phpstan/phpstan-deprecation-rules": "^2.0.1",
         "phpstan/phpstan-mockery": "^2.0.0",
         "phpstan/phpstan-phpunit": "^2.0.4",
         "swissspidy/phpstan-no-private": "^v1.0.0",
-        "globalis/wp-cli-bin": "^2.8.1",
-        "symfony/process": "^v5.4.36",
-        "symfony/dotenv": "^v5.4.36"
+        "roots/wordpress": ">=7.0",
+        "syde/wp-phpunit-integration": "^0.4"
     },
     "autoload": {
         "psr-4": {
