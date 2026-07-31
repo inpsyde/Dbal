@@ -83,7 +83,8 @@
         "optimize-autoloader": true,
         "allow-plugins": {
             "roots/wordpress-core-installer": true,
-            "dealerdirect/phpcodesniffer-composer-installer": true
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "composer/installers": true
         }
     },
     "extra": {
