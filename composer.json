@@ -65,7 +65,7 @@
         "phpstan": "@php ./vendor/bin/phpstan analyse --memory-limit=1G",
         "tests:unit:cov": "@php ./vendor/phpunit/phpunit/phpunit --testsuite=unit",
         "tests:unit": "@php ./vendor/phpunit/phpunit/phpunit --testsuite=unit --no-coverage",
-        "tests:integration": "@php ./vendor/phpunit/phpunit/phpunit --testsuite=integration --no-coverage",
+        "tests:integration": "@php ./vendor/phpunit/phpunit/phpunit --testsuite=integration --no-coverage -c phpunit-integration.xml.dist",
         "tests": [
             "@tests:integration",
             "@tests:unit"
@@ -88,6 +88,17 @@
         }
     },
     "extra": {
-        "wordpress-install-dir": "vendor/wordpress/wordpress"
+        "wordpress-install-dir": "vendor/wordpress/wordpress",
+        "installer-paths": {
+            "vendor/wordpress/wordpress/wp-content/themes/{$name}": [
+                "type:wordpress-theme"
+            ],
+            "vendor/wordpress/wordpress/wp-content/plugins/{$name}": [
+                "type:wordpress-plugin"
+            ],
+            "vendor/wordpress/wordpress/wp-content/mu-plugins/{$name}": [
+                "type:wordpress-muplugin"
+            ]
+        }
     }
 }
