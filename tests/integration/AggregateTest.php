@@ -17,6 +17,7 @@ class AggregateTest extends QueriesTestCase
 {
     /**
      * @test
+     * @preserveGlobalState disabled
      */
     public function testCount(): void
     {

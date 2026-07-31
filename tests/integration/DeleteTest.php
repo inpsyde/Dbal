@@ -18,6 +18,7 @@ class DeleteTest extends QueriesTestCase
 {
     /**
      * @test
+     * @preserveGlobalState disabled
      */
     public function testDeleteMultiple(): void
     {
@@ -48,6 +49,7 @@ class DeleteTest extends QueriesTestCase
 
     /**
      * @test
+     * @preserveGlobalState disabled
      */
     public function testDeleteOnPrimary(): void
     {
@@ -74,6 +76,7 @@ class DeleteTest extends QueriesTestCase
 
     /**
      * @test
+     * @preserveGlobalState disabled
      */
     public function testDeleteWithJoin(): void
     {
@@ -134,6 +137,7 @@ class DeleteTest extends QueriesTestCase
 
     /**
      * @test
+     * @preserveGlobalState disabled
      */
     public function testDeleteWithLimit(): void
     {

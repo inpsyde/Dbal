@@ -17,6 +17,7 @@ class JoinWpTableTest extends QueriesTestCase
 {
     /**
      * @test
+     * @preserveGlobalState disabled
      */
     public function testJoinWpPostsTable(): void
     {
@@ -64,6 +65,7 @@ class JoinWpTableTest extends QueriesTestCase
 
     /**
      * @test
+     * @preserveGlobalState disabled
      */
     public function testBuildQueryViaWpQueryAndUseAsClause(): void
     {
@@ -121,6 +123,7 @@ class JoinWpTableTest extends QueriesTestCase
 
     /**
      * @test
+     * @preserveGlobalState disabled
      */
     public function testSelectWithRawJoin(): void
     {
