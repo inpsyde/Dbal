@@ -17,6 +17,8 @@ New to Dbal? [Learning by example](docs/07-learning-by-example.md) is the fastes
 - PHP >= 8.2
 - WordPress (with `wpdb` available)
 
+To run the integration test suite locally, you'll also need the `pdo_sqlite` PHP extension - it powers the SQLite-backed WordPress environment `composer tests:integration` boots via [`syde/wp-phpunit-integration`](https://github.com/inpsyde/wp-phpunit-integration), no MySQL or Docker required.
+
 ## Installation
 
 ```bash
