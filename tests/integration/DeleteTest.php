@@ -11,7 +11,7 @@ use Inpsyde\Dbal\Tests\QueriesTestCase;
 use Inpsyde\Dbal\Tests\TableOne;
 use Inpsyde\Dbal\Tests\TableTwo;
 
-        /**
+/**
  * @runTestsInSeparateProcesses
  */
 class DeleteTest extends QueriesTestCase
@@ -141,12 +141,6 @@ class DeleteTest extends QueriesTestCase
      */
     public function testDeleteWithLimit(): void
     {
-        // MySQL's `DELETE ... ORDER BY ... LIMIT` extension has no equivalent the SQLite
-        // Database Integration plugin can translate to; it fails with a plain syntax error.
-        $this->markTestSkipped(
-            'DELETE with ORDER BY/LIMIT is not supported by the SQLite test environment.'
-        );
-
         Dbal::writeOn(TableOne::NAME)
             ->insertMany(
                 [TableOne::POST_ID => 1, TableOne::TEXT => 'One'],
@@ -164,6 +158,8 @@ class DeleteTest extends QueriesTestCase
 
         static::assertSame([1, 2, 3, 4], $ids);
 
+        // If this fails with a "near ORDER: syntax error", it's not a regression: DELETE
+        // ... ORDER BY ... LIMIT support depends on how the underlying SQLite was compiled.
         Dbal::deleteFrom(TableOne::NAME)
             ->orderBy(TableOne::POST_ID, Delete::DESC)
             ->limit(2)
