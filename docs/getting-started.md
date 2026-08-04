@@ -4,7 +4,7 @@
 
 The main entry point of the package is `Inpsyde\Dbal\Dbal`. This class exposes all relevant services through its public API and acts as the central access point for database-related functionality.
 
-Throughout this documentation, we will use a simple custom database table called `events`. See [07-learning-by-example.md](./07-learning-by-example.md) for a full walkthrough — from defining the schema to insert, update, read, and delete operations.
+Throughout this documentation, we will use a simple custom database table called `events`. See [learning-by-example.md](./learning-by-example.md) for a full walkthrough — from defining the schema to insert, update, read, and delete operations.
 
 ## Accessing wpdb
 
@@ -65,7 +65,7 @@ $schemaFinder->findCoreSchema('posts'); // returns a WpSchema for `wp_posts`
 $schemaFinder->findSchema('events');    // returns an InstallableSchema (used in this documentation)
 
 // Resolve the fully-qualified table name (including prefix), e.g. "wp_events"
-$schema = EventSchema::new(); // see 07-learning-by-example.md
+$schema = EventSchema::new(); // see learning-by-example.md
 $schemaFinder->fullTableName($schema);
 
 // Resolve the wpdb property name for a core table, e.g. "posts" → used as $wpdb->posts
@@ -74,7 +74,7 @@ $schemaFinder->wpdbTableName('posts');
 
 ## Querying
 
-`Inpsyde\Dbal\Dbal` provides convenient shortcuts for building and executing database queries. A more detailed explanation of the querying API can be found in [./05-querying.md](./05-querying.md).
+`Inpsyde\Dbal\Dbal` provides convenient shortcuts for building and executing database queries. A more detailed explanation of the querying API can be found in [./querying.md](./querying.md).
 
 **Basic examples:**
 

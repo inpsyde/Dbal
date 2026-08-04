@@ -2,7 +2,7 @@
 
 ## Create your own Schema
 
-When creating custom database tables, implement `Inpsyde\Dbal\Schema\InstallableSchema`. A complete, annotated example can be found in [07-learning-by-example.md](./07-learning-by-example.md).
+When creating custom database tables, implement `Inpsyde\Dbal\Schema\InstallableSchema`. A complete, annotated example can be found in [learning-by-example.md](./learning-by-example.md).
 
 ### `name(): string`
 
@@ -39,7 +39,7 @@ public function isNetworkWide(): bool
 
 ### `columns(): Columns`
 
-Returns a `Columns` instance describing every column in the table. See [02-columns-and-column.md](./02-columns-and-column.md) for the full column API.
+Returns a `Columns` instance describing every column in the table. See [columns-and-column.md](./columns-and-column.md) for the full column API.
 
 ```php
 use Inpsyde\Dbal\Schema\Column;
@@ -57,7 +57,7 @@ public function columns(): Columns
 
 ### `indexes(): ?Indexes`
 
-Returns an `Indexes` instance defining the table's indexes, or `null` for no indexes. See [03-indexes.md](./03-indexes.md) for the full index API.
+Returns an `Indexes` instance defining the table's indexes, or `null` for no indexes. See [indexes.md](./indexes.md) for the full index API.
 
 ```php
 use Inpsyde\Dbal\Schema\Index;

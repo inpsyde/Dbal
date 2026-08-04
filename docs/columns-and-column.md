@@ -2,7 +2,7 @@
 
 ## Columns
 
-The `Inpsyde\Dbal\Schema\Columns` implementation groups multiple `Inpsyde\Dbal\Schema\Column` instances. This is required when working [Schemas](./04-schemas.md).
+The `Inpsyde\Dbal\Schema\Columns` implementation groups multiple `Inpsyde\Dbal\Schema\Column` instances. This is required when working [Schemas](./schemas.md).
 
 ```php
 use Inpsyde\Dbal\Schema\Columns;
