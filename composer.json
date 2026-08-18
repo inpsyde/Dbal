@@ -15,13 +15,6 @@
     "repositories": [
         {
             "type": "composer",
-            "url": "https://repo.packagist.com/inpsyde/"
-        },
-        {
-            "packagist.org": false
-        },
-        {
-            "type": "composer",
             "url": "https://raw.githubusercontent.com/inpsyde/wp-stubs/main",
             "only": [
                 "inpsyde/wp-stubs-versions"
