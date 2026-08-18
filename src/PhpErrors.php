@@ -7,14 +7,14 @@ namespace Inpsyde\Dbal;
 final class PhpErrors
 {
     private const PHP_8_FATAL_ERROR_CODES = E_ERROR
-        | E_CORE_ERROR
-        | E_COMPILE_ERROR
-        | E_USER_ERROR
-        | E_RECOVERABLE_ERROR
-        | E_PARSE;
+    | E_CORE_ERROR
+    | E_COMPILE_ERROR
+    | E_USER_ERROR
+    | E_RECOVERABLE_ERROR
+    | E_PARSE;
 
-    /** @var callable|null */
-    private $previousErrorHandler;
+    /** @var callable */
+    private $handler;
     private bool $restored = false;
 
     /**
@@ -22,20 +22,21 @@ final class PhpErrors
      */
     public static function convertToExceptions(): PhpErrors
     {
-        // phpcs:disable WordPress.PHP
-        $previousErrorHandler = set_error_handler(
-            static function (int $code, string $message, string $file = '', int $line = 0): bool {
-                if (!static::areErrorsSuppressed($code)) {
-                    // phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped
-                    throw new \ErrorException(esc_html($message), $code, E_ERROR, $file, $line);
-                    // phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped
-                }
-
-                return true;
+        // phpcs:disable Syde.Files.LineLength.TooLong
+        $handler = static function (int $code, string $message, string $file = '', int $line = 0): bool {
+            if (!PhpErrors::areErrorsSuppressed($code)) {
+                // phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                throw new \ErrorException(esc_html($message), $code, E_ERROR, $file, $line);
+                // phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }
-        );
 
-        return new static($previousErrorHandler);
+            return true;
+        };
+
+        // phpcs:disable WordPress.PHP
+        set_error_handler($handler);
+
+        return new PhpErrors($handler);
     }
 
     /**
@@ -54,11 +55,19 @@ final class PhpErrors
     }
 
     /**
-     * @param callable|null $previousErrorHandler
+     * @param callable $handler
      */
-    private function __construct(?callable $previousErrorHandler)
+    private function __construct(callable $handler)
     {
-        $this->previousErrorHandler = $previousErrorHandler;
+        $this->handler = $handler;
+    }
+
+    private static function currentErrorHandler(): ?callable
+    {
+        $handler = set_error_handler(null); // phpcs:ignore
+        restore_error_handler();
+
+        return $handler;
     }
 
     /**
@@ -66,10 +75,16 @@ final class PhpErrors
      */
     public function restoreHandler(): void
     {
-        if (!$this->restored) {
-            $this->restored = true;
-            set_error_handler($this->previousErrorHandler); // phpcs:ignore
-            $this->previousErrorHandler = null;
+        if ($this->restored) {
+            return;
         }
+
+        $this->restored = true;
+
+        if (self::currentErrorHandler() !== $this->handler) {
+            return;
+        }
+
+        restore_error_handler();
     }
 }
