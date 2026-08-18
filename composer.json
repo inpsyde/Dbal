@@ -19,6 +19,14 @@
             "only": [
                 "inpsyde/wp-stubs-versions"
             ]
+        },
+        {
+            "type": "composer",
+            "url": "https://wpackagist.org",
+            "only": [
+                "wpackagist-plugin/*",
+                "wpackagist-theme/*"
+            ]
         }
     ],
     "require": {
