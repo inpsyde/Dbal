@@ -10,7 +10,15 @@ _Database abstraction layer for WordPress, on top of wpdb and dbDelta._
 - **Typed results, not just strings.** Because Dbal knows your schema, query results come back as the type your schema declares - a column defined as `INT` returns an actual `int`, a `FLOAT` column returns a `float`. No more casting results by hand just to get the type you already told the schema to expect.
 - **Schema migrations without the pain.** Creating - and especially upgrading - custom database tables in WordPress is notoriously painful, which is exactly why so many projects give up and cram everything into `wp_posts` instead. With Dbal you define your schema programmatically; when that definition changes, Dbal handles the upgrade for you.
 
-New to Dbal? [Learning by example](docs/07-learning-by-example.md) is the fastest way to see these three things in action before going deeper into the API reference below.
+## New to Dbal?
+
+- [Getting started](docs/getting-started.md) - the best first stop: introduces the `Dbal` entry point and how the package is structured.
+- [Learning by example](docs/learning-by-example.md) - a complete, realistic walkthrough of defining a table and running the full range of CRUD operations.
+- [Columns & Column](docs/columns-and-column.md) - how to define table columns when building a schema.
+- [Indexes & Index](docs/indexes-and-index.md) - how to define primary, unique, and regular indexes for a schema.
+- [Schemas](docs/schemas.md) - how to implement `InstallableSchema` to create and upgrade custom database tables.
+- [Querying](docs/querying.md) - how to build safe, code-based queries and work with `Result`/`ResultSet`.
+- [Error handling](docs/error-handling.md) - the structured approach to handling query errors via `Error`, `ErrorCollector`, and `PhpErrors`.
 
 ## Requirements
 
@@ -44,18 +52,6 @@ $result = Dbal::writeOn('events')->insert([
 // Delete a record
 Dbal::deleteFrom('events')->where(['id' => 1]);
 ```
-
-See the [documentation](docs/) for the full API.
-
-## Documentation
-
-- [Getting started](docs/01-getting-started.md)
-- [Columns & Column](docs/02-columns-and-column.md)
-- [Indexes & Index](docs/03-indexes-and-index.md)
-- [Schemas](docs/04-schemas.md)
-- [Querying](docs/05-querying.md)
-- [Error Handling](docs/06-error-handling.md)
-- [Learning by example](docs/07-learning-by-example.md)
 
 ## Copyright and License
 

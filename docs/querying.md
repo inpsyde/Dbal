@@ -1,6 +1,6 @@
 # Querying
 
-Normally, in WordPress, creating queries happens through `$wpdb->prepare($sql, $data)` and `$wpdb->get_results($sql)`. While this is still a valid and safe way to query your database, `inpsyde/dbal` helps you to write a more code-based way of queries with automatic escaping through the WordPress API. In the following examples we will compare "normal" queries through WordPress with queries written in `inpsyde/dbal` based on our `events` table we used in our [Schema](04-schemas.md) example.
+Normally, in WordPress, creating queries happens through `$wpdb->prepare($sql, $data)` and `$wpdb->get_results($sql)`. While this is still a valid and safe way to query your database, `inpsyde/dbal` helps you to write a more code-based way of queries with automatic escaping through the WordPress API. In the following examples we will compare "normal" queries through WordPress with queries written in `inpsyde/dbal` based on our `events` table we used in our [Schema](schemas.md) example.
 
 ## Result and ResultSet
 
@@ -82,7 +82,7 @@ $result->isValid();   // true if the query succeeded
 $data = $result->extract();
 ```
 
-See [Error Handling](06-error-handling.md) for details on working with errored results.
+See [Error Handling](error-handling.md) for details on working with errored results.
 
 ---
 
