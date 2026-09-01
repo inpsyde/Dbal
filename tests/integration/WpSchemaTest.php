@@ -16,6 +16,7 @@ class WpSchemaTest extends IntegrationTestCase
 {
     /**
      * @test
+     * @preserveGlobalState disabled
      */
     public function testSchemaRetrieval(): void
     {

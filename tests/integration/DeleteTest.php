@@ -18,6 +18,7 @@ class DeleteTest extends QueriesTestCase
 {
     /**
      * @test
+     * @preserveGlobalState disabled
      */
     public function testDeleteMultiple(): void
     {
@@ -48,6 +49,7 @@ class DeleteTest extends QueriesTestCase
 
     /**
      * @test
+     * @preserveGlobalState disabled
      */
     public function testDeleteOnPrimary(): void
     {
@@ -74,6 +76,7 @@ class DeleteTest extends QueriesTestCase
 
     /**
      * @test
+     * @preserveGlobalState disabled
      */
     public function testDeleteWithJoin(): void
     {
@@ -134,6 +137,7 @@ class DeleteTest extends QueriesTestCase
 
     /**
      * @test
+     * @preserveGlobalState disabled
      */
     public function testDeleteWithLimit(): void
     {
@@ -154,6 +158,13 @@ class DeleteTest extends QueriesTestCase
 
         static::assertSame([1, 2, 3, 4], $ids);
 
+        // If this fails with a "near ORDER: syntax error", it's not a regression: DELETE
+        // ... ORDER BY ... LIMIT support depends on how the underlying SQLite was compiled.
+        // The SQLite Database Integration plugin translates this safely as of
+        // v3.0.0-rc2 (https://github.com/WordPress/sqlite-database-integration/issues/100), but there
+        // is no 3.0.0 release yet.
+        //
+        //After the upgrade, this comment can be removed.
         Dbal::deleteFrom(TableOne::NAME)
             ->orderBy(TableOne::POST_ID, Delete::DESC)
             ->limit(2)

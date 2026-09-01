@@ -71,7 +71,7 @@ class ColumnsResultParser
                 continue;
             }
 
-            /** @var string $column */
+            /** @var non-empty-string $column */
             if (($alias !== null) && ($alias !== '')) {
                 $columnsToAlias[$column] = $alias;
             }
