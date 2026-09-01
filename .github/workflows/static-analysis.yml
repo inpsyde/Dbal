@@ -39,17 +39,23 @@ jobs:
     strategy:
       matrix:
         php: [ '8.2', '8.3', '8.4' ]
+    secrets:
+      COMPOSER_AUTH_JSON: ${{ secrets.PACKAGIST_AUTH_JSON }}
     with:
       PHP_VERSION: ${{ matrix.php }}
 
   coding-standards-analysis-php:
     if: ${{ (github.event_name != 'workflow_dispatch') || ((github.event.inputs.jobs == 'Run PHPCS only') || (github.event.inputs.jobs == 'Run all')) }}
     uses: inpsyde/reusable-workflows/.github/workflows/coding-standards-php.yml@main
+    secrets:
+      COMPOSER_AUTH_JSON: ${{ secrets.PACKAGIST_AUTH_JSON }}
     with:
       PHP_VERSION: '8.4'
 
   static-code-analysis-php:
     if: ${{ (github.event_name != 'workflow_dispatch') || ((github.event.inputs.jobs == 'Run PHPStan only') || (github.event.inputs.jobs == 'Run all')) }}
     uses: inpsyde/reusable-workflows/.github/workflows/static-analysis-php.yml@main
+    secrets:
+      COMPOSER_AUTH_JSON: ${{ secrets.PACKAGIST_AUTH_JSON }}
     with:
       PHP_VERSION: '8.4'

@@ -4,15 +4,11 @@ on:
     workflow_dispatch:
     pull_request:
         paths:
-            - '**/integration-tests*'
-            - '**/docker/**'
             - '**.php'
             - 'phpunit*'
             - 'composer.*'
     push:
         paths:
-            - '**/integration-tests*'
-            - '**/docker/**'
             - '**.php'
             - 'phpunit*'
             - 'composer.*'
@@ -22,39 +18,17 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
-    execute-tests:
-        runs-on: ubuntu-latest
+    tests-integration-php:
         if: ${{ !contains(github.event.head_commit.message, 'integration-tests skip') }}
         strategy:
+            fail-fast: false
             matrix:
-                php-version: [ '8.2', '8.3', '8.4' ]
-                wp-version: [ '6.5', '6.6', '6.7', '6' ]
-                exclude:
-                    - php-version: '8.3'
-                      wp-version: '6.5'
-                    - php-version: '8.3'
-                      wp-version: '6.6'
-        steps:
-            -   name: Checkout
-                uses: actions/checkout@v4
-
-            -   name: Setup PHP
-                uses: shivammathur/setup-php@v2
-                with:
-                    php-version: ${{ matrix.php-version }}
-                    coverage: none
-
-            -   name: Adjust Composer Dependencies
-                run: |
-                    composer config --unset repositories.0
-                    composer remove syde/phpcs inpsyde/wp-stubs-versions roots/wordpress-no-content --dev --no-update
-                    composer require "roots/wordpress-no-content:${{ matrix.wp-version }}.*" --no-update
-
-            -   name: Install Composer Dependencies
-                uses: ramsey/composer-install@v3
-
-            -   name: Run integration tests
-                working-directory: ./tests
-                run: |
-                    chmod u+x ./integration-tests.sh
-                    ./integration-tests.sh ${{ matrix.php-version }}
+                wp-version: [ '6.8', '6.9', '7.0' ]
+        uses: inpsyde/reusable-workflows/.github/workflows/tests-unit-php.yml@main
+        secrets:
+            COMPOSER_AUTH_JSON: ${{ secrets.PACKAGIST_AUTH_JSON }}
+            ENV_VARS: >-
+                [{"name":"WP_CORE_VERSION", "value":"${{ matrix.wp-version }}"}]
+        with:
+            PHP_VERSION: '8.2'
+            PHPUNIT_ARGS: '--testsuite=integration --no-coverage -c phpunit-integration.xml.dist'

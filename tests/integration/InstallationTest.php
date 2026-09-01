@@ -21,6 +21,7 @@ class InstallationTest extends IntegrationTestCase
 {
     /**
      * @test
+     * @preserveGlobalState disabled
      */
     public function testRegisterForInstall(): void
     {
@@ -62,6 +63,7 @@ class InstallationTest extends IntegrationTestCase
 
     /**
      * @test
+     * @preserveGlobalState disabled
      */
     public function testInstallationAndUpdate(): void
     {

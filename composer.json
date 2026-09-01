@@ -19,6 +19,14 @@
             "only": [
                 "inpsyde/wp-stubs-versions"
             ]
+        },
+        {
+            "type": "composer",
+            "url": "https://wpackagist.org",
+            "only": [
+                "wpackagist-plugin/*",
+                "wpackagist-theme/*"
+            ]
         }
     ],
     "require": {
@@ -29,16 +37,14 @@
         "syde/phpcs": "~1.0.1",
         "phpunit/phpunit": "^9.6.17",
         "brain/monkey": "^2.6.1",
-        "roots/wordpress-no-content": ">=6.7",
         "inpsyde/wp-stubs-versions": "dev-latest",
         "phpstan/phpstan": "^2.1.1",
         "phpstan/phpstan-deprecation-rules": "^2.0.1",
         "phpstan/phpstan-mockery": "^2.0.0",
         "phpstan/phpstan-phpunit": "^2.0.4",
         "swissspidy/phpstan-no-private": "^v1.0.0",
-        "globalis/wp-cli-bin": "^2.8.1",
-        "symfony/process": "^v5.4.36",
-        "symfony/dotenv": "^v5.4.36"
+        "roots/wordpress": ">=7.0",
+        "syde/wp-phpunit-integration": "^0.4"
     },
     "autoload": {
         "psr-4": {
@@ -60,7 +66,7 @@
         "phpstan": "@php ./vendor/bin/phpstan analyse --memory-limit=1G",
         "tests:unit:cov": "@php ./vendor/phpunit/phpunit/phpunit --testsuite=unit",
         "tests:unit": "@php ./vendor/phpunit/phpunit/phpunit --testsuite=unit --no-coverage",
-        "tests:integration": "@php ./vendor/phpunit/phpunit/phpunit --testsuite=integration --no-coverage",
+        "tests:integration": "@php ./vendor/phpunit/phpunit/phpunit --testsuite=integration --no-coverage -c phpunit-integration.xml.dist",
         "tests": [
             "@tests:integration",
             "@tests:unit"
@@ -78,10 +84,22 @@
         "optimize-autoloader": true,
         "allow-plugins": {
             "roots/wordpress-core-installer": true,
-            "dealerdirect/phpcodesniffer-composer-installer": true
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "composer/installers": true
         }
     },
     "extra": {
-        "wordpress-install-dir": "vendor/wordpress/wordpress"
+        "wordpress-install-dir": "vendor/wordpress/wordpress",
+        "installer-paths": {
+            "vendor/wordpress/wordpress/wp-content/themes/{$name}": [
+                "type:wordpress-theme"
+            ],
+            "vendor/wordpress/wordpress/wp-content/plugins/{$name}": [
+                "type:wordpress-plugin"
+            ],
+            "vendor/wordpress/wordpress/wp-content/mu-plugins/{$name}": [
+                "type:wordpress-muplugin"
+            ]
+        }
     }
 }
