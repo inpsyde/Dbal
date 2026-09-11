@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Query;
+namespace Syde\Dbal\Query;
 
-use Inpsyde\Dbal\Cache;
-use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\PhpErrors;
-use Inpsyde\Dbal\Result;
-use Inpsyde\Dbal\Schema\Index;
-use Inpsyde\Dbal\Schema\Schema;
-use Inpsyde\Dbal\Schema\SchemaFinder;
+use Syde\Dbal\Cache;
+use Syde\Dbal\Dbal;
+use Syde\Dbal\PhpErrors;
+use Syde\Dbal\Result;
+use Syde\Dbal\Schema\Index;
+use Syde\Dbal\Schema\Schema;
+use Syde\Dbal\Schema\SchemaFinder;
 
 class Delete extends BaseSelect
 {

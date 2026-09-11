@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Tests;
+namespace Syde\Dbal\Tests;
 
-use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\Schema\SchemasRegister;
+use Syde\Dbal\Dbal;
+use Syde\Dbal\Schema\SchemasRegister;
 
 class QueriesTestCase extends IntegrationTestCase
 {

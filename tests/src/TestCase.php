@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Tests;
+namespace Syde\Dbal\Tests;
 
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 abstract class TestCase extends \PHPUnit\Framework\TestCase
 {

@@ -6,7 +6,7 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Tests;
+namespace Syde\Dbal\Tests;
 
 class DummyWpdb extends \wpdb
 {

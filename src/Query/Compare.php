@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Query;
+namespace Syde\Dbal\Query;
 
-use Inpsyde\Dbal\ErrorCollector;
-use Inpsyde\Dbal\Schema\Schema;
-use Inpsyde\Dbal\Schema\SchemaFinder;
+use Syde\Dbal\ErrorCollector;
+use Syde\Dbal\Schema\Schema;
+use Syde\Dbal\Schema\SchemaFinder;
 
 final class Compare
 {

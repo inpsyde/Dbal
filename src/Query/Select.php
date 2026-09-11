@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Query;
+namespace Syde\Dbal\Query;
 
-use Inpsyde\Dbal\Cache;
-use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\Error;
-use Inpsyde\Dbal\PhpErrors;
-use Inpsyde\Dbal\Schema\Schema;
-use Inpsyde\Dbal\Schema\SchemaFinder;
-use Inpsyde\Dbal\Schema\Schemas;
+use Syde\Dbal\Cache;
+use Syde\Dbal\Dbal;
+use Syde\Dbal\Error;
+use Syde\Dbal\PhpErrors;
+use Syde\Dbal\Schema\Schema;
+use Syde\Dbal\Schema\SchemaFinder;
+use Syde\Dbal\Schema\Schemas;
 
 class Select extends BaseSelect
 {
@@ -705,7 +705,7 @@ class Select extends BaseSelect
      */
     private function withColumn(string $column, ?string $alias = null, bool $raw = false): Select
     {
-        // phpcs:enable Inpsyde.CodeQuality.FunctionLength
+        // phpcs:enable Syde.CodeQuality.FunctionLength
         if (!$this->errors->isEmpty()) {
             return $this;
         }

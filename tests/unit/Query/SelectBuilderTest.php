@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Tests\Unit\Query;
+namespace Syde\Dbal\Tests\Unit\Query;
 
 use Brain\Monkey;
-use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\Query\SelectBuilder;
-use Inpsyde\Dbal\Tests\TableOne;
-use Inpsyde\Dbal\Tests\TablePivot;
-use Inpsyde\Dbal\Tests\TableTwo;
-use Inpsyde\Dbal\Tests\UnitTestCase;
+use Syde\Dbal\Dbal;
+use Syde\Dbal\Query\SelectBuilder;
+use Syde\Dbal\Tests\TableOne;
+use Syde\Dbal\Tests\TablePivot;
+use Syde\Dbal\Tests\TableTwo;
+use Syde\Dbal\Tests\UnitTestCase;
 
 class SelectBuilderTest extends UnitTestCase
 {

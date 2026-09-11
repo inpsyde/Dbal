@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Tests\Unit\Schema;
+namespace Syde\Dbal\Tests\Unit\Schema;
 
 use Brain\Monkey;
-use Inpsyde\Dbal\Schema\Column;
-use Inpsyde\Dbal\Schema\Columns;
-use Inpsyde\Dbal\Schema\WpSchemas;
-use Inpsyde\Dbal\Tests\UnitTestCase;
+use Syde\Dbal\Schema\Column;
+use Syde\Dbal\Schema\Columns;
+use Syde\Dbal\Schema\WpSchemas;
+use Syde\Dbal\Tests\UnitTestCase;
 
 class WpSchemasTest extends UnitTestCase
 {

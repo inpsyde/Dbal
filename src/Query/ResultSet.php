@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Query;
+namespace Syde\Dbal\Query;
 
-use Inpsyde\Dbal\Error;
-use Inpsyde\Dbal\Result;
+use Syde\Dbal\Error;
+use Syde\Dbal\Result;
 
 /**
  * @template-implements \IteratorAggregate<int, array>

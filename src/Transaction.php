@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal;
+namespace Syde\Dbal;
 
 class Transaction
 {

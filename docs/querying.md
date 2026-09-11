@@ -1,20 +1,20 @@
 # Querying
 
-Normally, in WordPress, creating queries happens through `$wpdb->prepare($sql, $data)` and `$wpdb->get_results($sql)`. While this is still a valid and safe way to query your database, `inpsyde/dbal` helps you to write a more code-based way of queries with automatic escaping through the WordPress API. In the following examples we will compare "normal" queries through WordPress with queries written in `inpsyde/dbal` based on our `events` table we used in our [Schema](schemas.md) example.
+Normally, in WordPress, creating queries happens through `$wpdb->prepare($sql, $data)` and `$wpdb->get_results($sql)`. While this is still a valid and safe way to query your database, `syde/dbal` helps you to write a more code-based way of queries with automatic escaping through the WordPress API. In the following examples we will compare "normal" queries through WordPress with queries written in `syde/dbal` based on our `events` table we used in our [Schema](schemas.md) example.
 
 ## Result and ResultSet
 
-Before writing queries it helps to understand what `inpsyde/dbal` returns. Normally, `$wpdb->get_results()` returns mixed values: `object`, `array` or `null`. Getting additional information about the query executed is not present in this return value.
+Before writing queries it helps to understand what `syde/dbal` returns. Normally, `$wpdb->get_results()` returns mixed values: `object`, `array` or `null`. Getting additional information about the query executed is not present in this return value.
 
-`inpsyde/dbal` introduces two objects to have more consistent control and context over the response: `Inpsyde\Dbal\Result` and `Inpsyde\Dbal\Query\ResultSet`.
+`syde/dbal` introduces two objects to have more consistent control and context over the response: `Syde\Dbal\Result` and `Syde\Dbal\Query\ResultSet`.
 
 ### ResultSet
 
-The `Inpsyde\Dbal\Query\ResultSet` is used for `Inpsyde\Dbal\Query\Select` to return an iterable collection of `Inpsyde\Dbal\Result`.
+The `Syde\Dbal\Query\ResultSet` is used for `Syde\Dbal\Query\Select` to return an iterable collection of `Syde\Dbal\Result`.
 
 ```php
-use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\Query\ResultSet;
+use Syde\Dbal\Dbal;
+use Syde\Dbal\Query\ResultSet;
 
 /** @var ResultSet $resultSet */
 $resultSet = Dbal::select('events')->all();
@@ -38,8 +38,8 @@ foreach ($resultSet as $result) {
 `ResultSet::map()` lets you transform each row into a typed object before iterating:
 
 ```php
-use Inpsyde\Dbal\Query\ResultSet;
-use Inpsyde\Dbal\Result;
+use Syde\Dbal\Query\ResultSet;
+use Syde\Dbal\Result;
 
 /** @var ResultSet $resultSet */
 $resultSet->map(static function (Result $result): Event {
@@ -61,11 +61,11 @@ foreach ($resultSet->errored() as $error) {
 
 ### Result
 
-`Inpsyde\Dbal\Result` is used for a single return value from `INSERT`, `UPDATE`, or `DELETE` operations.
+`Syde\Dbal\Result` is used for a single return value from `INSERT`, `UPDATE`, or `DELETE` operations.
 
 ```php
-use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\Result;
+use Syde\Dbal\Dbal;
+use Syde\Dbal\Result;
 
 /** @var Result $result */
 $result = Dbal::writeOn('events')->insert(
@@ -91,7 +91,7 @@ See [Error Handling](error-handling.md) for details on working with errored resu
 For `SELECT` queries you start with invoking the `select()` method.
 
 ```php
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 Dbal::select('events');
 
@@ -103,7 +103,7 @@ $wpdb->get_results($sql);
 To fetch all rows call `->all()`, which returns a `ResultSet`. To fetch only the first matching row, call `->pickFirst()` on the result set:
 
 ```php
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 $resultSet = Dbal::select('events')->all();            // ResultSet of all rows
 $first     = Dbal::select('events')->pickFirst();      // ResultSet containing at most one row
@@ -115,7 +115,7 @@ $result    = Dbal::select('events')->pickFirst()->first(); // Result - first row
 The `select()` method takes an optional second parameter with which a table alias can be specified.
 
 ```php
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 Dbal::select('events', 'e');
 
@@ -129,7 +129,7 @@ $wpdb->get_results($sql);
 By default `Dbal::select()` produces `SELECT *`. Use `cols()` to restrict which columns are returned.
 
 ```php
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 Dbal::select('events')->cols('uuid', 'title', 'type');
 
@@ -141,8 +141,8 @@ $wpdb->get_results($sql);
 ### WHERE clause
 
 ```php
-use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\Query\Where;
+use Syde\Dbal\Dbal;
+use Syde\Dbal\Query\Where;
 
 Dbal::select('events')->where('post_id', 5, Where::EQ);
 
@@ -171,8 +171,8 @@ The following operators are supported:
 Multiple conditions can be chained with `andWhere()` and `orWhere()`:
 
 ```php
-use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\Query\Where;
+use Syde\Dbal\Dbal;
+use Syde\Dbal\Query\Where;
 
 // AND - both conditions must match
 Dbal::select('events')
@@ -197,7 +197,7 @@ $wpdb->get_results($sql);
 The `SELECT` statement can be specified with a `GROUP BY` clause.
 
 ```php
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 Dbal::select('events')->groupBy('post_id');
 
@@ -213,7 +213,7 @@ For `SELECT` queries you can generate `INNER` and `LEFT` joins.
 **`innerJoin(table, localColumn, foreignColumn)`** - basic inner join:
 
 ```php
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 Dbal::select('events', 'e')->innerJoin('posts', 'post_id', 'ID');
 
@@ -225,7 +225,7 @@ $wpdb->get_results($sql);
 **`innerJoinWhere(table, localColumn, foreignColumn, whereColumn, value, operator)`** - inner join with a `WHERE` filter applied to the joined table:
 
 ```php
-use Inpsyde\Dbal\Query\Where;
+use Syde\Dbal\Query\Where;
 
 Dbal::select('events', 'e')
     ->innerJoinWhere('posts', 'post_id', 'ID', 'post_status', 'publish', Where::EQ);
@@ -266,8 +266,8 @@ Dbal::select('events', 'e')
 The `orderBy()` method adds an expression to the `ORDER BY` clause.
 
 ```php
-use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\Query\Select;
+use Syde\Dbal\Dbal;
+use Syde\Dbal\Query\Select;
 
 Dbal::select('events')->orderBy('start_date', Select::ASC);
 
@@ -281,7 +281,7 @@ $wpdb->get_results($sql);
 The `LIMIT` clause can be used to paginate through your database table or limit the result to a specific number of rows.
 
 ```php
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 $limit  = 5;
 $offset = 0;
@@ -301,7 +301,7 @@ For `UPDATE` queries use the `writeOn()` method.
 **`update(data, where)`** - update rows matching a column/value pair:
 
 ```php
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 $result = Dbal::writeOn('events')->update(
     [
@@ -326,8 +326,8 @@ $wpdb->update(
 **`updateWhere(data, Where)`** - update using a full `Where` expression for more complex conditions:
 
 ```php
-use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\Query\Where;
+use Syde\Dbal\Dbal;
+use Syde\Dbal\Query\Where;
 
 $result = Dbal::writeOn('events')->updateWhere(
     ['status' => 'PAST'],
@@ -344,7 +344,7 @@ For `INSERT` queries use the `writeOn()` method.
 **`insert(data)`** - insert a single row:
 
 ```php
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 $result = Dbal::writeOn('events')->insert(
     [
@@ -369,7 +369,7 @@ $wpdb->insert(
 **`insertMany(firstRow, secondRow, ...rows)`** - insert multiple rows in a single query:
 
 ```php
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 $result = Dbal::writeOn('events')->insertMany(
     ['post_id' => 1, 'title' => 'Event A', 'status' => 'SCHEDULED', 'type' => 'party'],
@@ -387,7 +387,7 @@ $result = Dbal::writeOn('events')->insertMany(
 For `DELETE` queries use the `deleteFrom()` method.
 
 ```php
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 $result = Dbal::deleteFrom('events')->where(['id' => 1]);
 
@@ -398,7 +398,7 @@ $wpdb->delete('events', ['id' => 1]);
 When joining tables in a delete query, `deleteOnly()` restricts which tables rows are actually deleted from, preventing accidental deletion from joined tables:
 
 ```php
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 // Join posts but only delete rows from events
 $result = Dbal::deleteFrom('events')
@@ -411,7 +411,7 @@ $result = Dbal::deleteFrom('events')
 
 ## Transactions
 
-`inpsyde/dbal` provides an API for transaction management via `Dbal::transaction()`.
+`syde/dbal` provides an API for transaction management via `Dbal::transaction()`.
 
 The following isolation flags are available as bitmask constants on `Transaction`:
 
@@ -429,9 +429,9 @@ The following isolation flags are available as bitmask constants on `Transaction
 Flags can be combined using the bitwise OR operator (`|`):
 
 ```php
-use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\Result;
-use Inpsyde\Dbal\Transaction;
+use Syde\Dbal\Dbal;
+use Syde\Dbal\Result;
+use Syde\Dbal\Transaction;
 
 // Single flag
 $transaction = Dbal::transaction(Transaction::READ_WRITE);

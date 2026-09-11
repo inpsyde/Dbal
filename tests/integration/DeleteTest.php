@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Tests\Integration;
+namespace Syde\Dbal\Tests\Integration;
 
-use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\Query\Delete;
-use Inpsyde\Dbal\Query\Where;
-use Inpsyde\Dbal\Tests\QueriesTestCase;
-use Inpsyde\Dbal\Tests\TableOne;
-use Inpsyde\Dbal\Tests\TableTwo;
+use Syde\Dbal\Dbal;
+use Syde\Dbal\Query\Delete;
+use Syde\Dbal\Query\Where;
+use Syde\Dbal\Tests\QueriesTestCase;
+use Syde\Dbal\Tests\TableOne;
+use Syde\Dbal\Tests\TableTwo;
 
 /**
  * @runTestsInSeparateProcesses

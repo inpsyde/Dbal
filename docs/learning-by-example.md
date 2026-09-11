@@ -1,6 +1,6 @@
 # Learning by example
 
-This page walks through a complete, realistic use-case from scratch: defining a custom database table, installing it, and performing the full range of CRUD operations using `inpsyde/dbal`.
+This page walks through a complete, realistic use-case from scratch: defining a custom database table, installing it, and performing the full range of CRUD operations using `syde/dbal`.
 
 ## The events table
 
@@ -21,14 +21,14 @@ All examples on this page use a custom WordPress database table called `events`:
 
 ## 1. Defining the schema
 
-Start by implementing `Inpsyde\Dbal\Schema\InstallableSchema`. The `version()` method lets `inpsyde/dbal` detect structural changes and trigger `dbDelta` automatically.
+Start by implementing `Syde\Dbal\Schema\InstallableSchema`. The `version()` method lets `syde/dbal` detect structural changes and trigger `dbDelta` automatically.
 
 ```php
-use Inpsyde\Dbal\Schema\Column;
-use Inpsyde\Dbal\Schema\Columns;
-use Inpsyde\Dbal\Schema\Index;
-use Inpsyde\Dbal\Schema\Indexes;
-use Inpsyde\Dbal\Schema\InstallableSchema;
+use Syde\Dbal\Schema\Column;
+use Syde\Dbal\Schema\Columns;
+use Syde\Dbal\Schema\Index;
+use Syde\Dbal\Schema\Indexes;
+use Syde\Dbal\Schema\InstallableSchema;
 
 class EventSchema implements InstallableSchema
 {
@@ -114,8 +114,8 @@ class EventSchema implements InstallableSchema
 Hook into `Dbal::ACTION_REGISTER_SCHEMA` to register the schema for installation:
 
 ```php
-use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\Schema\SchemasRegister;
+use Syde\Dbal\Dbal;
+use Syde\Dbal\Schema\SchemasRegister;
 
 add_action(
     Dbal::ACTION_REGISTER_SCHEMA,
@@ -130,8 +130,8 @@ add_action(
 To drop the table when the plugin is deactivated, register it for uninstall inside the WordPress `register_deactivation_hook` callback:
 
 ```php
-use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\Schema\SchemasRegister;
+use Syde\Dbal\Dbal;
+use Syde\Dbal\Schema\SchemasRegister;
 
 register_deactivation_hook(
     __FILE__,
@@ -150,11 +150,11 @@ register_deactivation_hook(
 
 ## 2. The Event model
 
-Before writing queries it helps to have a typed model to work with. The `Event` class uses a private constructor, public readonly properties, and three static constructors: `new()` for creating a new (not-yet-persisted) event, `newFromResultSet()` for hydrating a row returned by `inpsyde/dbal`. `isValid()` distinguishes a successfully hydrated event from an error wrapper.
+Before writing queries it helps to have a typed model to work with. The `Event` class uses a private constructor, public readonly properties, and three static constructors: `new()` for creating a new (not-yet-persisted) event, `newFromResultSet()` for hydrating a row returned by `syde/dbal`. `isValid()` distinguishes a successfully hydrated event from an error wrapper.
 
 ```php
-use Inpsyde\Dbal\Error;
-use Inpsyde\Dbal\Result;
+use Syde\Dbal\Error;
+use Syde\Dbal\Result;
 
 class Event
 {
@@ -220,7 +220,7 @@ class Event
     }
 
     /**
-     * Hydrate an Event from a single Result returned by inpsyde/dbal.
+     * Hydrate an Event from a single Result returned by syde/dbal.
      */
     public static function newFromResultSet(Result $result): self
     {
@@ -248,7 +248,7 @@ class Event
 ### Single insert
 
 ```php
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 $event = Event::new(
     postId:    1,
@@ -275,7 +275,7 @@ if ($insertedEvent->isValid()) {
 Use `insertMany()` to insert multiple rows in a single query. At least two rows are required; use `insert()` for a single row.
 
 ```php
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 $concert    = Event::new(postId: 2, title: 'Summer Concert',  type: 'concert',    timezone: 'UTC');
 $exhibition = Event::new(postId: 3, title: 'Art Exhibition',  type: 'exhibition', status: 'PAST', timezone: 'UTC');
@@ -297,7 +297,7 @@ $result = Dbal::writeOn('events')->insertMany(
 `update(data, where)` updates all rows matching the `where` column/value pair:
 
 ```php
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 $event = Event::new(
     postId: 1,
@@ -318,8 +318,8 @@ if ($result->isValid()) {
 `updateWhere(data, Where)` accepts a full `Where` object for more complex conditions — useful when a simple column equality check is not enough:
 
 ```php
-use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\Query\Where;
+use Syde\Dbal\Dbal;
+use Syde\Dbal\Query\Where;
 
 // Mark all events whose end_date is in the past as PAST
 $result = Dbal::writeOn('events')->updateWhere(
@@ -331,8 +331,8 @@ $result = Dbal::writeOn('events')->updateWhere(
 Conditions can be chained with `andWith()` and `orWith()`:
 
 ```php
-use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\Query\Where;
+use Syde\Dbal\Dbal;
+use Syde\Dbal\Query\Where;
 
 // Cancel all scheduled party-type events for a specific post
 $result = Dbal::writeOn('events')->updateWhere(
@@ -351,9 +351,9 @@ $result = Dbal::writeOn('events')->updateWhere(
 ### Fetch all rows
 
 ```php
-use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\Query\ResultSet;
-use Inpsyde\Dbal\Result;
+use Syde\Dbal\Dbal;
+use Syde\Dbal\Query\ResultSet;
+use Syde\Dbal\Result;
 
 /** @var ResultSet $resultSet */
 $resultSet = Dbal::select('events')->all();
@@ -367,7 +367,7 @@ foreach ($resultSet as $result) {
 ### Fetch the first matching row
 
 ```php
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 $result = Dbal::select('events')->pickFirst()->first();
 
@@ -379,8 +379,8 @@ if ($result !== null && $result->isValid()) {
 ### Filter with WHERE
 
 ```php
-use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\Query\Where;
+use Syde\Dbal\Dbal;
+use Syde\Dbal\Query\Where;
 
 // Single condition
 $resultSet = Dbal::select('events')
@@ -408,7 +408,7 @@ $resultSet = Dbal::select('events')
 ### Restrict returned columns
 
 ```php
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 $resultSet = Dbal::select('events')
     ->cols('id', 'title', 'status', 'type')
@@ -419,8 +419,8 @@ $resultSet = Dbal::select('events')
 ### Order and paginate
 
 ```php
-use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\Query\Select;
+use Syde\Dbal\Dbal;
+use Syde\Dbal\Query\Select;
 
 $page    = 2;
 $perPage = 10;
@@ -437,9 +437,9 @@ $resultSet = Dbal::select('events')
 `ResultSet::map()` transforms each row before iteration:
 
 ```php
-use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\Query\ResultSet;
-use Inpsyde\Dbal\Result;
+use Syde\Dbal\Dbal;
+use Syde\Dbal\Query\ResultSet;
+use Syde\Dbal\Result;
 
 $resultSet = Dbal::select('events')->all();
 
@@ -455,7 +455,7 @@ foreach ($resultSet as $event) {
 ### Error handling on reads
 
 ```php
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 $resultSet = Dbal::select('events')->all();
 
@@ -473,7 +473,7 @@ if ($resultSet->hasErrors()) {
 ### Simple delete
 
 ```php
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 $result = Dbal::deleteFrom('events')->where(['id' => 1]);
 
@@ -487,7 +487,7 @@ if ($result->isValid()) {
 When joining tables, use `deleteOnly()` to restrict which table rows are actually removed — this prevents accidentally deleting rows from joined tables:
 
 ```php
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 // Delete events whose associated post no longer exists (or has been trashed)
 $result = Dbal::deleteFrom('events', 'e')
@@ -499,7 +499,7 @@ $result = Dbal::deleteFrom('events', 'e')
 ### Delete multiple rows by condition
 
 ```php
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 // Remove all canceled events for a given post
 $result = Dbal::deleteFrom('events')->where([

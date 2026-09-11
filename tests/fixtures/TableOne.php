@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Tests;
+namespace Syde\Dbal\Tests;
 
-use Inpsyde\Dbal\Schema\Column;
-use Inpsyde\Dbal\Schema\Columns;
-use Inpsyde\Dbal\Schema\Index;
-use Inpsyde\Dbal\Schema\Indexes;
-use Inpsyde\Dbal\Schema\InstallableSchema;
+use Syde\Dbal\Schema\Column;
+use Syde\Dbal\Schema\Columns;
+use Syde\Dbal\Schema\Index;
+use Syde\Dbal\Schema\Indexes;
+use Syde\Dbal\Schema\InstallableSchema;
 
 class TableOne implements InstallableSchema
 {

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Tests\Unit;
+namespace Syde\Dbal\Tests\Unit;
 
-use Inpsyde\Dbal\Error;
-use Inpsyde\Dbal\Result;
-use Inpsyde\Dbal\Tests\UnitTestCase;
-use Inpsyde\Dbal\Transaction;
+use Syde\Dbal\Error;
+use Syde\Dbal\Result;
+use Syde\Dbal\Tests\UnitTestCase;
+use Syde\Dbal\Transaction;
 
 class TransactionTest extends UnitTestCase
 {

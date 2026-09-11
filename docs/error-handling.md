@@ -1,13 +1,13 @@
 # Error Handling
 
-`inpsyde/dbal` provides a structured approach to error handling through three dedicated classes: `Inpsyde\Dbal\Error`, `Inpsyde\Dbal\ErrorCollector`, and `Inpsyde\Dbal\PhpErrors`.
+`syde/dbal` provides a structured approach to error handling through three dedicated classes: `Syde\Dbal\Error`, `Syde\Dbal\ErrorCollector`, and `Syde\Dbal\PhpErrors`.
 
 ## Result errors
 
 Every query returns either a `Result` (write operations) or a `ResultSet` (selects). Both expose whether the operation failed:
 
 ```php
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 $result = Dbal::writeOn('events')->insert([
     'post_id' => 1,
@@ -30,7 +30,7 @@ if ($result->isValid()) {
 For a `ResultSet`, use `hasErrors()` to check whether any rows failed, and `toResult()` to collapse the set into a single `Result` for error inspection:
 
 ```php
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 $resultSet = Dbal::select('events')->all();
 
@@ -42,10 +42,10 @@ if ($resultSet->hasErrors()) {
 
 ## Error
 
-`Inpsyde\Dbal\Error` extends PHP's native `\Error` and carries structured error information. Multiple errors can be merged into a chain:
+`Syde\Dbal\Error` extends PHP's native `\Error` and carries structured error information. Multiple errors can be merged into a chain:
 
 ```php
-use Inpsyde\Dbal\Error;
+use Syde\Dbal\Error;
 
 // Merge two errors into one
 $merged = $errorA->withMerged($errorB);
@@ -62,10 +62,10 @@ $serialized = $merged->serialize();
 
 ## ErrorCollector
 
-`Inpsyde\Dbal\ErrorCollector` accumulates multiple errors before acting on them. It is used internally during query building and can also be used in your own validation logic:
+`Syde\Dbal\ErrorCollector` accumulates multiple errors before acting on them. It is used internally during query building and can also be used in your own validation logic:
 
 ```php
-use Inpsyde\Dbal\ErrorCollector;
+use Syde\Dbal\ErrorCollector;
 
 $collector = new ErrorCollector();
 
@@ -82,7 +82,7 @@ if (!$collector->isEmpty()) {
 WordPress's `$wpdb` can emit PHP notices and warnings instead of structured errors. `PhpErrors::convertToExceptions()` installs a temporary error handler that converts these into catchable exceptions:
 
 ```php
-use Inpsyde\Dbal\PhpErrors;
+use Syde\Dbal\PhpErrors;
 
 $phpErrors = PhpErrors::convertToExceptions();
 

@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Tests\Integration;
+namespace Syde\Dbal\Tests\Integration;
 
-use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\Query\Where;
-use Inpsyde\Dbal\Query\WpQueryUtils;
-use Inpsyde\Dbal\Tests\QueriesTestCase;
-use Inpsyde\Dbal\Tests\TableOne;
+use Syde\Dbal\Dbal;
+use Syde\Dbal\Query\Where;
+use Syde\Dbal\Query\WpQueryUtils;
+use Syde\Dbal\Tests\QueriesTestCase;
+use Syde\Dbal\Tests\TableOne;
 
 /**
  * @runTestsInSeparateProcesses

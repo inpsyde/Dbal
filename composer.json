@@ -1,5 +1,5 @@
 {
-    "name": "inpsyde/dbal",
+    "name": "syde/dbal",
     "description": "Database abstraction layer for WordPress, on top of wpdb and dbDelta.",
     "type": "library",
     "license": "GPL-2.0-or-later",
@@ -48,14 +48,14 @@
     },
     "autoload": {
         "psr-4": {
-            "Inpsyde\\Dbal\\": "src/"
+            "Syde\\Dbal\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Inpsyde\\Dbal\\Tests\\": "tests/src/",
-            "Inpsyde\\Dbal\\Tests\\Unit\\": "tests/unit/",
-            "Inpsyde\\Dbal\\Tests\\Integration\\": "tests/integration/"
+            "Syde\\Dbal\\Tests\\": "tests/src/",
+            "Syde\\Dbal\\Tests\\Unit\\": "tests/unit/",
+            "Syde\\Dbal\\Tests\\Integration\\": "tests/integration/"
         },
         "classmap": [
             "tests/fixtures/"

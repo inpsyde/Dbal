@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal;
+namespace Syde\Dbal;
 
-use Inpsyde\Dbal\Schema\SchemaFinder;
+use Syde\Dbal\Schema\SchemaFinder;
 
 /**
  * @psalm-consistent-constructor
@@ -273,7 +273,7 @@ class Cache
      */
     private function addCleanCacheHooks(): void
     {
-        // phpcs:enable Inpsyde.CodeQuality.FunctionLength
+        // phpcs:enable Syde.CodeQuality.FunctionLength
 
         $wpdb = Dbal::wpdb();
 

@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Tests\Unit\Query;
+namespace Syde\Dbal\Tests\Unit\Query;
 
-use Inpsyde\Dbal\Query\Aliases;
-use Inpsyde\Dbal\Query\ColumnsResultParser;
-use Inpsyde\Dbal\Schema\Column;
-use Inpsyde\Dbal\Schema\Columns;
-use Inpsyde\Dbal\Tests\TableOne;
-use Inpsyde\Dbal\Tests\TableTwo;
-use Inpsyde\Dbal\Tests\UnitTestCase;
+use Syde\Dbal\Query\Aliases;
+use Syde\Dbal\Query\ColumnsResultParser;
+use Syde\Dbal\Schema\Column;
+use Syde\Dbal\Schema\Columns;
+use Syde\Dbal\Tests\TableOne;
+use Syde\Dbal\Tests\TableTwo;
+use Syde\Dbal\Tests\UnitTestCase;
 
 class ColumnsResultParserTest extends UnitTestCase
 {

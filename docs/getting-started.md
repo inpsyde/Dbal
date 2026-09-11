@@ -1,17 +1,17 @@
 # Getting started
 
-`inpsyde/dbal` is a database abstraction layer for WordPress built on top of `wpdb` and `dbDelta`. It provides a structured and extensible way to define schemas, interact with database tables, and perform read/write operations consistently.
+`syde/dbal` is a database abstraction layer for WordPress built on top of `wpdb` and `dbDelta`. It provides a structured and extensible way to define schemas, interact with database tables, and perform read/write operations consistently.
 
-The main entry point of the package is `Inpsyde\Dbal\Dbal`. This class exposes all relevant services through its public API and acts as the central access point for database-related functionality.
+The main entry point of the package is `Syde\Dbal\Dbal`. This class exposes all relevant services through its public API and acts as the central access point for database-related functionality.
 
 Throughout this documentation, we will use a simple custom database table called `events`. See [learning-by-example.md](./learning-by-example.md) for a full walkthrough — from defining the schema to insert, update, read, and delete operations.
 
 ## Accessing wpdb
 
-The `wpdb` object is automatically fetched by `inpsyde/dbal` and can be accessed:
+The `wpdb` object is automatically fetched by `syde/dbal` and can be accessed:
 
 ```php
-$wpdb = Inpsyde\Dbal\Dbal::wpdb();
+$wpdb = Syde\Dbal\Dbal::wpdb();
 ```
 
 ## Readiness Check
@@ -19,7 +19,7 @@ $wpdb = Inpsyde\Dbal\Dbal::wpdb();
 To verify whether the package is properly initialized and ready for use, you can perform a readiness check:
 
 ```php
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 $isReady = Dbal::isReady();
 ```
@@ -28,10 +28,10 @@ This is especially useful during early bootstrap phases or when working with cus
 
 ## Caching
 
-`inpsyde/dbal` includes a lightweight caching layer based on the WordPress Core `wp_cache_*` functions. This cache is used internally in several places and can also be accessed directly:
+`syde/dbal` includes a lightweight caching layer based on the WordPress Core `wp_cache_*` functions. This cache is used internally in several places and can also be accessed directly:
 
 ```php
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 $cache = Dbal::cache();
 
@@ -53,10 +53,10 @@ $cache->cleanCacheForSite();
 
 ## Schema Finder
 
-The `Inpsyde\Dbal\Schema\SchemaFinder` allows you to locate both WordPress core schemas (WpSchema) and custom, installable schemas (Schema) available in your installation:
+The `Syde\Dbal\Schema\SchemaFinder` allows you to locate both WordPress core schemas (WpSchema) and custom, installable schemas (Schema) available in your installation:
 
 ```php
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 
 $schemaFinder = Dbal::schemaFinder();
@@ -74,12 +74,12 @@ $schemaFinder->wpdbTableName('posts');
 
 ## Querying
 
-`Inpsyde\Dbal\Dbal` provides convenient shortcuts for building and executing database queries. A more detailed explanation of the querying API can be found in [./querying.md](./querying.md).
+`Syde\Dbal\Dbal` provides convenient shortcuts for building and executing database queries. A more detailed explanation of the querying API can be found in [./querying.md](./querying.md).
 
 **Basic examples:**
 
 ```php
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 $resultSet = Dbal::select('events')
     ->all();

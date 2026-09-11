@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Query;
+namespace Syde\Dbal\Query;
 
-use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\ErrorCollector;
-use Inpsyde\Dbal\Schema\Column;
-use Inpsyde\Dbal\Schema\Columns;
-use Inpsyde\Dbal\Schema\ColumnValueEncoder;
-use Inpsyde\Dbal\Schema\Schema;
-use Inpsyde\Dbal\Schema\SchemaFinder;
+use Syde\Dbal\Dbal;
+use Syde\Dbal\ErrorCollector;
+use Syde\Dbal\Schema\Column;
+use Syde\Dbal\Schema\Columns;
+use Syde\Dbal\Schema\ColumnValueEncoder;
+use Syde\Dbal\Schema\Schema;
+use Syde\Dbal\Schema\SchemaFinder;
 
 /**
  * @phpstan-type Clauses array{bool, string, string|null, mixed, string|null}

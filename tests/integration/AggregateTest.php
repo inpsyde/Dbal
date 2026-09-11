@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Tests\Integration;
+namespace Syde\Dbal\Tests\Integration;
 
-use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\Tests\QueriesTestCase;
-use Inpsyde\Dbal\Tests\TableOne;
-use Inpsyde\Dbal\Tests\TablePivot;
-use Inpsyde\Dbal\Tests\TableTwo;
+use Syde\Dbal\Dbal;
+use Syde\Dbal\Tests\QueriesTestCase;
+use Syde\Dbal\Tests\TableOne;
+use Syde\Dbal\Tests\TablePivot;
+use Syde\Dbal\Tests\TableTwo;
 
 /**
  * @runTestsInSeparateProcesses

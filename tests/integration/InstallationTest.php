@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Tests\Integration;
+namespace Syde\Dbal\Tests\Integration;
 
-use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\Schema\Column;
-use Inpsyde\Dbal\Schema\Schema;
-use Inpsyde\Dbal\Schema\SchemasRegister;
-use Inpsyde\Dbal\Schema\TableInstaller;
-use Inpsyde\Dbal\Tests\IntegrationTestCase;
-use Inpsyde\Dbal\Tests\TableOne;
-use Inpsyde\Dbal\Tests\TablePivot;
-use Inpsyde\Dbal\Tests\TableTwo;
+use Syde\Dbal\Dbal;
+use Syde\Dbal\Schema\Column;
+use Syde\Dbal\Schema\Schema;
+use Syde\Dbal\Schema\SchemasRegister;
+use Syde\Dbal\Schema\TableInstaller;
+use Syde\Dbal\Tests\IntegrationTestCase;
+use Syde\Dbal\Tests\TableOne;
+use Syde\Dbal\Tests\TablePivot;
+use Syde\Dbal\Tests\TableTwo;
 
 /**
  * @runTestsInSeparateProcesses

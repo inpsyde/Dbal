@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Schema;
+namespace Syde\Dbal\Schema;
 
 /**
  * @psalm-consistent-constructor
@@ -230,7 +230,7 @@ class ColumnValueEncoder
      */
     private function castDateTime(string $value)
     {
-        // phpcs:enable Inpsyde.CodeQuality.ReturnTypeDeclaration
+        // phpcs:enable Syde.CodeQuality.ReturnTypeDeclaration
         [$asObject, $targetZone] = $this->column->shouldRetrieveAsDatetime();
 
         $isTimestamp = $this->column->type() === Column::TIMESTAMP;

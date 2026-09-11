@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Tests\Unit;
+namespace Syde\Dbal\Tests\Unit;
 
-use Inpsyde\Dbal\Error;
-use Inpsyde\Dbal\ErrorCollector;
-use Inpsyde\Dbal\Tests\UnitTestCase;
+use Syde\Dbal\Error;
+use Syde\Dbal\ErrorCollector;
+use Syde\Dbal\Tests\UnitTestCase;
 
 class ErrorCollectorTest extends UnitTestCase
 {

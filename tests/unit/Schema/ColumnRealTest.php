@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Tests\Unit\Schema;
+namespace Syde\Dbal\Tests\Unit\Schema;
 
-use Inpsyde\Dbal\Schema\Column;
-use Inpsyde\Dbal\Tests\UnitTestCase;
+use Syde\Dbal\Schema\Column;
+use Syde\Dbal\Tests\UnitTestCase;
 
 class ColumnRealTest extends UnitTestCase
 {

@@ -2,11 +2,11 @@
 
 ## Create your own Schema
 
-When creating custom database tables, implement `Inpsyde\Dbal\Schema\InstallableSchema`. A complete, annotated example can be found in [learning-by-example.md](./learning-by-example.md).
+When creating custom database tables, implement `Syde\Dbal\Schema\InstallableSchema`. A complete, annotated example can be found in [learning-by-example.md](./learning-by-example.md).
 
 ### `name(): string`
 
-Returns the bare table name without the WordPress prefix (e.g. `'events'`, not `'wp_events'`). `inpsyde/dbal` prepends the active prefix automatically.
+Returns the bare table name without the WordPress prefix (e.g. `'events'`, not `'wp_events'`). `syde/dbal` prepends the active prefix automatically.
 
 ```php
 public function name(): string
@@ -17,7 +17,7 @@ public function name(): string
 
 ### `version(): string`
 
-Returns the current schema version string. `inpsyde/dbal` compares this against the stored version and triggers `dbDelta` automatically whenever the value changes, keeping the table structure in sync without manual intervention.
+Returns the current schema version string. `syde/dbal` compares this against the stored version and triggers `dbDelta` automatically whenever the value changes, keeping the table structure in sync without manual intervention.
 
 ```php
 public function version(): string
@@ -42,8 +42,8 @@ public function isNetworkWide(): bool
 Returns a `Columns` instance describing every column in the table. See [columns-and-column.md](./columns-and-column.md) for the full column API.
 
 ```php
-use Inpsyde\Dbal\Schema\Column;
-use Inpsyde\Dbal\Schema\Columns;
+use Syde\Dbal\Schema\Column;
+use Syde\Dbal\Schema\Columns;
 
 public function columns(): Columns
 {
@@ -60,8 +60,8 @@ public function columns(): Columns
 Returns an `Indexes` instance defining the table's indexes, or `null` for no indexes. See [indexes.md](./indexes.md) for the full index API.
 
 ```php
-use Inpsyde\Dbal\Schema\Index;
-use Inpsyde\Dbal\Schema\Indexes;
+use Syde\Dbal\Schema\Index;
+use Syde\Dbal\Schema\Indexes;
 
 public function indexes(): ?Indexes
 {
@@ -103,8 +103,8 @@ public function onUpdate(\wpdb $wpdb, string $fullTableName, string $previousVer
 Hook into `Dbal::ACTION_REGISTER_SCHEMA` to register the schema for installation:
 
 ```php
-use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\Schema\SchemasRegister;
+use Syde\Dbal\Dbal;
+use Syde\Dbal\Schema\SchemasRegister;
 
 add_action(
     Dbal::ACTION_REGISTER_SCHEMA,
@@ -117,8 +117,8 @@ add_action(
 To drop the table when the plugin is deactivated, register it for uninstall inside `register_deactivation_hook`:
 
 ```php
-use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\Schema\SchemasRegister;
+use Syde\Dbal\Dbal;
+use Syde\Dbal\Schema\SchemasRegister;
 
 register_deactivation_hook(
     __FILE__,
@@ -135,7 +135,7 @@ register_deactivation_hook(
 
 ### TableInstaller actions and filters
 
-`inpsyde/dbal` fires the following WordPress actions and filters during schema installation and updates, allowing you to hook in custom logic:
+`syde/dbal` fires the following WordPress actions and filters during schema installation and updates, allowing you to hook in custom logic:
 
 | Hook                           | Type   | When fired                                                                            | Arguments                    |
 |--------------------------------|--------|---------------------------------------------------------------------------------------|------------------------------|
@@ -146,7 +146,7 @@ register_deactivation_hook(
 | `dbal.skip-table-exists-check` | filter | Before install - return `true` to skip the check for whether the table already exists | `bool $skip, Schema $schema` |
 
 ```php
-add_action('dbal.table-installed', static function (Inpsyde\Dbal\Schema\Schema $schema): void {
+add_action('dbal.table-installed', static function (Syde\Dbal\Schema\Schema $schema): void {
     // e.g., seed initial data after the table is first created
     if ($schema->name() === 'events') {
         // seed...
@@ -163,10 +163,10 @@ add_filter('dbal.skip-table-exists-check', static function (bool $skip, $schema)
 
 ## WordPress Schema
 
-`inpsyde/dbal` also supports schemas for existing WordPress core tables through `$wpdb->{tableName}` to make use of the full API. To access those, use either `SchemaFinder` or `WpSchemas`:
+`syde/dbal` also supports schemas for existing WordPress core tables through `$wpdb->{tableName}` to make use of the full API. To access those, use either `SchemaFinder` or `WpSchemas`:
 
 ```php
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 $postsSchema  = Dbal::schemaFinder()->findCoreSchema('posts');
 $postsColumns = $postsSchema->columns();

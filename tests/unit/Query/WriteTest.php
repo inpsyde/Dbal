@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Tests\Unit\Query;
+namespace Syde\Dbal\Tests\Unit\Query;
 
-use Inpsyde\Dbal\Query\Where;
-use Inpsyde\Dbal\Query\Write;
-use Inpsyde\Dbal\Tests\TableOne;
-use Inpsyde\Dbal\Tests\UnitTestCase;
+use Syde\Dbal\Query\Where;
+use Syde\Dbal\Query\Write;
+use Syde\Dbal\Tests\TableOne;
+use Syde\Dbal\Tests\UnitTestCase;
 
 class WriteTest extends UnitTestCase
 {

@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Query;
+namespace Syde\Dbal\Query;
 
-use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\ErrorCollector;
-use Inpsyde\Dbal\Schema\Schema;
-use Inpsyde\Dbal\Schema\SchemaFinder;
-use Inpsyde\Dbal\Schema\Schemas;
+use Syde\Dbal\Dbal;
+use Syde\Dbal\ErrorCollector;
+use Syde\Dbal\Schema\Schema;
+use Syde\Dbal\Schema\SchemaFinder;
+use Syde\Dbal\Schema\Schemas;
 
 /**
  * @psalm-consistent-constructor

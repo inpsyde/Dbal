@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Query;
+namespace Syde\Dbal\Query;
 
-use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\Error;
-use Inpsyde\Dbal\Result;
+use Syde\Dbal\Dbal;
+use Syde\Dbal\Error;
+use Syde\Dbal\Result;
 
 final class SelectBuilder
 {

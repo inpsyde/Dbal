@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Schema;
+namespace Syde\Dbal\Schema;
 
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 class TableInstaller
 {

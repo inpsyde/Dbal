@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Tests\Unit\Query;
+namespace Syde\Dbal\Tests\Unit\Query;
 
-use Inpsyde\Dbal\ErrorCollector;
-use Inpsyde\Dbal\Query\Aliases;
-use Inpsyde\Dbal\Query\Compare;
-use Inpsyde\Dbal\Query\Join;
-use Inpsyde\Dbal\Query\Where;
-use Inpsyde\Dbal\Tests\TableOne;
-use Inpsyde\Dbal\Tests\TableTwo;
-use Inpsyde\Dbal\Tests\UnitTestCase;
+use Syde\Dbal\ErrorCollector;
+use Syde\Dbal\Query\Aliases;
+use Syde\Dbal\Query\Compare;
+use Syde\Dbal\Query\Join;
+use Syde\Dbal\Query\Where;
+use Syde\Dbal\Tests\TableOne;
+use Syde\Dbal\Tests\TableTwo;
+use Syde\Dbal\Tests\UnitTestCase;
 
 class JoinTest extends UnitTestCase
 {

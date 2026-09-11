@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Tests\Unit\Query;
+namespace Syde\Dbal\Tests\Unit\Query;
 
-use Inpsyde\Dbal\Query\Pagination;
-use Inpsyde\Dbal\Tests\UnitTestCase;
+use Syde\Dbal\Query\Pagination;
+use Syde\Dbal\Tests\UnitTestCase;
 
 class PaginationTest extends UnitTestCase
 {

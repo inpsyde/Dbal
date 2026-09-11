@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Schema;
+namespace Syde\Dbal\Schema;
 
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 /**
  * @psalm-consistent-constructor
@@ -265,7 +265,7 @@ final class WpSchemas
             $backup = [$wp_queries, $charset_collate];
             require_once ABSPATH . 'wp-admin/includes/schema.php';
             [$wp_queries, $charset_collate] = $backup;
-            // phpcs:enable Inpsyde.CodeQuality.VariablesName.SnakeCaseVar
+            // phpcs:enable Syde.CodeQuality.VariablesName.SnakeCaseVar
         }
 
         $schema = (string) wp_get_db_schema('all');

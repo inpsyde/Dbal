@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Query;
+namespace Syde\Dbal\Query;
 
-use Inpsyde\Dbal\Schema\Columns;
+use Syde\Dbal\Schema\Columns;
 
 class ColumnsResultParser
 {

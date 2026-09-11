@@ -19,10 +19,10 @@
 	<rule ref="SlevomatCodingStandard.Files.TypeNameMatchesFileName">
         <properties>
             <property name="rootNamespaces" type="array">
-                <element key="src" value="Inpsyde\Dbal" />
-                <element key="tests/src" value="Inpsyde\Dbal\Tests" />
-                <element key="tests/unit" value="Inpsyde\Dbal\Tests\Unit" />
-                <element key="tests/integration" value="Inpsyde\Dbal\Tests\Integration" />
+                <element key="src" value="Syde\Dbal" />
+                <element key="tests/src" value="Syde\Dbal\Tests" />
+                <element key="tests/unit" value="Syde\Dbal\Tests\Unit" />
+                <element key="tests/integration" value="Syde\Dbal\Tests\Integration" />
             </property>
         </properties>
     </rule>

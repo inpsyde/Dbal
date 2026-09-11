@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Schema;
+namespace Syde\Dbal\Schema;
 
 /** @psalm-consistent-constructor */
 class SchemasRegister

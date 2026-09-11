@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Tests\Unit\Query;
+namespace Syde\Dbal\Tests\Unit\Query;
 
-use Inpsyde\Dbal\Error;
-use Inpsyde\Dbal\Query\ResultSet;
-use Inpsyde\Dbal\Query\Select;
-use Inpsyde\Dbal\Tests\TableOne;
-use Inpsyde\Dbal\Tests\UnitTestCase;
+use Syde\Dbal\Error;
+use Syde\Dbal\Query\ResultSet;
+use Syde\Dbal\Query\Select;
+use Syde\Dbal\Tests\TableOne;
+use Syde\Dbal\Tests\UnitTestCase;
 
 class ResultSetTest extends UnitTestCase
 {

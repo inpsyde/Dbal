@@ -30,13 +30,13 @@ To run the integration test suite locally, you'll also need the `pdo_sqlite` PHP
 ## Installation
 
 ```bash
-composer require inpsyde/dbal
+composer require syde/dbal
 ```
 
 ## Quick Start
 
 ```php
-use Inpsyde\Dbal\Dbal;
+use Syde\Dbal\Dbal;
 
 // Select all events
 $resultSet = Dbal::select('events')->all();

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Tests;
+namespace Syde\Dbal\Tests;
 
 use Brain\Monkey;
-use Inpsyde\Dbal\Schema\SchemaFinder;
-use Inpsyde\Dbal\Schema\SchemasRegister;
-use Inpsyde\Dbal\Schema\WpSchemas;
+use Syde\Dbal\Schema\SchemaFinder;
+use Syde\Dbal\Schema\SchemasRegister;
+use Syde\Dbal\Schema\WpSchemas;
 
 class UnitTestCase extends TestCase
 {

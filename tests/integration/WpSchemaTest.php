@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\Dbal\Tests\Integration;
+namespace Syde\Dbal\Tests\Integration;
 
-use Inpsyde\Dbal\Dbal;
-use Inpsyde\Dbal\Schema\Column;
-use Inpsyde\Dbal\Schema\Columns;
-use Inpsyde\Dbal\Tests\IntegrationTestCase;
+use Syde\Dbal\Dbal;
+use Syde\Dbal\Schema\Column;
+use Syde\Dbal\Schema\Columns;
+use Syde\Dbal\Tests\IntegrationTestCase;
 
 /**
  * @runTestsInSeparateProcesses

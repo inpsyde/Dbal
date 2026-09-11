@@ -2,11 +2,11 @@
 
 ## Indexes
 
-The `Inpsyde\Dbal\Schema\Indexes` implementation groups multiple `Inpsyde\Dbal\Schema\Index` instances. This being required for creating a [Schema](./schemas.md).
+The `Syde\Dbal\Schema\Indexes` implementation groups multiple `Syde\Dbal\Schema\Index` instances. This being required for creating a [Schema](./schemas.md).
 
 ```php
-use Inpsyde\Dbal\Schema\Indexes;
-use Inpsyde\Dbal\Schema\Index;
+use Syde\Dbal\Schema\Indexes;
+use Syde\Dbal\Schema\Index;
 
 Indexes::new(
     Index::primary('id'),
@@ -25,7 +25,7 @@ An Index references to a column (see [./columns-and-column.md](columns-and-colum
 The primary key for a table represents the column or set of columns that you use in your most vital queries. It has an associated index, for fast query performance.
 
 ```php
-use Inpsyde\Dbal\Schema\Index;
+use Syde\Dbal\Schema\Index;
 
 Index::primary('id');
 ```
@@ -34,7 +34,7 @@ Index::primary('id');
 When a Unique Key is applied on a certain field of a database table, than it does not allow duplicate values to be inserted in that column, i.e. it is used to uniquely identify a record in a table.
 
 ```php
-use Inpsyde\Dbal\Schema\Index;
+use Syde\Dbal\Schema\Index;
 
 Index::unique('uuid');
 ```
@@ -44,7 +44,7 @@ Index::unique('uuid');
 A Key is a not unique and not primary key and is mostly used to optimize performance for accessing data.
 
 ```php
-use Inpsyde\Dbal\Schema\Index;
+use Syde\Dbal\Schema\Index;
 
 Index::key('type');
 ```
