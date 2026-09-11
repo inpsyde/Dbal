@@ -4,7 +4,7 @@ _Database abstraction layer for WordPress, on top of wpdb and dbDelta._
 
 [![Static Analysis + Unit tests](https://github.com/inpsyde/Dbal/actions/workflows/static-analysis.yml/badge.svg)](https://github.com/inpsyde/Dbal/actions/workflows/static-analysis.yml) [![Integration Tests](https://github.com/inpsyde/Dbal/actions/workflows/integration-tests.yml/badge.svg)](https://github.com/inpsyde/Dbal/actions/workflows/integration-tests.yml) [![Integration Tests](https://github.com/inpsyde/Dbal/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/inpsyde/Dbal/actions/workflows/unit-tests.yml)
 
-`wpdb` gives you direct SQL access, but that comes with tradeoffs. Dbal exists to remove:
+`wpdb` gives you direct SQL access, but that comes with tradeoffs. Dbal exists to improve:
 
 - **Security by default.** WordPress queries are unescaped unless you remember to call `prepare()` yourself - an opt-in safeguard that's easy to forget. Dbal escapes automatically, so secure queries are the default, not something you have to remember to do.
 - **Typed results, not just strings.** Because Dbal knows your schema, query results come back as the type your schema declares - a column defined as `INT` returns an actual `int`, a `FLOAT` column returns a `float`. No more casting results by hand just to get the type you already told the schema to expect.
